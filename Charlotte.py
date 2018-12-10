@@ -34,7 +34,7 @@ async def on_ready():
     # Send an announcement that the bots been started in Akatsuki's #general
     announceOnline = discord.Embed(title="Charlotte v{versionNum} Online.".format(versionNum=version), description='Ready for commands owo\n\nSource code can be found at https://github.com/osuAkatsuki/Charlotte.', color=0x00ff00)
     announceOnline.set_thumbnail(url='https://i.namir.in/5kE.png')
-    await client.send_message(client.get_channel('365406576548511745'), embed=announceOnline)
+    await client.send_message(client.get_channel(config['akatsuki']['general']), embed=announceOnline)
 
 # On exceptions, don't make the whole thing die :)
 @client.event
@@ -46,7 +46,7 @@ async def on_error(event, *args):
 async def on_message(message):
     client.wait_until_ready()
 
-    if message.channel.id == '367068661837725706': # message sent in #player-reporting, move to #reports
+    if message.channel.id == config['akatsuki']['player_reporting'] and not message.startswith('$'): # message sent in #player-reporting, move to #reports, unless it is a command
         await client.delete_message(message) # delete the message from #player-reporting
 
         # Prepare, and send the report in #reports
@@ -54,7 +54,7 @@ async def on_message(message):
         embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
         embed.add_field(name="Report content", value=message.content, inline=True)
         embed.add_field(name="Author", value=message.author.mention, inline=True)
-        await client.send_message(client.get_channel('367080772076568596'), embed=embed)
+        await client.send_message(client.get_channel(config['akatsuki']['reports']), embed=embed)
 
         # Prepare, and send the report to the reporter
         embedPrivate = discord.Embed(title="Thank you for the player report.", description="We will review the report shortly.".format(message.content), color=0x00ff00)
@@ -64,7 +64,7 @@ async def on_message(message):
 
         # Send the report to the bot owner, if enabled in config
         if config['default']['report_pm'] == 1:
-            await client.send_message(channel=discord.User(id=config['discord']['owner_id']), embed=embed)
+            await client.send_message(channel=discord.User(id=int(config['discord']['owner_id'])), embed=embed)
 
         # Print result to console
         print(Fore.CYAN + "Report recieved. It has been moved to #reports{end}".format(end=" and sent to {}.".format(config['discord']['username']) if config['default']['report_pm'] == 1 else "."))
@@ -81,7 +81,7 @@ async def on_message(message):
                     else:
                         print(Fore.MAGENTA + "Aborted Trigger: Email Verification Support, due to \"badge\" contents of the message.\nUser: {}".format(message.author))
             # Akatsuki's ServerID
-            elif message.server.id == '365406575893938177':
+            elif message.server.id == config['akatsuki']['server_id']:
                 if "badge" not in message.content.lower():
                     await client.send_message(message.author, 'Right, this is an automated message as it was assumed you needed assitance in Akatsuki with: Email Verification\n\nAs the verification page says, Akatsuki does not use verification emails. To verify your account, simply install the switcher, install the certificate, click the server you\'d like to play on, and click On/Off, then login to osu! to complete the verification process.')
                     await client.delete_message(message)
@@ -101,7 +101,7 @@ async def on_message(message):
 
                 # add if thing for new config here
         elif message.server.id in config['default']['important_servers']: # important_servers from configuration file
-            if message.channel.id == '508022888113111040': # Akatsuki's discord server id
+            if message.channel.id == config['akatsuki']['general']: # Akatsuki's discord server id
                 # Play my fucking audio file here when thats a thing
                 print(Back.CYAN + Style.BRIGHT + "{} [{} ({})] {}: {}".format(message.timestamp, message.server, message.channel, message.author, message.content))
             else:

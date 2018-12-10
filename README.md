@@ -11,7 +11,7 @@ This is Akatsuki's discord bot's source code.
 ## How to set up this thing
 I don't really think you'd ever want to, but heres a thing anyways.
 ```
-$ git clone https://github.com/cmyui/Charlotte.git
+$ git clone https://github.com/osuAkatsuki/Charlotte.git
 ```
 Then rename your config sample to just config.ini
 ```
@@ -22,12 +22,12 @@ Next, configure the config
 The default config should be pretty straight forward. If you're using a token to login to discord, make sure tokenauth is 1, and then just paste your token in. If you're using email/password, disable tokenauth and put the username and password in instead.
 ```
 [default]
-debug = 0
-tokenauth = 1
-important_servers: [2147, 483, 647]
-secret = 0
-report_pm = 1
-commands_enabled = 1
+debug = 0/1, whether to show debug messages or not
+tokenauth = 0/1, whether you are using token to auth, rather than pw
+important_servers: [2147, 483, 647], list of 'important servers', shows differently in console
+secret = 0/1, dw about it
+report_pm = 0/1, whether to pm on report
+commands_enabled = 0/1, whether commands should be useable
 
 [discord]
 owner_id = your personal discord id
@@ -35,6 +35,12 @@ token = token here if tokenAuth = 1
 username = username here (optional)
 email = email here if tokenAuth = 0
 password = password here if tokenAuth = 0
+
+[akatsuki]
+general = your server's #general id
+server_id = your server's id
+player_reporting = your server's #player-reporting id
+reports = your server's #reports id
 ```
 Finish up by installing requirements.txt, and then you're on your way.
 ```
