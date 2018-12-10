@@ -20,7 +20,7 @@ config.sections()
 config.read('config.ini')
 
 #Constants
-version = 1.12
+version = 1.15
 servers = ['yozora', 'ainu', 'kotorikku', 'kawata', 'toh.ru', 'ryusei', 'ryu-sei', 'waving', 'enjuu', 'verge', 'toh ru']
 emailChecks = ['verify e', 'verification', 'on email', 'verify m', 'verify a', 'email t']
 
