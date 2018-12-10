@@ -21,7 +21,7 @@ config.read('config.ini')
 
 #Constants
 version = 1.12
-servers = ['yozora', 'ainu', 'kotorikku', 'darkmoon', 'dark-moon', 'kawata', 'toh.ru', 'waving', 'enjuu', 'verge', 'toh ru']
+servers = ['yozora', 'ainu', 'kotorikku', 'kawata', 'toh.ru', 'ryusei', 'ryu-sei', 'waving', 'enjuu', 'verge', 'toh ru']
 emailChecks = ['verify e', 'verification', 'on email', 'verify m', 'verify a', 'email t']
 
 # Startup, after login action
