@@ -20,7 +20,9 @@ config.sections()
 config.read('config.ini')
 
 #Constants
-version = 1.1
+version = 1.12
+servers = ['yozora', 'ainu', 'kotorikku', 'darkmoon', 'dark-moon', 'kawata', 'toh.ru', 'waving', 'enjuu', 'verge', 'toh ru']
+emailChecks = ['verify e', 'verification', 'on email', 'verify m', 'verify a', 'email t']
 
 # Startup, after login action
 @client.event
@@ -30,7 +32,7 @@ async def on_ready():
         print(Fore.MAGENTA + "\n\nConfiguration:\ndebug: {}\ntokenauth: {}\n\n".format(config['default']['debug'], config['default']['tokenauth']))
 
     # Send an announcement that the bots been started in Akatsuki's #general
-    announceOnline = discord.Embed(title="Charlotte v{versionNum} Online.".format(versionNum=version), description='Ready for commands owo\n\nSource code can be found at https://github.com/cmyui/Charlotte.', color=0x00ff00)
+    announceOnline = discord.Embed(title="Charlotte v{versionNum} Online.".format(versionNum=version), description='Ready for commands owo\n\nSource code can be found at https://github.com/osuAkatsuki/Charlotte.', color=0x00ff00)
     announceOnline.set_thumbnail(url='https://i.namir.in/5kE.png')
     await client.send_message(client.get_channel('365406576548511745'), embed=announceOnline)
 
@@ -67,13 +69,8 @@ async def on_message(message):
         # Print result to console
         print(Fore.CYAN + "Report recieved. It has been moved to #reports{end}".format(end=" and sent to {}.".format(config['discord']['username']) if config['default']['report_pm'] == 1 else "."))
     elif message.author != client.user:
-        if ("verify e" in message.content.lower() or
-        "verification" in message.content.lower() or
-        "on email" in message.content.lower() or
-        "verify m" in message.content.lower() or
-        "verify a" in message.content.lower() or
-        "email t" in message.content.lower()) and message.author != client.user:
-
+        # Checks for things in message
+        if any(x in message.content.lower() for x in emailChecks):
             # I really don't know how to do this :(
             # Private Messaging
             if message.server is None:
@@ -87,11 +84,14 @@ async def on_message(message):
             elif message.server.id == '365406575893938177':
                 if "badge" not in message.content.lower():
                     await client.send_message(message.author, 'Right, this is an automated message as it was assumed you needed assitance in Akatsuki with: Email Verification\n\nAs the verification page says, Akatsuki does not use verification emails. To verify your account, simply install the switcher, install the certificate, click the server you\'d like to play on, and click On/Off, then login to osu! to complete the verification process.')
+                    await client.delete_message(message)
                     if int(config['default']['debug']) == 1:
                         print(Fore.MAGENTA + "Triggered: Verification Email Support\nUser: {}".format(message.author))
                 else:
                     print(Fore.MAGENTA + "Aborted Trigger: Email Verification Support, due to \"badge\" contents of the message.\nUser: {}".format(message.author))
-        
+        elif any(x in message.content.lower() for x in servers):
+            await client.delete_message(message)  # Remove other private server-related messages
+
         if message.server is None: # Private messages
                 print(Fore.YELLOW + Style.BRIGHT + "{} [{}] {}: {}".format(message.timestamp, message.channel, message.author, message.content))
         elif config['discord']['owner_id'] in message.content: # When you are pinged
@@ -109,8 +109,8 @@ async def on_message(message):
         else: # Regular message
             print("{} [{} ({})] {}: {}".format(message.timestamp, message.server, message.channel, message.author, message.content))
 
-        if config['default']['commands_enabled'] == 1:
-            if message.content.startswith('$f') and message.author.id == config['discord']['owner_id']:
+        if int(config['default']['commands_enabled']) == 1 and message.content.startswith('$') and message.author.id == config['discord']['owner_id']: # The message is a command. handle it that way owo..
+            if message.content.startswith('$f'):
                 # Check osu! score flags.. in discord!
                 await client.delete_message(message)  # Remove $f
                 if config['default']['secret']:
@@ -123,7 +123,7 @@ async def on_message(message):
                 else:
                     print(Fore.RED + "You do not have secret enabled in config.")
 
-            elif message.content.startswith('$s') and message.author == config['discord']['owner_id']:
+            elif message.content.startswith('$s'):
                 # Change your discord users status / game
                 game = ''.join(message.content[3:]).strip() # Get the game
                 if game: # Game also changed
@@ -141,8 +141,11 @@ async def on_message(message):
                 else:
                     print(Fore.RED + Style.BRIGHT + "Please specify a game name.")
                     await client.delete_message(message) # Remove $s
-            else:
-                print(Fore.RED + 'This feature could not be found, or in unavailable.')
+
+            elif message.content.startswith('$p'): # prune messages
+                amtMessages = ''.join(message.content[3:]).strip() if len(''.join(message.content[3:]).strip()) > 0 else 100 # Get the amt of messages
+                deleted = await client.purge_from(message.channel, limit=int(amtMessages))
+                await client.send_message(message.channel, 'Deleted {} message(s).'.format(len(deleted)))
 
 if int(config['default']['tokenauth']) == 1:
     if int(config['default']['debug']) == 1:
