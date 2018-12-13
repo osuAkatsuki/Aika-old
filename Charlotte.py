@@ -20,7 +20,7 @@ config.sections()
 config.read('config.ini')
 
 #Constants
-version = 1.18
+version = 1.2
 servers = ['yozora', 'ainu', 'kotorikku', 'kawata', 'toh.ru', 'ryusei', 'ryu-sei', 'waving', 'enjuu', 'verge', 'toh ru']
 emailChecks = ['verify e', 'verification', 'on email', 'verify m', 'verify a', 'email t']
 
@@ -110,18 +110,19 @@ async def on_message(message):
             print("{} [{} ({})] {}: {}".format(message.timestamp, message.server, message.channel, message.author, message.content))
 
         if int(config['default']['commands_enabled']) == 1 and message.content.startswith('$'): # The message is a command. handle it that way owo..
+            messagecontent = message.content.split(' ')
             #TODO: Process commands based on discord perms
             if message.author.id == config['discord']['owner_id']: # Process owner commands
                 """
                 Process owner commands. Only the config['discord']['owner_id'] has access to these.
                 """
 
-                if message.content.startswith('$flags'):
+                if messagecontent[0].lower() == '$flags':
                     # Check osu! score flags.. in discord!
                     await client.delete_message(message)  # Remove $f
                     if config['default']['secret']:
                         print("\n")
-                        flags = ''.join(message.content[3:]).strip() # Get the flags from discord message
+                        flags = messagecontent[1] # Get the flags from discord message
                         if flags.isdigit():
                             scoreFlags.calculateFlags(int(flags))
                         else:
@@ -129,9 +130,9 @@ async def on_message(message):
                     else:
                         print(Fore.RED + "You do not have secret enabled in config.")
 
-                elif message.content.startswith('$game'):
+                elif messagecontent[0].lower() == '$game':
                     # Change your discord users status / game
-                    game = ''.join(message.content[3:]).strip() # Get the game
+                    game = ' '.join(messagecontent[1:]).strip() # Get the game
                     if game: # Game also changed
 
                         """
@@ -142,13 +143,16 @@ async def on_message(message):
                         """
                         await client.change_presence(game=discord.Game(name=game, url='https://akatsuki.pw/', type=0))
 
-                        print(Fore.GREEN + Style.BRIGHT + "Game changed to: {}".format(game))
-                        await client.delete_message(message) # Remove $s
+                        await client.send_message(message.channel, 'Game successfully changed to: \'{}\'.'.format(game))
                     else:
-                        print(Fore.RED + Style.BRIGHT + "Please specify a game name.")
-                        await client.delete_message(message) # Remove $s
-                elif message.content.startswith('$info'):
-                    topic = ''.join(message.content[5:]).strip().lower()
+                        await client.send_message(message.channel, 'Please specify a game name.')
+                    await client.delete_message(message) # Remove $s
+
+                elif messagecontent[0].lower() == '$info':
+                    try:
+                        topic = messagecontent[1].lower()
+                    except:
+                        topic = ''
 
                     if topic == 'welcome':
                         embed = discord.Embed(title="Welcome to the Akatsuki Discord!", description='** **', color=0x00ff00)
@@ -173,8 +177,12 @@ async def on_message(message):
             """ otherwise
             Process regular user command.
             """
-            if message.content.startswith('$faq'): # FAQ command
-                topic = ''.join(message.content[5:]).strip().lower()
+            if messagecontent[0].lower() == '$faq': # FAQ command
+                try:
+                    topic = messagecontent[1].lower()
+                except:
+                    topic = ''
+
                 if topic == 'namechange':
                     embed = discord.Embed(title="Akatsuki name changes.", description='** **', color=0x00ff00)
                     embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
@@ -219,18 +227,22 @@ async def on_message(message):
                 else:
                     await client.send_message(message.channel, 'Invalid FAQ callback{topic}.. Try harder?'.format(topic=' ' + topic if len(topic) > 0 else ''))
 
-            elif message.content.startswith('$verify') and message.channel.id == config['akatsuki']['verify']: # Verify command
+            elif messagecontent[0].lower() == '$verify' and message.channel.id == config['akatsuki']['verify']: # Verify command
                 verified = discord.utils.get(message.server.roles, name="Members")
                 await client.add_roles(message.author, verified)
                 await client.send_message(message.channel, "User verified successfully.")
 
-            elif message.content.startswith('$p') and message.author.server_permissions.manage_messages: # prune messages
-                amtMessages = ''.join(message.content[3:]).strip() # Get the amt of messages
-                if amtMessages.isdigit() and int(amtMessages) <= 1000:
+            elif messagecontent[0].lower() == '$prune' and message.author.server_permissions.manage_messages: # prune messages
+                try:
+                    amtMessages = messagecontent[1]
+                except:
+                    amtMessages = 100
+
+                if str(amtMessages).isdigit() and int(amtMessages) <= 1000:
                     deleted = await client.purge_from(message.channel, limit=int(amtMessages) + 1)
                     await client.send_message(message.channel, 'Deleted {} message(s).'.format(len(deleted) - 1))
                 else:
-                    await client.send_message(message.channel, 'Incorrect syntax. Please use: $p <1 - 1000>.')
+                    await client.send_message(message.channel, 'Incorrect syntax. Please use: $prune <1 - 1000>.')
 
 
 if int(config['default']['debug']) == 1:
