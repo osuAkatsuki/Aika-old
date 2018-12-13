@@ -91,7 +91,7 @@ async def on_message(message):
                         print(Fore.MAGENTA + "Triggered: Verification Email Support\nUser: {}".format(message.author))
                 else:
                     print(Fore.MAGENTA + "Aborted Trigger: Email Verification Support, due to \"badge\" contents of the message.\nUser: {}".format(message.author))
-        elif any(x in message.content.lower() for x in servers):
+        elif any(x in message.content.lower() for x in servers) or 'discord.gg/' in message.content.lower():
             await client.delete_message(message)  # Remove other private server-related messages
 
         if message.server is None: # Private messages
