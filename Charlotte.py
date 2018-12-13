@@ -9,6 +9,7 @@ import json
 from colorama import init
 from colorama import Fore, Back, Style
 from secret import scoreFlags
+from urllib.parse import urlencode
 
 # Initialize colorama owo
 init(autoreset=True)
@@ -23,8 +24,9 @@ config.read('config.ini')
 
 #Constants
 version = 1.25
-servers = ['yozora', 'ainu', 'kotorikku', 'kawata', 'toh.ru', 'ryusei', 'ryu-sei', 'waving', 'enjuu', 'verge', 'toh ru']
+servers = ['yozora', 'ainu', 'kotorikku', 'kawata', 'toh.ru', 'ryusei', 'ryu-sei', 'waving', 'enjuu', 'verge', 'toh ru', 'toh-ru']
 emailChecks = ['verify e', 'verification', 'on email', 'verify m', 'verify a', 'email t']
+SQLChecks = [';', 'drop', 'ripple', 'select', '*'] # because im paranoid as fuck
 
 # Startup, after login action
 @client.event
@@ -73,8 +75,6 @@ async def on_message(message):
     elif message.author != client.user:
         # Checks for things in message
         if any(x in message.content.lower() for x in emailChecks):
-            # I really don't know how to do this :(
-            # Private Messaging
             if message.server is None:
                 if "badge" not in message.content.lower():
                     await client.send_message(message.author, 'Right, this is an automated message as it was presumed your message was about: Email Verification\n\nAs the verification page says, Akatsuki does not use verification emails. To verify your account, simply install the switcher, install the certificate, click the server you\'d like to play on, and click On/Off, then login to osu! to complete the verification process.')
@@ -176,6 +176,20 @@ async def on_message(message):
                     else:
                         await client.send_message(message.channel, 'Invalid INFO callback{topic}.. Try harder?'.format(topic=' ' + topic if len(topic) > 0 else ''))
 
+                elif messagecontent[0].lower() == '$r':
+                    try:
+                        annmsg = ' '.join(messagecontent[1:]).strip()
+                        if any(x in message.content.lower() for x in SQLChecks):
+                            await client.send_message(message.channel, 'nice try fucker. <@285190493703503872>')
+                        else:
+                            processingMessage = await client.send_message(message.channel, 'Processing request...')
+                            params = urlencode({"k": config["akatsuki"]["apikey"], "to": "#admin", "msg": annmsg})
+                            requests.get("http://{}:5001/api/v1/fokabotMessage?{}".format(config["akatsuki"]["ip"], params))
+                            await client.send_message(message.channel, 'Successfully executed: `{}` on Akatsuki.'.format(annmsg))
+                            await client.delete_message(processingMessage)
+                    except:
+                        await client.send_message(message.channel, 'something exploded. L')
+
             """ otherwise
             Process regular user command.
             """
@@ -189,9 +203,8 @@ async def on_message(message):
                 processingMessage = await client.send_message(message.channel, 'Processing request...')
 
                 resp = requests.get('https://akatsuki.pw/api/v1/users/{rx}full?id={userID}'.format(rx="rx" if relax == '-rx' else '', userID=userID), timeout=3).text
+                
                 userInfo = json.loads(resp)
-
-                #print('resp: {}\nuserInfo: {}\n{}'.format(resp, userInfo, resp.headers['content-type']))
                 
                 if userInfo["favourite_mode"] == 0: # osu!
                     mode = 'std'
