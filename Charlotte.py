@@ -20,7 +20,7 @@ config.sections()
 config.read('config.ini')
 
 #Constants
-version = 1.16
+version = 1.17
 servers = ['yozora', 'ainu', 'kotorikku', 'kawata', 'toh.ru', 'ryusei', 'ryu-sei', 'waving', 'enjuu', 'verge', 'toh ru']
 emailChecks = ['verify e', 'verification', 'on email', 'verify m', 'verify a', 'email t']
 
@@ -29,17 +29,18 @@ emailChecks = ['verify e', 'verification', 'on email', 'verify m', 'verify a', '
 async def on_ready():
     print(Fore.GREEN + '\nAuthentication Successful.\n{} | {}\n--------------------------\n'.format(client.user.name,client.user.id))
     if int(config['default']['debug']) == 1:
-        print(Fore.MAGENTA + "\n\nConfiguration:\ndebug: {}\ntokenauth: {}\n\n".format(config['default']['debug'], config['default']['tokenauth']))
+        print(Fore.MAGENTA + "\n\nConfiguration:\ndebug: {}\n\n".format(config['default']['debug']))
 
-    # Send an announcement that the bots been started in Akatsuki's #general
-    announceOnline = discord.Embed(title="Charlotte v{versionNum} Online.".format(versionNum=version), description='Ready for commands owo\n\nSource code can be found at https://github.com/osuAkatsuki/Charlotte.', color=0x00ff00)
-    announceOnline.set_thumbnail(url='https://i.namir.in/5kE.png')
-    await client.send_message(client.get_channel(config['akatsuki']['general']), embed=announceOnline)
+    # Send an announcement that the bots been started in Akatsuki's #general (if debug)
+    if config['default']['debug'] == 1:
+        announceOnline = discord.Embed(title="Charlotte v{versionNum} Online.".format(versionNum=version), description='Ready for commands owo\n\nSource code can be found at https://github.com/osuAkatsuki/Charlotte.', color=0x00ff00)
+        announceOnline.set_thumbnail(url='https://i.namir.in/5kE.png')
+        await client.send_message(client.get_channel(config['akatsuki']['general']), embed=announceOnline)
 
 # On exceptions, don't make the whole thing die :)
 @client.event
 async def on_error(event, *args):
-    print(Fore.RED + "\n\nFuck.\n\nError: {}\nargs: {}\n\nTraceback: {}\n".format(event, *args, logging.warning(traceback.format_exc())))
+    print(Fore.RED + "\n\nAn exception has occurred.\n\nError: {}\nargs: {}\n\nTraceback: {}\n".format(event, *args, logging.warning(traceback.format_exc())))
 
 # On message event
 @client.event
@@ -202,11 +203,12 @@ async def on_message(message):
                 else:
                     await client.send_message(message.channel, 'Invalid FAQ callback{topic}.. Try harder?'.format(topic=' ' + topic if len(topic) > 0 else ''))
 
-if int(config['default']['tokenauth']) == 1:
-    if int(config['default']['debug']) == 1:
-        print(Fore.MAGENTA + "Logging in with credentials: {}".format('*' * len(config['discord']['token'])))
-    client.run(str(config['discord']['token']))
-elif int(config['default']['tokenauth']) == 0:
-    if int(config['default']['debug']) == 1:
-        print(Fore.MAGENTA + "Logging in with credentials: {}, {}".format(config['discord']['email'], '*' * len(config['discord']['password'])))
-    client.run('{}'.format(config['discord']['email']), '{}'.format(config['discord']['password']))
+            elif message.content.startswith('$verify') and message.channel.id == config['akatsuki']['verify']: # Verify command
+                verified = discord.utils.get(message.server.roles, name="Members")
+                await client.add_roles(message.author, verified)
+                await client.send_message(message.channel, "User verified successfully.")
+
+
+if int(config['default']['debug']) == 1:
+    print(Fore.MAGENTA + "Logging in with credentials: {}".format('*' * len(config['discord']['token'])))
+client.run(str(config['discord']['token']))

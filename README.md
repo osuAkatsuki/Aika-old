@@ -23,7 +23,6 @@ The default config should be pretty straight forward. If you're using a token to
 ```
 [default]
 debug = 0/1, whether to show debug messages or not
-tokenauth = 0/1, whether you are using token to auth, rather than pw
 important_servers: [2147, 483, 647], list of 'important servers', shows differently in console
 secret = 0/1, dw about it
 report_pm = 0/1, whether to pm on report
@@ -33,14 +32,13 @@ commands_enabled = 0/1, whether commands should be useable
 owner_id = your personal discord id
 token = token here if tokenAuth = 1
 username = username here (optional)
-email = email here if tokenAuth = 0
-password = password here if tokenAuth = 0
 
 [akatsuki]
 general = your server's #general id
 server_id = your server's id
 player_reporting = your server's #player-reporting id
 reports = your server's #reports id
+verify = your server's verify channel
 ```
 Finish up by installing requirements.txt, and then you're on your way.
 ```
