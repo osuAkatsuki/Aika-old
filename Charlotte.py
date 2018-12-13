@@ -20,19 +20,18 @@ config.sections()
 config.read('config.ini')
 
 #Constants
-version = 1.17
+version = 1.18
 servers = ['yozora', 'ainu', 'kotorikku', 'kawata', 'toh.ru', 'ryusei', 'ryu-sei', 'waving', 'enjuu', 'verge', 'toh ru']
 emailChecks = ['verify e', 'verification', 'on email', 'verify m', 'verify a', 'email t']
 
 # Startup, after login action
 @client.event
 async def on_ready():
-    print(Fore.GREEN + '\nAuthentication Successful.\n{} | {}\n--------------------------\n'.format(client.user.name,client.user.id))
-    if int(config['default']['debug']) == 1:
-        print(Fore.MAGENTA + "\n\nConfiguration:\ndebug: {}\n\n".format(config['default']['debug']))
+    print(Fore.GREEN + '\nAuthentication Successful.\n{} | {}\n------------------------------\n'.format(client.user.name,client.user.id))
+    print(Fore.MAGENTA + "\n\nConfiguration:\nDebug: {debug}\n\n".format(debug="True" if int(config['default']['debug']) == 1 else "False"))
 
     # Send an announcement that the bots been started in Akatsuki's #general (if debug)
-    if config['default']['debug'] == 1:
+    if int(config['default']['debug']) == 1:
         announceOnline = discord.Embed(title="Charlotte v{versionNum} Online.".format(versionNum=version), description='Ready for commands owo\n\nSource code can be found at https://github.com/osuAkatsuki/Charlotte.', color=0x00ff00)
         announceOnline.set_thumbnail(url='https://i.namir.in/5kE.png')
         await client.send_message(client.get_channel(config['akatsuki']['general']), embed=announceOnline)
@@ -148,14 +147,31 @@ async def on_message(message):
                     else:
                         print(Fore.RED + Style.BRIGHT + "Please specify a game name.")
                         await client.delete_message(message) # Remove $s
+                elif message.content.startswith('$info'):
+                    topic = ''.join(message.content[5:]).strip().lower()
 
-                elif message.content.startswith('$p'): # prune messages
-                    amtMessages = ''.join(message.content[3:]).strip() if len(''.join(message.content[3:]).strip()) > 0 else 100 # Get the amt of messages
-                    deleted = await client.purge_from(message.channel, limit=int(amtMessages))
-                    await client.send_message(message.channel, 'Deleted {} message(s).'.format(len(deleted)))
+                    if topic == 'welcome':
+                        embed = discord.Embed(title="Welcome to the Akatsuki Discord!", description='** **', color=0x00ff00)
+                        embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
+                        embed.add_field(name="** **", value='Hi! Welcome to our little corner of the internet.\n\nYou\'re probably rushing around trying to figure out to verify, but I\'m here to tell you to calm down. We have the 10-minute waiting period for a reason, and that is so that you take a moment to read <#426852938107977738>. Please do this, as I bet that it\'ll fix your issues. After you\'ve read through it and 10 minutes have passed, feel free to type $verify in the <#459856640049676299> channel to get full access to all the cool features of the discord.\n\nAkatsuki is an osu! private server and community run predominantly by <@285190493703503872> and <@107356210486898688>. We currently run an osu! server with some pretty unique and awesome features, such as relax score submission, with a custom PP algorithm . None of this would be possible without our contributors, donators (both premium, and supporters), and especially the Ripple developers for the base of which we started this project on.\n\n[osu!Akatsuki](https://akatsuki.pw/)', inline=False)
+                        await client.send_message(message.channel, embed=embed)
+                    elif topic == 'chatrules':
+                        embed = discord.Embed(title="Akatsuki Discord & Chat Rules", description='** **', color=0x00ff00)
+                        embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
+                        embed.add_field(name="** **", value='These are the rules that apply to the Akatsuki Discord, and also the in-game chat on the Akatsuki Server.\n\n1. NSFW material is only permitted within the <#428460752698081291> and <#505960162411020288> channels.\n2. No talk about other osu! private servers will be permitted.\n3. Racism, sexism, toxicity, and hate speech will not be tolerated.\n4. Spamming is obviously not permitted.\n5. Do not make any kind of cheating accusation, use <#367068661837725706>.\n6. Keep memes and such to the <#463420430552662017> channel.\n7. Treat all members of Akatsuki with respect.\n8. Advertising other discord servers in any way is not allowed.\n9. Do not excessively highlight other members of the community.\n10. Do not discuss cheating activities.\n11. If you leave the discord, you permanently forfeit your roles. Don’t expect to rejoin and bug staff for them back.', inline=False)
+                        embed.set_footer(icon_url='', text='Please remember we reserve the right to kick you without a reason/notice.')
+                        await client.send_message(message.channel, embed=embed)
+                    elif topic == 'gamerules':
+                        embed = discord.Embed(title="Akatsuki Discord & Chat Rules", description='** **', color=0x00ff00)
+                        embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
+                        embed.add_field(name="** **", value='These are the rules that apply in-game on the Akatsuki Server.\n\n1. Cheating and any other form of hacking are strictly prohibited.\n2. You are allowed to have 1 account on the Akatsuki server.\n3. Impersonation of any other player is not permitted.\n4. Edited clients are not permitted on Akatsuki (with the exception of osu!Sync).\n5. Shared or boosted accounts are not allowed.\n6. Do not try to exploit bugs found on the server, report them to a developer immediately.', inline=False)
+                        embed.set_footer(icon_url='', text='Overall, do not abuse our patience. We provide this server free of charge for the community, and you will be banned from the community if we deem it necessary.')
+                        await client.send_message(message.channel, embed=embed)
+                    else:
+                        await client.send_message(message.channel, 'Invalid INFO callback{topic}.. Try harder?'.format(topic=' ' + topic if len(topic) > 0 else ''))
 
             """ otherwise
-            Process regular user command. Anyone can use these!
+            Process regular user command.
             """
             if message.content.startswith('$faq'): # FAQ command
                 topic = ''.join(message.content[5:]).strip().lower()
@@ -207,6 +223,14 @@ async def on_message(message):
                 verified = discord.utils.get(message.server.roles, name="Members")
                 await client.add_roles(message.author, verified)
                 await client.send_message(message.channel, "User verified successfully.")
+
+            elif message.content.startswith('$p') and message.author.server_permissions.manage_messages: # prune messages
+                amtMessages = ''.join(message.content[3:]).strip() # Get the amt of messages
+                if amtMessages.isdigit() and int(amtMessages) <= 1000:
+                    deleted = await client.purge_from(message.channel, limit=int(amtMessages) + 1)
+                    await client.send_message(message.channel, 'Deleted {} message(s).'.format(len(deleted) - 1))
+                else:
+                    await client.send_message(message.channel, 'Incorrect syntax. Please use: $p <1 - 1000>.')
 
 
 if int(config['default']['debug']) == 1:
