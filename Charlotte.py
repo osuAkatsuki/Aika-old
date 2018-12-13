@@ -4,6 +4,8 @@ import configparser
 import re
 import logging
 import traceback
+import requests
+import json
 from colorama import init
 from colorama import Fore, Back, Style
 from secret import scoreFlags
@@ -20,7 +22,7 @@ config.sections()
 config.read('config.ini')
 
 #Constants
-version = 1.2
+version = 1.25
 servers = ['yozora', 'ainu', 'kotorikku', 'kawata', 'toh.ru', 'ryusei', 'ryu-sei', 'waving', 'enjuu', 'verge', 'toh ru']
 emailChecks = ['verify e', 'verification', 'on email', 'verify m', 'verify a', 'email t']
 
@@ -177,7 +179,49 @@ async def on_message(message):
             """ otherwise
             Process regular user command.
             """
-            if messagecontent[0].lower() == '$faq': # FAQ command
+            if messagecontent[0].lower() == '$user': # akatsuki userinfo command
+                userID = messagecontent[1]
+                try:
+                    relax = messagecontent[2]
+                except:
+                    relax = ''
+
+                processingMessage = await client.send_message(message.channel, 'Processing request...')
+
+                resp = requests.get('https://akatsuki.pw/api/v1/users/{rx}full?id={userID}'.format(rx="rx" if relax == '-rx' else '', userID=userID), timeout=3).text
+                userInfo = json.loads(resp)
+
+                #print('resp: {}\nuserInfo: {}\n{}'.format(resp, userInfo, resp.headers['content-type']))
+                
+                if userInfo["favourite_mode"] == 0: # osu!
+                    mode = 'std'
+                    modeNice = 'osu!'
+                elif userInfo["favourite_mode"] == 1: # osu!taiko
+                    mode = 'taiko'
+                    modeNice = 'osu!taiko'
+                elif userInfo["favourite_mode"] == 2: # osu!catch
+                    mode = 'ctb'
+                    modeNice = 'osu!catch'
+                elif userInfo["favourite_mode"] == 3: # osu!mania
+                    mode = 'mania'
+                    modeNice = 'osu!mania'
+
+                embed = discord.Embed(title="{flag} {username} | {gm} {rx}".format(flag=":flag_{}:".format(userInfo["country"].lower()), username=userInfo["username"], rx='(Relax)' if relax == '-rx' else '(Vanilla)', gm=modeNice), description='** **', color=0x00ff00)
+                embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
+
+                embed.add_field(name="Global Rank", value="#{:,}".format(userInfo["{}".format(mode)]["global_leaderboard_rank"]), inline=True)
+                embed.add_field(name="Country Rank", value="#{:,}".format(userInfo["{}".format(mode)]["country_leaderboard_rank"]), inline=True)
+                embed.add_field(name="PP", value="{:,}pp".format(userInfo["{}".format(mode)]["pp"]), inline=True)
+                embed.add_field(name="Ranked Score", value="{:,}".format(userInfo["{}".format(mode)]["ranked_score"]), inline=True)
+                embed.add_field(name="Total Score", value="{:,}".format(userInfo["{}".format(mode)]["total_score"]), inline=True)
+                embed.add_field(name="Accuracy", value=userInfo["{}".format(mode)]["accuracy"], inline=True)
+                embed.add_field(name="Playcount", value="{:,}".format(userInfo["{}".format(mode)]["playcount"]), inline=True)
+                embed.add_field(name="Replays Watched", value="{:,}".format(userInfo["{}".format(mode)]["replays_watched"]), inline=True)
+
+                await client.send_message(message.channel, embed=embed)
+                await client.delete_message(processingMessage)
+
+            elif messagecontent[0].lower() == '$faq': # FAQ command
                 try:
                     topic = messagecontent[1].lower()
                 except:
