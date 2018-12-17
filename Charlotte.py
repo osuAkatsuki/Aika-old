@@ -30,6 +30,7 @@ db = MySQLdb.connect(
     passwd=str(config['mysql']['passwd']),
     db=str(config['mysql']['db'])
     )
+db.autocommit(True)
 
 #Constants
 version = 1.25
@@ -316,7 +317,6 @@ async def on_message(message):
                         await client.add_roles(message.author, role)
                         cursor.execute("UPDATE discord_roles SET verified = 1 WHERE discordid = {}".format(message.author.id))
                         await client.send_message(message.channel, "Your Discord has been sucessfully linked to your Akatsuki account.")
-                        db.commit()
                     else:
                         await client.send_message(message.channel, "You already have an account linked!")
                 else:
