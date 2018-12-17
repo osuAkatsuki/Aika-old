@@ -42,9 +42,11 @@ verify = your server's verify channel
 apikey = your banchos apikey
 ip = your server's ip
 
-[twitch]
-user_id = your twitch user_id
-client_id = your twitch client-id (sent in headers)
+[mysql]
+host = mysql access point
+user = mysql username
+passwd = mysql passwd
+db = mysql db
 ```
 Finish up by installing requirements.txt, and then you're on your way.
 ```

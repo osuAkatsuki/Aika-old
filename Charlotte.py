@@ -10,6 +10,7 @@ from colorama import init
 from colorama import Fore, Back, Style
 from secret import scoreFlags
 from urllib.parse import urlencode
+import MySQLdb
 
 # Initialize colorama owo
 init(autoreset=True)
@@ -21,6 +22,15 @@ client = discord.Client()
 config = configparser.ConfigParser()
 config.sections()
 config.read('config.ini')
+
+# MySQL
+db = MySQLdb.connect(
+    host=str(config['mysql']['host']),
+    user=str(config['mysql']['user']),
+    passwd=str(config['mysql']['passwd']),
+    db=str(config['mysql']['db'])
+    )
+cursor = db.cursor()
 
 #Constants
 version = 1.25
@@ -297,6 +307,16 @@ async def on_message(message):
                 else:
                     await client.send_message(message.channel, 'Incorrect syntax. Please use: $prune <1 - 1000>.')
 
+            elif messagecontent[0].lower() == '$linkosu':
+                cursor.execute("SELECT * FROM discord_roles WHERE discordid = {}".format(message.author.id))
+                result = cursor.fetchone()
+                if result is not None:
+                    if result[4] == 0:
+                        role = discord.utils.get(message.server.roles, id=result[3])
+                        await client.add_roles(message.author, role)
+                        cursor.execute("UPDATE discord_roles SET verified = 1 WHERE discordid = {}".format(message.author.id))
+                        await client.send_message(message.channel, "Your roles have successfully been applied :3")
+                        db.commit()
 
 if int(config['default']['debug']) == 1:
     print(Fore.MAGENTA + "Logging in with credentials: {}".format('*' * len(config['discord']['token'])))
