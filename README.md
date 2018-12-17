@@ -41,6 +41,10 @@ reports = your server's #reports id
 verify = your server's verify channel
 apikey = your banchos apikey
 ip = your server's ip
+
+[twitch]
+user_id = your twitch user_id
+client_id = your twitch client-id (sent in headers)
 ```
 Finish up by installing requirements.txt, and then you're on your way.
 ```

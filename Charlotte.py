@@ -91,7 +91,7 @@ async def on_message(message):
                         print(Fore.MAGENTA + "Triggered: Verification Email Support\nUser: {}".format(message.author))
                 else:
                     print(Fore.MAGENTA + "Aborted Trigger: Email Verification Support, due to \"badge\" contents of the message.\nUser: {}".format(message.author))
-        elif any(x in message.content.lower() for x in servers) or 'discord.gg/' in message.content.lower():
+        elif any(x in message.content.lower() for x in servers) or 'discord.gg/' in message.content.lower() and message.author.id != config['discord']['owner_id']:
             await client.delete_message(message)  # Remove other private server-related messages
 
         if message.server is None: # Private messages
@@ -103,11 +103,7 @@ async def on_message(message):
 
                 # add if thing for new config here
         elif message.server.id in config['default']['important_servers']: # important_servers from configuration file
-            if message.channel.id == config['akatsuki']['general']: # Akatsuki's discord server id
-                # Play my fucking audio file here when thats a thing
-                print(Back.CYAN + Style.BRIGHT + "{} [{} ({})] {}: {}".format(message.timestamp, message.server, message.channel, message.author, message.content))
-            else:
-                print(Fore.BLUE + Style.BRIGHT + "{} [{} ({})] {}: {}".format(message.timestamp, message.server, message.channel, message.author, message.content))
+            print(Fore.BLUE + Style.BRIGHT + "{} [{} ({})] {}: {}".format(message.timestamp, message.server, message.channel, message.author, message.content))
         else: # Regular message
             print("{} [{} ({})] {}: {}".format(message.timestamp, message.server, message.channel, message.author, message.content))
 
