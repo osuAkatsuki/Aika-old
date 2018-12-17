@@ -315,8 +315,10 @@ async def on_message(message):
                         role = discord.utils.get(message.server.roles, id=result[3])
                         await client.add_roles(message.author, role)
                         cursor.execute("UPDATE discord_roles SET verified = 1 WHERE discordid = {}".format(message.author.id))
-                        await client.send_message(message.channel, "Your roles have successfully been applied :3")
+                        await client.send_message(message.channel, "Your Discord has been sucessfully linked to your Akatsuki account.")
                         db.commit()
+                    else:
+                        await client.send_message(message.channel, "You already have an account linked!")
 
 if int(config['default']['debug']) == 1:
     print(Fore.MAGENTA + "Logging in with credentials: {}".format('*' * len(config['discord']['token'])))
