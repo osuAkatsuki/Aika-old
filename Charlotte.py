@@ -30,7 +30,6 @@ db = MySQLdb.connect(
     passwd=str(config['mysql']['passwd']),
     db=str(config['mysql']['db'])
     )
-cursor = db.cursor()
 
 #Constants
 version = 1.25
@@ -308,6 +307,7 @@ async def on_message(message):
                     await client.send_message(message.channel, 'Incorrect syntax. Please use: $prune <1 - 1000>.')
 
             elif messagecontent[0].lower() == '$linkosu':
+                cursor = db.cursor()
                 cursor.execute("SELECT * FROM discord_roles WHERE discordid = {}".format(message.author.id))
                 result = cursor.fetchone()
                 if result is not None:
@@ -319,6 +319,8 @@ async def on_message(message):
                         db.commit()
                     else:
                         await client.send_message(message.channel, "You already have an account linked!")
+                else:
+                    await client.send_message(message.channel, "You must first use `!linkdiscord {}` in game, before using $linkosu on Discord. (Thats your Discord ID!).".format(message.author.id))
 
 if int(config['default']['debug']) == 1:
     print(Fore.MAGENTA + "Logging in with credentials: {}".format('*' * len(config['discord']['token'])))
