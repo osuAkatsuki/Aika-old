@@ -8,7 +8,6 @@ import requests
 import json
 from colorama import init
 from colorama import Fore, Back, Style
-from secret import scoreFlags
 from urllib.parse import urlencode
 import MySQLdb
 
