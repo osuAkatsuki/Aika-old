@@ -30,6 +30,7 @@ db = MySQLdb.connect(
     db=str(config['mysql']['db'])
     )
 db.autocommit(True)
+db.ping(True)
 
 #Constants
 version = 1.25
