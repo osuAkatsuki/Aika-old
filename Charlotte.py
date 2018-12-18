@@ -320,7 +320,7 @@ async def on_message(message):
                     else:
                         await client.send_message(message.channel, "You already have an account linked!")
                 else:
-                    await client.send_message(message.channel, "You must first use `!linkdiscord {}` in game, before using $linkosu on Discord. (Thats your Discord ID!).".format(message.author.id))
+                    await client.send_message(message.channel, "You must first use the following command on Akatsuki (The # is your Discord ID).\n>> `!linkdiscord {}`".format(message.author.id))
 
 if int(config['default']['debug']) == 1:
     print(Fore.MAGENTA + "Logging in with credentials: {}".format('*' * len(config['discord']['token'])))
