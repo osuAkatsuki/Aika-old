@@ -33,7 +33,7 @@ db.autocommit(True)
 db.ping(True)
 
 #Constants
-version = 1.25
+version = 1.27
 servers = ['yozora', 'ainu', 'kotorikku', 'kawata', 'toh.ru', 'ryusei', 'ryu-sei', 'waving', 'enjuu', 'verge', 'toh ru', 'toh-ru']
 emailChecks = ['verify e', 'verification', 'on email', 'verify m', 'verify a', 'email t']
 SQLChecks = [';', 'drop', 'ripple', 'select', '*'] # because im paranoid as fuck
@@ -124,7 +124,6 @@ async def on_message(message):
                 """
                 Process owner commands. Only the config['discord']['owner_id'] has access to these.
                 """
-
                 if messagecontent[0].lower() == '$flags':
                     # Check osu! score flags.. in discord!
                     await client.delete_message(message)  # Remove $f
