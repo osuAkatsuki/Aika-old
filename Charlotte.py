@@ -34,7 +34,7 @@ db.ping(True)
 
 #Constants
 version = 1.27
-servers = ['yozora', 'ainu', 'kotorikku', 'kawata', 'toh.ru', 'ryusei', 'ryu-sei', 'waving', 'enjuu', 'verge', 'toh ru', 'toh-ru']
+servers = ['yozora', 'ainu', 'kotorikku', 'kawata', 'toh.ru', 'ryusei', 'ryu-sei', 'waving', 'enjuu', 'verge', 'toh ru', 'toh-ru', 'katori']
 emailChecks = ['verify e', 'verification', 'on email', 'verify m', 'verify a', 'email t']
 SQLChecks = [';', 'drop', 'ripple', 'select', '*'] # because im paranoid as fuck
 
@@ -164,7 +164,7 @@ async def on_message(message):
                     if topic == 'welcome':
                         embed = discord.Embed(title="Welcome to the Akatsuki Discord!", description='** **', color=0x00ff00)
                         embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
-                        embed.add_field(name="** **", value='Hi! Welcome to our little corner of the internet.\n\nYou\'re probably rushing around trying to figure out to verify, but I\'m here to tell you to calm down. We have the 10-minute waiting period for a reason, and that is so that you take a moment to read <#426852938107977738>. Please do this, as I bet that it\'ll fix your issues. After you\'ve read through it and 10 minutes have passed, feel free to type $verify in the <#459856640049676299> channel to get full access to all the cool features of the discord.\n\nAkatsuki is an osu! private server and community run predominantly by <@285190493703503872> and <@107356210486898688>. We currently run an osu! server with some pretty unique and awesome features, such as relax score submission, with a custom PP algorithm . None of this would be possible without our contributors, donators (both premium, and supporters), and especially the Ripple developers for the base of which we started this project on.\n\n[osu!Akatsuki](https://akatsuki.pw/)', inline=False)
+                        embed.add_field(name="** **", value='Hi! Welcome to our little corner of the internet.\n\nYou\'re probably rushing around trying to figure out to verify, but I\'m here to tell you to calm down. We have the 10-minute waiting period for a reason, and that is so that you take a moment to read <#426852938107977738>. Please do this, as I bet that it\'ll fix your issues. After you\'ve read through it and 10 minutes have passed, feel free to type $verify in the <#459856640049676299> channel to get full access to all the cool features of the discord.\n\nAkatsuki is an osu! private server and community run predominantly by <@285190493703503872>. We currently run an osu! server with some pretty unique and awesome features, such as relax score submission, with a custom PP algorithm . None of this would be possible without our contributors, donators (both premium, and supporters), and especially the Ripple developers for the base of which we started this project on.\n\n[osu!Akatsuki](https://akatsuki.pw/)', inline=False)
                         await client.send_message(message.channel, embed=embed)
                     elif topic == 'chatrules':
                         embed = discord.Embed(title="Akatsuki Discord & Chat Rules", description='** **', color=0x00ff00)
@@ -194,6 +194,44 @@ async def on_message(message):
                             await client.delete_message(processingMessage)
                     except:
                         await client.send_message(message.channel, 'something exploded. L')
+
+                elif messagecontent[0].lower() == '$partner':
+                    userID = messagecontent[1]
+                    streamName = messagecontent[2]
+                    platform = messagecontent[3]
+
+                    if not platform.isdigit():
+                        if platform == 'twitch':
+                            platform = 1
+                        elif platform == 'youtube':
+                            platform = 2
+                        elif platform == 'mixer':
+                            platform = 3
+
+                    cursor = db.cursor()
+                    cursor.execute("SELECT * FROM partners WHERE userid = {}".format(userID))
+                    result = cursor.fetchone()
+                    if result is None:
+                        """ If u ever figure out how to ping someone to give them a role. yep.
+                        role = discord.utils.get(message.server.roles, id=533300101972623371)
+                        await client.add_roles(message.author, role)
+                        """
+                        cursor.execute("INSERT INTO partners (userid, stream_username, platform) VALUES ('{}', '{}', '{}')".format(userID, streamName, platform))
+                        await client.send_message(message.channel, "{} has been sucessfully registered as an Akatsuki partner.".format(streamName))
+                    else:
+                        await client.send_message(message.channel, "That userID is already partnered!")
+
+                elif messagecontent[0].lower() == '$removepartner':
+                    streamName = messagecontent[1]
+
+                    cursor = db.cursor()
+                    cursor.execute("SELECT * FROM partners WHERE stream_username = {}".format(streamName))
+
+                    if result is not None:
+                        cursor.execute("DELETE FROM partners WHERE stream_username = {}".format(streamName))
+                        await client.send_message(message.channel, "{}'s partnership sucessfully revoked.".format(streamName))
+                    else:
+                        await client.send_message(message.channel, "{} is not a registered partner.".format(streamName))
 
             """ otherwise
             Process regular user command.
