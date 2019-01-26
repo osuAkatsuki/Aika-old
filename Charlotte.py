@@ -60,7 +60,7 @@ async def on_error(event, *args):
 async def on_message(message):
     client.wait_until_ready()
 
-    if message.channel.id == config['akatsuki']['player_reporting'] and not message.startswith('$'): # message sent in #player-reporting, move to #reports, unless it is a command
+    if message.channel.id == config['akatsuki']['player_reporting'] and not message.content.startswith('$'): # message sent in #player-reporting, move to #reports, unless it is a command
         await client.delete_message(message) # delete the message from #player-reporting
 
         # Prepare, and send the report in #reports
