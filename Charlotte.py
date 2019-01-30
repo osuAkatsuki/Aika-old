@@ -276,8 +276,8 @@ async def on_message(message):
                 await client.delete_message(processingMessage)
 
             elif messagecontent[0].lower() == '$d': # d
-                cj = random.randint(1, 10)
-                if cj <= 7: # 70% chance cmyui, since his list bigger
+                cj = random.randint(1, 2)
+                if cj == 1: # 70% chance cmyui, since his list bigger
                     await client.send_message(message.channel, 'cmyui: {}'.format(random.choice(cmyuiPsych)))
                 else:
                     await client.send_message(message.channel, 'Justice: {}'.format(random.choice(justicePsych)))
