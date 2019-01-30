@@ -34,7 +34,7 @@ db.autocommit(True)
 db.ping(True)
 
 #Constants
-version = 1.33
+version = 1.34
 filters = ['yozora', 'ainu', 'kotorikku', 'kawata', 'ryusei', 'ryu-sei', 'enjuu', 'verge', 'katori', 'nigger', 'discord.gg/', 'gatari', 'ripple'] # bad boy words
 emailChecks = ['verify e', 'verification', 'on email', 'verify m', 'verify a', 'email t', 'w verify', 'i verify']
 SQLChecks = [';', 'drop', 'ripple', 'select', '*'] # because im paranoid as fuck
@@ -284,6 +284,21 @@ async def on_message(message):
                     await client.send_message(message.channel, 'cmyui: {}'.format(random.choice(cmyuiPsych)))
                 else:
                     await client.send_message(message.channel, 'Justice: {}'.format(random.choice(justicePsych)))
+
+            elif messagecontent[0].lower() == '$cmyui': # cmyui command. multipurpose information command on the guy
+                try:
+                    topic = messagecontent[1].lower()
+                except:
+                    topic = ''
+
+                if topic == 'area':
+                    await client.send_message(message.channel, 'https://i.namir.in//nGm.png')
+                elif topic == 'settings':
+                    await client.send_message(message.channel, '1.0x sens, video and storyboard off, dim 100%, fullscreen 1920x1080@240-256hz (depends on day), snaking sliders, cursor size 0.5-0.85, hit lighting off, raw input on')
+                elif topic == 'skin':
+                    await client.send_message(message.channel, 'cmyui v5.3: https://i.namir.in//6CF.osk\ncmyui v6.0 (Blue Crystal v2.1): https://i.namir.in//JS9.osk\ncmyui v7.0: https://i.namir.in//YP7.osk\ncmyui v9.4: https://i.namir.in//jHW.osk\ncmyui v10.0: https://i.namir.in//x6O.osk\nAlacrity 1.2: https://i.namir.in//4Oo.osk\nAbyssal 2018-15-06: https://i.namir.in//Asi.osk\nJustice: https://i.namir.in//b1u.osk\nCookiezi 32: https://i.namir.in//y8v.osk\nCookiezi 35: https://i.namir.in//y8v.osk\n\nUsually using:\nNomod Aim: Alacrity or Abyssal. Maybe blue crystal or cmyui v7 if it\'s very hard.\nNomod stream: cmyui 9.4, Alacrity, Abyssal, cookiezi.\nOther stuff, idk depends')
+                else:
+                    await client.send_message(message.channel, 'Invalid cmyui info callback{topic}.. Try harder?'.format(topic=' ' + topic if len(topic) > 0 else ''))
 
             elif messagecontent[0].lower() == '$faq': # FAQ command
                 try:
