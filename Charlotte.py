@@ -34,7 +34,7 @@ db.autocommit(True)
 db.ping(True)
 
 #Constants
-version = 1.33.5
+version = 1.33
 filters = ['yozora', 'ainu', 'kotorikku', 'kawata', 'ryusei', 'ryu-sei', 'enjuu', 'verge', 'katori', 'nigger', 'discord.gg/', 'gatari', 'ripple'] # bad boy words
 emailChecks = ['verify e', 'verification', 'on email', 'verify m', 'verify a', 'email t', 'w verify', 'i verify']
 SQLChecks = [';', 'drop', 'ripple', 'select', '*'] # because im paranoid as fuck
