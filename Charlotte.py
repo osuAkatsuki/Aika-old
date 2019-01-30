@@ -34,13 +34,13 @@ db.autocommit(True)
 db.ping(True)
 
 #Constants
-version = 1.32
+version = 1.33.5
 filters = ['yozora', 'ainu', 'kotorikku', 'kawata', 'ryusei', 'ryu-sei', 'enjuu', 'verge', 'katori', 'nigger', 'discord.gg/', 'gatari', 'ripple'] # bad boy words
 emailChecks = ['verify e', 'verification', 'on email', 'verify m', 'verify a', 'email t', 'w verify', 'i verify']
 SQLChecks = [';', 'drop', 'ripple', 'select', '*'] # because im paranoid as fuck
 
 # a list of our psychedelic thoughts..
-cmyuiPsych = ['intense visible pleasure wave on demand', 'pentap AiAe [a bit jumpy] HD', 'i thought i was going to bite my tongue but it was my immune system', 'smoke', 'seeing everything even when i closed my eyes', 'pulsating teleportation', 'feeling like we had something to do', 'nose bleeding hallucination', 'shit horse vodka', 'd', 'lost job', 'vomit', 'chicken nuggets', 'beach', 'fat guy', 'glass ceiling', 'facial hair', 'waving green walls', 'sea land', 'rich', 'pleasure', 'reaching for exponential pleasure', 'self dissection', 'high (first lyric in song)', 'follow the light', 'paul', 'leo', 'francesco', 'dad offering beer', 'aero chord', 'acid interstate', 'driving through the jungles of germany', 'jaegarmeister in coke', 'wasp swarm', 'balcony', 'bending mushroom houses', 'panorama', 'dark green red and blue treetops', 'bugs in the forest', 'water dam', 'dark forest pathways', 'controlling your brain', 'begging for life and forgiveness', 'jacob crying', 'psychedelic music', 'akatsuki event', 'mirkas scarf', 'i am gonnnnnnnnneeeeeeeeeeee', 'hair splitting reality', 'hugging jacob', 'donkey kong fur flowing', 'calendar pulsating', 'flowers moving', 'clouds on the ceiling', 'horses and bodies on the design with lighting', 'pins and needles stabbing my fingers', 'drawing blood and becoming cold', 'going down the water slide', 'asking a girl for a key card', 'running into their room and bed', 'waking up in destroyed room with paramedics', 'becoming older and older and then god himself', 'hearing them say i was dead', 'the jungle under my monitor', 'cat and dog', 'dinner with shinis family', 'fett', 'wanchu back', 'leo\'s sweater', 'eating a sandwich', 'sitting on the bus', 'eating one chicken nugget', 'asking a stranger where the water cups were', 'staring at an older couple across in hospital... i think the guy died that night :(', 'logitech g930 usb ripped open but somehow intact', 'wet sand weird ass taste in mouth. literally unexplainable how fucked it feels.', 'my mouth numbing as i put the tab in, with that bitter taste of 25i..', 'standing on my chair overlooking the highway entrance lane. feeling the cars come towards me', 'stucco ceiling swerving all around', 'realer than real']
+cmyuiPsych = ['strange throat feeling, almost as if my tongue had become a plant and sprouted or something', 'feeling music rather than just hearing it', 'intense visible pleasure wave on demand', 'pentap AiAe [a bit jumpy] HD', 'i thought i had bit my tongue but it was my immune system', 'smoke', 'seeing everything even when i closed my eyes', 'pulsating teleportation', 'feeling like we had something to do', 'nose bleeding hallucination', 'shit horse vodka', 'd', 'lost job', 'vomit', 'chicken nuggets', 'beach', 'fat guy', 'glass ceiling', 'facial hair', 'waving green walls', 'sea land', 'rich', 'pleasure', 'reaching for exponential pleasure', 'self dissection', 'high (first lyric in song)', 'follow the light', 'paul', 'leo', 'francesco', 'dad offering beer', 'aero chord', 'acid interstate', 'driving through the jungles of germany', 'jaegarmeister in coke', 'wasp swarm', 'balcony', 'bending mushroom houses', 'panorama', 'dark green red and blue treetops', 'bugs in the forest', 'water dam', 'dark forest pathways', 'controlling your brain', 'begging for life and forgiveness', 'jacob crying', 'psychedelic music', 'akatsuki event', 'mirkas scarf', 'i am gonnnnnnnnneeeeeeeeeeee', 'hair splitting reality', 'hugging jacob', 'donkey kong fur flowing', 'calendar pulsating', 'flowers moving', 'clouds on the ceiling', 'horses and bodies on the design with lighting', 'pins and needles stabbing my fingers', 'drawing blood and becoming cold', 'going down the water slide', 'asking a girl for a key card', 'running into their room and bed', 'waking up in destroyed room with paramedics', 'becoming older and older and then god himself', 'hearing them say i was dead', 'the jungle under my monitor', 'cat and dog', 'dinner with shinis family', 'fett', 'wanchu back', 'leo\'s sweater', 'eating a sandwich', 'sitting on the bus', 'eating one chicken nugget', 'asking a stranger where the water cups were', 'staring at an older couple across in hospital... i think the guy died that night :(', 'logitech g930 usb ripped open but somehow intact', 'wet sand weird ass taste in mouth. literally unexplainable how fucked it feels.', 'my mouth numbing as i put the tab in, with that bitter taste of 25i..', 'standing on my chair overlooking the highway entrance lane. feeling the cars come towards me', 'stucco ceiling swerving all around', 'realer than real']
 justicePsych = ['d', 'FUCKING NEPTUNE', 'civilization incepting on my body', 'what the fuck am I looking at', 'Spencer is God', 'Subaru Outback from NASA', 'the gas station is quite green today', 'Smash on a single joycon  is retard central', 'I refuse to fall down the stairs a third time', 'my life is a rainbow', 'my sock is going to kill me', 'omega-cold', 'Mezzanine-Massive Attack', 'HOW DO YOU TURN ON THE FUCKING SHOWER', 'HOW DO YOU TURN OFF THE FUCKING SHOWER', 'I CANT GET OUT OF THE FUCKING SHOWER', 'The shower has brought me great wealth', 'many faces inside of that person', 'look at that Arby\'s sign wow', 'my penis is non-existent what the fuck', 'ice is evil', 'the snow never ends', 'that beer bottle is Satan', 'I am Satan', 'I am definitely not Satan', 'WE HAVE BEEN IN THIS CAR FOREVER I WAS BORN IN THIS CAR', 'why is Chase so far away', 'I cant fucking see anything, but my eyes are pretending they can see']
 
 # Startup, after login action
@@ -65,7 +65,7 @@ async def on_error(event, *args):
 async def on_message(message):
     client.wait_until_ready()
 
-    if message.channel.id == config['akatsuki']['player_reporting'] and not message.content.startswith('$'): # message sent in #player-reporting, move to #reports, unless it is a command
+    if message.channel.id == config['akatsuki']['player_reporting']: # message sent in #player-reporting, move to #reports
         await client.delete_message(message) # delete the message from #player-reporting
 
         # Prepare, and send the report in #reports
@@ -73,20 +73,23 @@ async def on_message(message):
         embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
         embed.add_field(name="Report content", value=message.content, inline=True)
         embed.add_field(name="Author", value=message.author.mention, inline=True)
-        await client.send_message(client.get_channel(config['akatsuki']['reports']), embed=embed)
 
         # Prepare, and send the report to the reporter
         embedPrivate = discord.Embed(title="Thank you for the player report.", description="We will review the report shortly.".format(message.content), color=0x00ff00)
         embedPrivate.add_field(name="Report content", value=message.content, inline=True)
         embedPrivate.set_thumbnail(url='https://i.namir.in/Mbp.png')
-        await client.send_message(message.author, embed=embedPrivate)
 
-        # Send the report to the bot owner, if enabled in config
-        if config['default']['report_pm'] == 1:
-            await client.send_message(channel=discord.User(id=int(config['discord']['owner_id'])), embed=embed)
+        if not message.content.startswith('$'): # do not pm or link to #reports if it is a command
+            await client.send_message(message.author, embed=embedPrivate)
+            await client.send_message(client.get_channel(config['akatsuki']['reports']), embed=embed)
 
-        # Print result to console
-        print(Fore.CYAN + "Report recieved. It has been moved to #reports{end}".format(end=" and sent to {}.".format(config['discord']['username']) if config['default']['report_pm'] == 1 else "."))
+            # Send the report to the bot owner, if enabled in config
+            if config['default']['report_pm'] == 1:
+                await client.send_message(channel=discord.User(id=int(config['discord']['owner_id'])), embed=embed)
+
+            # Print result to console
+            print(Fore.CYAN + "Report recieved. It has been moved to #reports{end}".format(end=" and sent to {}.".format(config['discord']['username']) if config['default']['report_pm'] == 1 else "."))
+
     elif message.author != client.user:
         # Checks for things in message
         if any(x in message.content.lower() for x in emailChecks) and message.server.id == config['akatsuki']['server_id']:
@@ -329,6 +332,13 @@ async def on_message(message):
                     embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
                     embed.add_field(name="** **", value="Connecting via Linux or OS X is a bit more tricky than windows, as you will have to do it manually, rather than using a server switcher.\nFirst, you will need to locate your hosts file. Since different non-windows operating systems have different directories for this file, please just google your operating system's hosts file to save some time.\nOnce you have located this file, paste the following lines in:\n\nRelax```\n163.172.67.35    osu.ppy.sh\n163.172.67.35    c.ppy.sh\n163.172.67.35    c1.ppy.sh\n163.172.67.35    c2.ppy.sh\n163.172.67.35    c3.ppy.sh\n163.172.67.35    c4.ppy.sh\n163.172.67.35    c5.ppy.sh\n163.172.67.35    c6.ppy.sh\n163.172.67.35    ce.ppy.sh\n163.172.67.35    a.ppy.sh\n163.172.67.35    s.ppy.sh\n163.172.67.35    i.ppy.sh```\n\nNext, you will need to install the certificate. Again, this is different from OS to OS, so you'll need to google this one aswell. The cerificate you'll need to install is 'ca.crt', which can be found at the bottom of this channel.", inline=False)
                     await client.send_message(message.channel, embed=embed)
+
+                elif topic == 'premium':
+                    embed = discord.Embed(title="What is 'Akatsuki Premium?'", description='** **', color=0x00ff00)
+                    embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
+                    embed.add_field(name="** **", value="Akatsuki!Premium is essentially a means to step up support for the server. These members are basically Akatsuki's backbones in paying for the server, as this role is specifically for those who have chosen to give more than we'd ever expect. Haha. More information and perks can be found [here](https://akatsuki.pw/premium).\n\nThank you for your support!", inline=False)
+                    embed.set_footer(icon_url='', text='At no point do we ever expect our users to pay for the service. But we accept donations because, of course, we need to pay for the server too haha.')
+                    await client.send_message(message.channel, embed=embed)
                 else:
                     await client.send_message(message.channel, 'Invalid FAQ callback{topic}.. Try harder?'.format(topic=' ' + topic if len(topic) > 0 else ''))
 
@@ -336,6 +346,13 @@ async def on_message(message):
                 verified = discord.utils.get(message.server.roles, name="Members")
                 await client.add_roles(message.author, verified)
                 await client.send_message(message.channel, "User verified successfully.")
+
+            elif messagecontent[0].lower() == '$botinfo': # bot info command
+                embed = discord.Embed(title="Why hello! I'm Charlotte.", description='** **', color=0x00ff00)
+                embed.set_thumbnail(url='https://i.namir.in//5kE.png')
+                embed.add_field(name="** **", value='I\'m Akatsuki (and cmyui\'s) bot. I provide the server with things such as commands to track ingame stats, help out members in need, and provide overall fun (and lots of useless) commands!\n\nSource code: https://github.com/osuAkatsuki/Charlotte.\nIngame: https://akatsuki.pw/u/999\nCreator: https://akatsuki.pw/u/1001\n\nGood vibes <3', inline=False)
+                embed.set_footer(icon_url='', text='At your service! <3')
+                await client.send_message(message.channel, embed=embed)
 
             elif messagecontent[0].lower() == '$prune' and message.author.server_permissions.manage_messages: # prune messages
                 try:
