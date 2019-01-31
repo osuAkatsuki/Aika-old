@@ -45,13 +45,14 @@ justicePsych = ['d', 'FUCKING NEPTUNE', 'civilization incepting on my body', 'wh
 # Startup, after login action
 @client.event
 async def on_ready():
-    print(Fore.GREEN + '\nAuthentication Successful.\n{} | {}\n------------------------------\n'.format(client.user.name, client.user.id))
-    print(Fore.MAGENTA + "\n\nConfiguration:\nDebug: {debug}\n\n".format(debug="True" if int(config['default']['debug']) == 1 else "False"))
+    print(Fore.GREEN + '\nAuthentication Successful.\n{} | {}\n--------------------------\n'.format(client.user.name, client.user.id))
+    if int(config['default']['debug']) == 1:
+        print(Fore.MAGENTA + "\n\nConfiguration:\nDebug: {debug}\n\n".format(debug="True" if int(config['default']['debug']) == 1 else "False"))
 
     # Send an announcement that the bots been started in Akatsuki's #general (if debug)
-    if int(config['default']['debug']) == 1:
+    if int(config['default']['announce_online']) == 1:
         announceOnline = discord.Embed(title="Aika v{versionNum} Online".format(versionNum=config['default']['version']), description='Ready for commands <3\n\nSource code can be found at https://github.com/osuAkatsuki/Aika.', color=0x00ff00)
-        announceOnline.set_thumbnail(url='https://i.namir.in/5kE.png')
+        announceOnline.set_thumbnail(url='https://i.namir.in/IUY.png')
         await client.send_message(client.get_channel(config['akatsuki']['general']), embed=announceOnline)
 
 # On exceptions, don't make the whole thing die :)
@@ -385,6 +386,5 @@ async def on_message(message):
                 else:
                     await client.send_message(message.channel, "You must first use the following command in #osu (in-game in the osu! client) (The # is your Discord ID).\n>> `!linkdiscord {}`".format(message.author.id))
 
-if int(config['default']['debug']) == 1:
-    print(Fore.MAGENTA + "Logging in with credentials: {}".format('*' * len(config['discord']['token'])))
+print(Fore.CYAN + "\nLogging in with credentials: {}".format('*' * len(config['discord']['token'])))
 client.run(str(config['discord']['token']))
