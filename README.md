@@ -1,6 +1,6 @@
 [![Discord](https://discordapp.com/api/guilds/365406575893938177/widget.png?style=shield)](https://discord.gg/5cBtMPW)
 
-## Charlotte
+## Aika
 
 This is Akatsuki's discord bot's source code.
 
@@ -11,7 +11,7 @@ This is Akatsuki's discord bot's source code.
 ## How to set up this thing
 I don't really think you'd ever want to, but heres a thing anyways.
 ```
-$ git clone https://github.com/osuAkatsuki/Charlotte.git
+$ git clone https://github.com/osuAkatsuki/Aika.git
 ```
 Then rename your config sample to just config.ini
 ```
