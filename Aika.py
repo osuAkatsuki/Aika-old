@@ -34,6 +34,7 @@ db.autocommit(True)
 db.ping(True)
 
 # Constants
+version = 1.41
 filters = ['yozo', 'y0zo', 'yoz0', 'y0z0', 'ainu', 'kotorikku', 'kawata', 'ryusei', 'ryu-sei', 'enjuu', 'verge', 'katori', 'nigger', 'discord.gg/', 'gatari', 'ripple'] # bad boy words
 email_checks = ['verify e', 'verification', 'on email', 'verify m', 'verify a', 'email t', 'w verify', 'i verify']
 sql_checks = [';', 'drop', 'ripple', 'select', 'delete', 'update', '*'] # Because I'm paranoid as fuck
@@ -51,7 +52,7 @@ async def on_ready():
 
     # Send an announcement that the bots been started in Akatsuki's #general (if debug)
     if int(config['default']['announce_online']) == 1:
-        announceOnline = discord.Embed(title="Aika v{versionNum} Online".format(versionNum=config['default']['version']), description='Ready for commands <3\n\nSource code can be found at https://github.com/osuAkatsuki/Aika.', color=0x00ff00)
+        announceOnline = discord.Embed(title="Aika v{versionNum} Online".format(versionNum=version), description='Ready for commands <3\n\nSource code can be found at https://github.com/osuAkatsuki/Aika.', color=0x00ff00)
         announceOnline.set_thumbnail(url='https://i.namir.in/IUY.png')
         await client.send_message(client.get_channel(config['akatsuki']['general']), embed=announceOnline)
 

@@ -24,7 +24,6 @@ The default config should be pretty straight forward. If you're using a token to
 [default]
 debug = 0/1, whether to show debug messages or not
 announce_online = 0/1, whether to announce when the bot is online in whatever specified channel from config
-version = 1.23 (bot version number)
 
 [discord]
 owner_id = your personal discord id
