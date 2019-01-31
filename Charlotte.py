@@ -33,25 +33,25 @@ db = MySQLdb.connect(
 db.autocommit(True)
 db.ping(True)
 
-#Constants
-version = 1.34
-filters = ['yozora', 'ainu', 'kotorikku', 'kawata', 'ryusei', 'ryu-sei', 'enjuu', 'verge', 'katori', 'nigger', 'discord.gg/', 'gatari', 'ripple'] # bad boy words
+# Constants
+version = 1.40
+filters = ['yozo', 'y0zo', 'yoz0', 'y0z0', 'ainu', 'kotorikku', 'kawata', 'ryusei', 'ryu-sei', 'enjuu', 'verge', 'katori', 'nigger', 'discord.gg/', 'gatari', 'ripple'] # bad boy words
 emailChecks = ['verify e', 'verification', 'on email', 'verify m', 'verify a', 'email t', 'w verify', 'i verify']
-SQLChecks = [';', 'drop', 'ripple', 'select', '*'] # because im paranoid as fuck
+SQLChecks = [';', 'drop', 'ripple', 'select', '*'] # Because I'm paranoid as fuck
 
-# a list of our psychedelic thoughts..
-cmyuiPsych = ['strange throat feeling, almost as if my tongue had become a plant and sprouted or something', 'feeling music rather than just hearing it', 'intense visible pleasure wave on demand', 'pentap AiAe [a bit jumpy] HD', 'i thought i had bit my tongue but it was my immune system', 'smoke', 'seeing everything even when i closed my eyes', 'pulsating teleportation', 'feeling like we had something to do', 'nose bleeding hallucination', 'shit horse vodka', 'd', 'lost job', 'vomit', 'chicken nuggets', 'beach', 'fat guy', 'glass ceiling', 'facial hair', 'waving green walls', 'sea land', 'rich', 'pleasure', 'reaching for exponential pleasure', 'self dissection', 'high (first lyric in song)', 'follow the light', 'paul', 'leo', 'francesco', 'dad offering beer', 'aero chord', 'acid interstate', 'driving through the jungles of germany', 'jaegarmeister in coke', 'wasp swarm', 'balcony', 'bending mushroom houses', 'panorama', 'dark green red and blue treetops', 'bugs in the forest', 'water dam', 'dark forest pathways', 'controlling your brain', 'begging for life and forgiveness', 'jacob crying', 'psychedelic music', 'akatsuki event', 'mirkas scarf', 'i am gonnnnnnnnneeeeeeeeeeee', 'hair splitting reality', 'hugging jacob', 'donkey kong fur flowing', 'calendar pulsating', 'flowers moving', 'clouds on the ceiling', 'horses and bodies on the design with lighting', 'pins and needles stabbing my fingers', 'drawing blood and becoming cold', 'going down the water slide', 'asking a girl for a key card', 'running into their room and bed', 'waking up in destroyed room with paramedics', 'becoming older and older and then god himself', 'hearing them say i was dead', 'the jungle under my monitor', 'cat and dog', 'dinner with shinis family', 'fett', 'wanchu back', 'leo\'s sweater', 'eating a sandwich', 'sitting on the bus', 'eating one chicken nugget', 'asking a stranger where the water cups were', 'staring at an older couple across in hospital... i think the guy died that night :(', 'logitech g930 usb ripped open but somehow intact', 'wet sand weird ass taste in mouth. literally unexplainable how fucked it feels.', 'my mouth numbing as i put the tab in, with that bitter taste of 25i..', 'standing on my chair overlooking the highway entrance lane. feeling the cars come towards me', 'stucco ceiling swerving all around', 'realer than real']
+# A list of our psychedelic thoughts..
+cmyuiPsych = ['jamming out to blue zenith while talking to deallly and others in Akatsuki VC', 'listening to his mom laugh', 'him and the others seeming much further away than they really were', 'driving in the ambulance', 'watching his blood get sucked out into a needle', 'trying to act sober in the face of authority', 'understanding someone that speaks no english', 'the afterimages as i wave my phone back and forth', 'seizure in the kids pool', 'humans split into 5 parts', 'the cat and the praying mantis', 'feeling wrong in my own skin', 'not being able to tell whether hot or cold', 'the relief of drinking the whole bottle of iced tea', 'strange throat feeling, almost as if my tongue had become a plant and sprouted or something', 'feeling music rather than just hearing it', 'intense visible pleasure wave on demand', 'pentap AiAe [a bit jumpy] HD', 'i thought i had bit my tongue but it was my immune system', 'smoke', 'seeing everything even when i closed my eyes', 'pulsating teleportation', 'feeling like we had something to do', 'nose bleeding hallucination', 'shit horse vodka', 'd', 'lost job', 'vomit', 'chicken nuggets', 'beach', 'fat guy', 'glass ceiling', 'facial hair', 'waving green walls', 'sea land', 'rich', 'pleasure', 'reaching for exponential pleasure', 'self dissection', 'high (first lyric in song)', 'follow the light', 'paul', 'leo', 'francesco', 'dad offering beer', 'aero chord', 'acid interstate', 'driving through the jungles of germany', 'jaegarmeister in coke', 'wasp swarm', 'balcony', 'bending mushroom houses', 'panorama', 'dark green red and blue treetops', 'bugs in the forest', 'water dam', 'dark forest pathways', 'controlling your brain', 'begging for life and forgiveness', 'jacob crying', 'psychedelic music', 'akatsuki event', 'mirkas scarf', 'i am gonnnnnnnnneeeeeeeeeeee', 'hair splitting reality', 'hugging jacob', 'donkey kong fur flowing', 'calendar pulsating', 'flowers moving', 'clouds on the ceiling', 'horses and bodies on the design with lighting', 'pins and needles stabbing my fingers', 'drawing blood and becoming cold', 'going down the water slide', 'asking a girl for a key card', 'running into their room and bed', 'waking up in destroyed room with paramedics', 'becoming older and older and then god himself', 'hearing them say i was dead', 'the jungle under my monitor', 'cat and dog', 'dinner with shinis family', 'fett', 'wanchu back', 'leo\'s sweater', 'lying down on the cool water dam at 4am', 'eating a sandwich', 'sitting on the bus', 'eating one chicken nugget', 'asking a stranger where the water cups were', 'staring at an older couple across in hospital... i think the guy died that night :(', 'logitech g930 usb ripped open but somehow intact', 'wet sand weird ass taste in mouth. literally unexplainable how fucked it feels.', 'my mouth numbing as i put the tab in, with that bitter taste of 25i..', 'standing on my chair overlooking the highway entrance lane. feeling the cars come towards me', 'stucco ceiling swerving all around', 'realer than real']
 justicePsych = ['d', 'FUCKING NEPTUNE', 'civilization incepting on my body', 'what the fuck am I looking at', 'Spencer is God', 'Subaru Outback from NASA', 'the gas station is quite green today', 'Smash on a single joycon  is retard central', 'I refuse to fall down the stairs a third time', 'my life is a rainbow', 'my sock is going to kill me', 'omega-cold', 'Mezzanine-Massive Attack', 'HOW DO YOU TURN ON THE FUCKING SHOWER', 'HOW DO YOU TURN OFF THE FUCKING SHOWER', 'I CANT GET OUT OF THE FUCKING SHOWER', 'The shower has brought me great wealth', 'many faces inside of that person', 'look at that Arby\'s sign wow', 'my penis is non-existent what the fuck', 'ice is evil', 'the snow never ends', 'that beer bottle is Satan', 'I am Satan', 'I am definitely not Satan', 'WE HAVE BEEN IN THIS CAR FOREVER I WAS BORN IN THIS CAR', 'why is Chase so far away', 'I cant fucking see anything, but my eyes are pretending they can see']
 
 # Startup, after login action
 @client.event
 async def on_ready():
-    print(Fore.GREEN + '\nAuthentication Successful.\n{} | {}\n------------------------------\n'.format(client.user.name,client.user.id))
+    print(Fore.GREEN + '\nAuthentication Successful.\n{} | {}\n------------------------------\n'.format(client.user.name, client.user.id))
     print(Fore.MAGENTA + "\n\nConfiguration:\nDebug: {debug}\n\n".format(debug="True" if int(config['default']['debug']) == 1 else "False"))
 
     # Send an announcement that the bots been started in Akatsuki's #general (if debug)
     if int(config['default']['debug']) == 1:
-        announceOnline = discord.Embed(title="Charlotte v{versionNum} Online.".format(versionNum=version), description='Ready for commands owo\n\nSource code can be found at https://github.com/osuAkatsuki/Charlotte.', color=0x00ff00)
+        announceOnline = discord.Embed(title="cmyui's Charlotte v{versionNum} Online".format(versionNum=version), description='Ready for commands owo\n\nSource code can be found at https://github.com/osuAkatsuki/Charlotte.', color=0x00ff00)
         announceOnline.set_thumbnail(url='https://i.namir.in/5kE.png')
         await client.send_message(client.get_channel(config['akatsuki']['general']), embed=announceOnline)
 
@@ -65,8 +65,8 @@ async def on_error(event, *args):
 async def on_message(message):
     client.wait_until_ready()
 
-    if message.channel.id == config['akatsuki']['player_reporting']: # message sent in #player-reporting, move to #reports
-        await client.delete_message(message) # delete the message from #player-reporting
+    if message.channel.id == config['akatsuki']['player_reporting']: # Message sent in #player-reporting, move to #reports
+        await client.delete_message(message) # Delete the message from #player-reporting
 
         # Prepare, and send the report in #reports
         embed = discord.Embed(title="New report recieved.", description='** **', color=0x00ff00)
@@ -79,16 +79,12 @@ async def on_message(message):
         embedPrivate.add_field(name="Report content", value=message.content, inline=True)
         embedPrivate.set_thumbnail(url='https://i.namir.in/Mbp.png')
 
-        if not message.content.startswith('$'): # do not pm or link to #reports if it is a command
+        if not message.content.startswith('$'): # Do not pm or link to #reports if it is a command
             await client.send_message(message.author, embed=embedPrivate)
             await client.send_message(client.get_channel(config['akatsuki']['reports']), embed=embed)
 
-            # Send the report to the bot owner, if enabled in config
-            if config['default']['report_pm'] == 1:
-                await client.send_message(channel=discord.User(id=int(config['discord']['owner_id'])), embed=embed)
-
             # Print result to console
-            print(Fore.CYAN + "Report recieved. It has been moved to #reports{end}".format(end=" and sent to {}.".format(config['discord']['username']) if config['default']['report_pm'] == 1 else "."))
+            print(Fore.CYAN + "Report recieved. It has been moved to #reports.")
 
     elif message.author != client.user:
         # Checks for things in message
@@ -102,7 +98,7 @@ async def on_message(message):
                 print(Fore.MAGENTA + "Aborted Trigger: Email Verification Support, due to \"badge\" contents of the message.\nUser: {}".format(message.author))
 
         elif any(x in message.content.lower() for x in filters) and message.author.id != config['discord']['owner_id']:
-            await client.delete_message(message)  # Remove other private server-related messages
+            await client.delete_message(message)
             await client.send_message(message.author, 'Hello,\n\nYour message in osu!Akatsuki has been removed as it has been deemed unsuitable.\n```{}```'.format(message.content))
             print(Fore.MAGENTA + "Filtered message | '{}: {}'".format(message.author, message.content))
 
@@ -115,33 +111,22 @@ async def on_message(message):
         elif (config['discord']['username'] in message.content.lower() and len(config['discord']['username']) > 1): # When your username is mentioned (either actual one, or custom set in configuration)
                 print(Fore.GREEN + Style.BRIGHT + "{} [{} ({})] {}: {}".format(message.timestamp, message.server, message.channel, message.author, message.content))
 
-                # add if thing for new config here
-        elif message.server.id in config['default']['important_servers']: # important_servers from configuration file
+        elif message.server.id == config['akatsuki']['server_id']: # The server is akatsuki
             print(Fore.BLUE + Style.BRIGHT + "{} [{} ({})] {}: {}".format(message.timestamp, message.server, message.channel, message.author, message.content))
         else: # Regular message
             print("{} [{} ({})] {}: {}".format(message.timestamp, message.server, message.channel, message.author, message.content))
 
-        if int(config['default']['commands_enabled']) == 1 and message.content.startswith('$'): # The message is a command. handle it that way owo..
+        if message.content.startswith('$'): # The message is a command
+
+            # First of all, make a simpler way to deal with message content so u don't develop stage 4 cancer
             messagecontent = message.content.split(' ')
+
             #TODO: Process commands based on discord perms
             if message.author.id == config['discord']['owner_id']: # Process owner commands
                 """
                 Process owner commands. Only the config['discord']['owner_id'] has access to these.
                 """
-                if messagecontent[0].lower() == '$flags':
-                    # Check osu! score flags.. in discord!
-                    await client.delete_message(message)  # Remove $f
-                    if config['default']['secret']:
-                        print("\n")
-                        flags = messagecontent[1] # Get the flags from discord message
-                        if flags.isdigit():
-                            scoreFlags.calculateFlags(int(flags))
-                        else:
-                            print(Fore.RED + "That is not a valid entry.")
-                    else:
-                        print(Fore.RED + "You do not have secret enabled in config.")
-
-                elif messagecontent[0].lower() == '$game':
+                if messagecontent[0].lower() == '$game':
                     # Change your discord users status / game
                     game = ' '.join(messagecontent[1:]).strip() # Get the game
                     if game: # Game also changed
@@ -157,7 +142,7 @@ async def on_message(message):
                         await client.send_message(message.channel, 'Game successfully changed to: \'{}\'.'.format(game))
                     else:
                         await client.send_message(message.channel, 'Please specify a game name.')
-                    await client.delete_message(message) # Remove $s
+                    await client.delete_message(message)
 
                 elif messagecontent[0].lower() == '$info':
                     try:
@@ -177,13 +162,13 @@ async def on_message(message):
                         embed.set_footer(icon_url='', text='Please remember we reserve the right to kick you without a reason/notice.')
                         await client.send_message(message.channel, embed=embed)
                     elif topic == 'gamerules':
-                        embed = discord.Embed(title="Akatsuki Discord & Chat Rules", description='** **', color=0x00ff00)
+                        embed = discord.Embed(title="Akatsuki In-game Rules", description='** **', color=0x00ff00)
                         embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
                         embed.add_field(name="** **", value='These are the rules that apply in-game on the Akatsuki Server.\n\n1. Cheating and any other form of hacking are strictly prohibited.\n2. You are allowed to have 1 account on the Akatsuki server.\n3. Impersonation of any other player is not permitted.\n4. Edited clients are not permitted on Akatsuki (with the exception of osu!Sync).\n5. Shared or boosted accounts are not allowed.\n6. Do not try to exploit bugs found on the server, report them to a developer immediately.', inline=False)
                         embed.set_footer(icon_url='', text='Overall, do not abuse our patience. We provide this server free of charge for the community, and you will be banned from the community if we deem it necessary.')
                         await client.send_message(message.channel, embed=embed)
                     else:
-                        await client.send_message(message.channel, 'Invalid INFO callback{topic}.. Try harder?'.format(topic=' ' + topic if len(topic) > 0 else ''))
+                        await client.send_message(message.channel, 'Invalid INFO callback{topic}.'.format(topic=' ' + topic if len(topic) > 0 else ''))
 
                 elif messagecontent[0].lower() == '$r':
                     try:
@@ -237,7 +222,8 @@ async def on_message(message):
             
             Process regular user command.
             """
-            if messagecontent[0].lower() == '$user': # akatsuki userinfo command
+            if messagecontent[0].lower() == '$user' \
+            or messagecontent[0].lower() == '$stats': # Akatsuki userinfo command
                 userID = messagecontent[1]
                 try:
                     relax = messagecontent[2]
@@ -279,26 +265,30 @@ async def on_message(message):
                 await client.delete_message(processingMessage)
 
             elif messagecontent[0].lower() == '$d': # d
-                cj = random.randint(1, 2)
-                if cj == 1: # 70% chance cmyui, since his list bigger
+                if random.randint(1, 2) == 1:
                     await client.send_message(message.channel, 'cmyui: {}'.format(random.choice(cmyuiPsych)))
                 else:
                     await client.send_message(message.channel, 'Justice: {}'.format(random.choice(justicePsych)))
 
-            elif messagecontent[0].lower() == '$cmyui': # cmyui command. multipurpose information command on the guy
+            elif messagecontent[0].lower() == '$cmyui': # cmyui command. Multipurpose information command on the guy
                 try:
                     topic = messagecontent[1].lower()
                 except:
                     topic = ''
 
-                if topic == 'area':
-                    await client.send_message(message.channel, 'https://i.namir.in//nGm.png')
+                if topic == '':
+                    await client.send_message(message.channel, 'The $cmyui command is just a dictionary of stuff cmyui has saved in it. Some public ones:\n\n$cmyui area - cmyui\'s area\n$cmyui skin - cmyui\'s skins\n$cmyui settings - cmyui\'s settings')
+                elif topic == 'area':
+                    await client.send_message(message.author, 'https://i.namir.in/nGm.png')
+                    await client.send_message(message.channel, 'The response has been sent to you via DM.')
                 elif topic == 'settings':
-                    await client.send_message(message.channel, '1.0x sens, video and storyboard off, dim 100%, fullscreen 1920x1080@240-256hz (depends on day), snaking sliders, cursor size 0.5-0.85, hit lighting off, raw input on')
+                    await client.send_message(message.author, '1.0x sens, video and storyboard off, dim 100%, fullscreen 1920x1080@240-256hz (depends on day), snaking sliders, cursor size 0.5-0.85, hit lighting off, raw input on')
+                    await client.send_message(message.channel, 'The response has been sent to you via DM.')
                 elif topic == 'skin':
-                    await client.send_message(message.channel, 'cmyui v5.3: https://i.namir.in//6CF.osk\ncmyui v6.0 (Blue Crystal v2.1): https://i.namir.in//JS9.osk\ncmyui v7.0: https://i.namir.in//YP7.osk\ncmyui v9.4: https://i.namir.in//jHW.osk\ncmyui v10.0: https://i.namir.in//x6O.osk\nAlacrity 1.2: https://i.namir.in//4Oo.osk\nAbyssal 2018-15-06: https://i.namir.in//Asi.osk\nJustice: https://i.namir.in//b1u.osk\nCookiezi 32: https://i.namir.in//y8v.osk\nCookiezi 35: https://i.namir.in//y8v.osk\n\nUsually using:\nNomod Aim: Alacrity or Abyssal. Maybe blue crystal or cmyui v7 if it\'s very hard.\nNomod stream: cmyui 9.4, Alacrity, Abyssal, cookiezi.\nOther stuff, idk depends')
+                    await client.send_message(message.author, '**Here are some of the skins cmyui uses frequently**\n\nCurrent main skin (g3p): https://i.namir.in/Q1L.osk\n\nOther skins:\ncmyui v5.3: https://i.namir.in/6CF.osk\ncmyui v6.0 (Blue Crystal v2.1): https://i.namir.in/JS9.osk\ncmyui v7.0: https://i.namir.in/YP7.osk\ncmyui v9.4: https://i.namir.in/jHW.osk\ncmyui v10.0: https://i.namir.in/x6O.osk\nAlacrity 1.2: https://i.namir.in/4Oo.osk\nAbyssal 2018-15-06: https://i.namir.in/Asi.osk\nJustice: https://i.namir.in/b1u.osk\nCookiezi 32: https://i.namir.in/y8v.osk\nCookiezi 35: https://i.namir.in/y8v.osk\n\nIf any of the links are not working, please tell cmyui#0425 :)')
+                    await client.send_message(message.channel, 'The response has been sent to you via DM.')
                 else:
-                    await client.send_message(message.channel, 'Invalid cmyui info callback{topic}.. Try harder?'.format(topic=' ' + topic if len(topic) > 0 else ''))
+                    await client.send_message(message.channel, '$cmyui subcategory{topic} does not exist..'.format(topic=' ' + topic if len(topic) > 0 else ''))
 
             elif messagecontent[0].lower() == '$faq': # FAQ command
                 try:
@@ -355,21 +345,21 @@ async def on_message(message):
                     embed.set_footer(icon_url='', text='At no point do we ever expect our users to pay for the service. But we accept donations because, of course, we need to pay for the server too haha.')
                     await client.send_message(message.channel, embed=embed)
                 else:
-                    await client.send_message(message.channel, 'Invalid FAQ callback{topic}.. Try harder?'.format(topic=' ' + topic if len(topic) > 0 else ''))
+                    await client.send_message(message.channel, 'Invalid FAQ callback{topic}.'.format(topic=' ' + topic if len(topic) > 0 else ''))
 
             elif messagecontent[0].lower() == '$verify' and message.channel.id == config['akatsuki']['verify']: # Verify command
                 verified = discord.utils.get(message.server.roles, name="Members")
                 await client.add_roles(message.author, verified)
                 await client.send_message(message.channel, "User verified successfully.")
 
-            elif messagecontent[0].lower() == '$botinfo': # bot info command
+            elif messagecontent[0].lower() == '$botinfo': # Bot info command
                 embed = discord.Embed(title="Why hello! I'm Charlotte.", description='** **', color=0x00ff00)
-                embed.set_thumbnail(url='https://i.namir.in//5kE.png')
-                embed.add_field(name="** **", value='I\'m Akatsuki (and cmyui\'s) bot. I provide the server with things such as commands to track ingame stats, help out members in need, and provide overall fun (and lots of useless) commands!\n\nSource code: https://github.com/osuAkatsuki/Charlotte.\nIngame: https://akatsuki.pw/u/999\nCreator: https://akatsuki.pw/u/1001\n\nGood vibes <3', inline=False)
-                embed.set_footer(icon_url='', text='At your service! <3')
+                embed.set_thumbnail(url='https://i.namir.in/5kE.png')
+                embed.add_field(name="** **", value='I\'m Akatsuki\'s (and cmyui\'s) bot. I provide the server with things such as commands to track ingame stats, help out members in need, and provide overall fun (and lots of useless) commands!\n\nSource code: https://github.com/osuAkatsuki/Charlotte.\nIngame: https://akatsuki.pw/u/999\nCreator: https://akatsuki.pw/u/1001', inline=False)
+                embed.set_footer(icon_url='', text='Good vibes <3')
                 await client.send_message(message.channel, embed=embed)
 
-            elif messagecontent[0].lower() == '$prune' and message.author.server_permissions.manage_messages: # prune messages
+            elif messagecontent[0].lower() == '$prune' and message.author.server_permissions.manage_messages: # Prune messages
                 try:
                     amtMessages = messagecontent[1]
                 except:
@@ -377,7 +367,7 @@ async def on_message(message):
 
                 if str(amtMessages).isdigit() and int(amtMessages) <= 1000:
                     deleted = await client.purge_from(message.channel, limit=int(amtMessages) + 1)
-                    await client.send_message(message.channel, 'Deleted {} message(s).'.format(len(deleted) - 1))
+                    await client.send_message(message.channel, 'Deleted {messages} message{plural}.'.format(messages=len(deleted) - 1), plural='s' if (len(deleted) - 1) > 1 else '')
                 else:
                     await client.send_message(message.channel, 'Incorrect syntax. Please use: $prune <1 - 1000>.')
 
@@ -394,7 +384,7 @@ async def on_message(message):
                     else:
                         await client.send_message(message.channel, "You already have an account linked!")
                 else:
-                    await client.send_message(message.channel, "You must first use the following command in #osu (ingame in osu!) (The # is your Discord ID).\n>> `!linkdiscord {}`".format(message.author.id))
+                    await client.send_message(message.channel, "You must first use the following command in #osu (in-game in the osu! client) (The # is your Discord ID).\n>> `!linkdiscord {}`".format(message.author.id))
 
 if int(config['default']['debug']) == 1:
     print(Fore.MAGENTA + "Logging in with credentials: {}".format('*' * len(config['discord']['token'])))
