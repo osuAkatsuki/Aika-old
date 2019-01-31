@@ -23,6 +23,7 @@ The default config should be pretty straight forward. If you're using a token to
 ```
 [default]
 debug = 0/1, whether to show debug messages or not
+version = 1.23
 
 [discord]
 owner_id = your personal discord id
@@ -50,5 +51,5 @@ $ pip3 install requirements.txt
 ```
 Done!
 ```
-$ python3 Charlotte.py
+$ python3 Aika.py
 ```

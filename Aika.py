@@ -34,10 +34,9 @@ db.autocommit(True)
 db.ping(True)
 
 # Constants
-version = 1.40
 filters = ['yozo', 'y0zo', 'yoz0', 'y0z0', 'ainu', 'kotorikku', 'kawata', 'ryusei', 'ryu-sei', 'enjuu', 'verge', 'katori', 'nigger', 'discord.gg/', 'gatari', 'ripple'] # bad boy words
-emailChecks = ['verify e', 'verification', 'on email', 'verify m', 'verify a', 'email t', 'w verify', 'i verify']
-SQLChecks = [';', 'drop', 'ripple', 'select', '*'] # Because I'm paranoid as fuck
+email_checks = ['verify e', 'verification', 'on email', 'verify m', 'verify a', 'email t', 'w verify', 'i verify']
+sql_checks = [';', 'drop', 'ripple', 'select', 'delete', 'update', '*'] # Because I'm paranoid as fuck
 
 # A list of our psychedelic thoughts..
 cmyuiPsych = ['jamming out to blue zenith while talking to deallly and others in Akatsuki VC', 'listening to his mom laugh', 'him and the others seeming much further away than they really were', 'driving in the ambulance', 'watching his blood get sucked out into a needle', 'trying to act sober in the face of authority', 'understanding someone that speaks no english', 'the afterimages as i wave my phone back and forth', 'seizure in the kids pool', 'humans split into 5 parts', 'the cat and the praying mantis', 'feeling wrong in my own skin', 'not being able to tell whether hot or cold', 'the relief of drinking the whole bottle of iced tea', 'strange throat feeling, almost as if my tongue had become a plant and sprouted or something', 'feeling music rather than just hearing it', 'intense visible pleasure wave on demand', 'pentap AiAe [a bit jumpy] HD', 'i thought i had bit my tongue but it was my immune system', 'smoke', 'seeing everything even when i closed my eyes', 'pulsating teleportation', 'feeling like we had something to do', 'nose bleeding hallucination', 'shit horse vodka', 'd', 'lost job', 'vomit', 'chicken nuggets', 'beach', 'fat guy', 'glass ceiling', 'facial hair', 'waving green walls', 'sea land', 'rich', 'pleasure', 'reaching for exponential pleasure', 'self dissection', 'high (first lyric in song)', 'follow the light', 'paul', 'leo', 'francesco', 'dad offering beer', 'aero chord', 'acid interstate', 'driving through the jungles of germany', 'jaegarmeister in coke', 'wasp swarm', 'balcony', 'bending mushroom houses', 'panorama', 'dark green red and blue treetops', 'bugs in the forest', 'water dam', 'dark forest pathways', 'controlling your brain', 'begging for life and forgiveness', 'jacob crying', 'psychedelic music', 'akatsuki event', 'mirkas scarf', 'i am gonnnnnnnnneeeeeeeeeeee', 'hair splitting reality', 'hugging jacob', 'donkey kong fur flowing', 'calendar pulsating', 'flowers moving', 'clouds on the ceiling', 'horses and bodies on the design with lighting', 'pins and needles stabbing my fingers', 'drawing blood and becoming cold', 'going down the water slide', 'asking a girl for a key card', 'running into their room and bed', 'waking up in destroyed room with paramedics', 'becoming older and older and then god himself', 'hearing them say i was dead', 'the jungle under my monitor', 'cat and dog', 'dinner with shinis family', 'fett', 'wanchu back', 'leo\'s sweater', 'lying down on the cool water dam at 4am', 'eating a sandwich', 'sitting on the bus', 'eating one chicken nugget', 'asking a stranger where the water cups were', 'staring at an older couple across in hospital... i think the guy died that night :(', 'logitech g930 usb ripped open but somehow intact', 'wet sand weird ass taste in mouth. literally unexplainable how fucked it feels.', 'my mouth numbing as i put the tab in, with that bitter taste of 25i..', 'standing on my chair overlooking the highway entrance lane. feeling the cars come towards me', 'stucco ceiling swerving all around', 'realer than real']
@@ -51,7 +50,7 @@ async def on_ready():
 
     # Send an announcement that the bots been started in Akatsuki's #general (if debug)
     if int(config['default']['debug']) == 1:
-        announceOnline = discord.Embed(title="cmyui's Charlotte v{versionNum} Online".format(versionNum=version), description='Ready for commands owo\n\nSource code can be found at https://github.com/osuAkatsuki/Charlotte.', color=0x00ff00)
+        announceOnline = discord.Embed(title="Aika v{versionNum} Online".format(versionNum=config['default']['version']), description='Ready for commands <3\n\nSource code can be found at https://github.com/osuAkatsuki/Aika.', color=0x00ff00)
         announceOnline.set_thumbnail(url='https://i.namir.in/5kE.png')
         await client.send_message(client.get_channel(config['akatsuki']['general']), embed=announceOnline)
 
@@ -88,7 +87,7 @@ async def on_message(message):
 
     elif message.author != client.user:
         # Checks for things in message
-        if any(x in message.content.lower() for x in emailChecks) and message.server.id == config['akatsuki']['server_id']:
+        if any(x in message.content.lower() for x in email_checks) and message.server.id == config['akatsuki']['server_id']:
             if "badge" not in message.content.lower():
                 await client.send_message(message.author, 'Right, this is an automated message as it was assumed you needed assitance in Akatsuki with: Email Verification\n\nAs the verification page says, Akatsuki does not use verification emails. To verify your account, simply install the switcher, install the certificate, click the server you\'d like to play on, and click On/Off, then login to osu! to complete the verification process.')
                 await client.delete_message(message)
@@ -173,7 +172,7 @@ async def on_message(message):
                 elif messagecontent[0].lower() == '$r':
                     try:
                         annmsg = ' '.join(messagecontent[1:]).strip()
-                        if any(x in message.content.lower() for x in SQLChecks):
+                        if any(x in message.content.lower() for x in sql_checks):
                             await client.send_message(message.channel, 'nice try fucker. <@285190493703503872>')
                         else:
                             processingMessage = await client.send_message(message.channel, 'Processing request...')
@@ -353,9 +352,9 @@ async def on_message(message):
                 await client.send_message(message.channel, "User verified successfully.")
 
             elif messagecontent[0].lower() == '$botinfo': # Bot info command
-                embed = discord.Embed(title="Why hello! I'm Charlotte.", description='** **', color=0x00ff00)
-                embed.set_thumbnail(url='https://i.namir.in/5kE.png')
-                embed.add_field(name="** **", value='I\'m Akatsuki\'s (and cmyui\'s) bot. I provide the server with things such as commands to track ingame stats, help out members in need, and provide overall fun (and lots of useless) commands!\n\nSource code: https://github.com/osuAkatsuki/Charlotte.\nIngame: https://akatsuki.pw/u/999\nCreator: https://akatsuki.pw/u/1001', inline=False)
+                embed = discord.Embed(title="Why hello! I'm Aika.", description='** **', color=0x00ff00)
+                embed.set_thumbnail(url='https://i.namir.in/IUY.png')
+                embed.add_field(name="** **", value='I\'m Akatsuki\'s (and cmyui\'s) bot. I provide the server with things such as commands to track ingame stats, help out members in need, and provide overall fun (and lots of useless) commands!\n\nSource code: https://github.com/osuAkatsuki/Aika.\nIngame: https://akatsuki.pw/u/999\nCreator: https://akatsuki.pw/u/1001', inline=False)
                 embed.set_footer(icon_url='', text='Good vibes <3')
                 await client.send_message(message.channel, embed=embed)
 
