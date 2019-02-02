@@ -11,6 +11,8 @@ from colorama import init
 from colorama import Fore, Back, Style
 from urllib.parse import urlencode
 import MySQLdb
+import redis
+import time
 
 # Initialize colorama owo
 init(autoreset=True)
@@ -23,6 +25,9 @@ config = configparser.ConfigParser()
 config.sections()
 config.read('config.ini')
 
+# Connect to redis
+r = redis.Redis(host='localhost', port=6379, db=0)
+
 # MySQL
 db = MySQLdb.connect(
     host=str(config['mysql']['host']),
@@ -34,12 +39,12 @@ db.autocommit(True)
 db.ping(True)
 
 # Constants
-version = 1.41
-filters = ['yozo', 'y0zo', 'yoz0', 'y0z0', 'ainu', 'kotorikku', 'kawata', 'ryusei', 'ryu-sei', 'enjuu', 'verge', 'katori', 'nigger', 'discord.gg/', 'gatari', 'ripple'] # bad boy words
+version = 1.45
+filters = ['yozo', 'y0zo', 'yoz0', 'y0z0', 'ainu', 'kotorikku', 'kawata', 'ryusei', 'ryu-sei', 'enjuu', 'verge', 'katori', 'nigger', 'nigga', 'discord.gg/', 'gatari', 'ripple'] # bad boy words
 email_checks = ['verify e', 'verification', 'on email', 'verify m', 'verify a', 'email t', 'w verify', 'i verify']
 sql_checks = [';', 'drop', 'ripple', 'select', 'delete', 'update', '*'] # Because I'm paranoid as fuck
 
-# A list of our psychedelic thoughts..
+positivity = ['YES, you can do it! NO, it won\'t be easy, but it\'ll be worth it!', 'Reason to get out of bed: there are puppies to pet!', 'Reason to get out of bed: the sun is shining for you!', 'Reason to get out of bed: there are new ice cream flavours to try!', 'Reasons to get out of bed: there are lots of new steps forward to take', 'Life is tough.. but so are you!', 'You are capable of so much MORe than you think.', 'I think you\'re doing a good job! Keep it up!', 'Instead of focusing on the negative, try to remember all the things you\'re grateful for instead!']
 cmyuiPsych = ['jamming out to blue zenith while talking to deallly and others in Akatsuki VC', 'listening to his mom laugh', 'him and the others seeming much further away than they really were', 'driving in the ambulance', 'watching his blood get sucked out into a needle', 'trying to act sober in the face of authority', 'understanding someone that speaks no english', 'the afterimages as i wave my phone back and forth', 'seizure in the kids pool', 'humans split into 5 parts', 'the cat and the praying mantis', 'feeling wrong in my own skin', 'not being able to tell whether hot or cold', 'the relief of drinking the whole bottle of iced tea', 'strange throat feeling, almost as if my tongue had become a plant and sprouted or something', 'feeling music rather than just hearing it', 'intense visible pleasure wave on demand', 'pentap AiAe [a bit jumpy] HD', 'i thought i had bit my tongue but it was my immune system', 'smoke', 'seeing everything even when i closed my eyes', 'pulsating teleportation', 'feeling like we had something to do', 'nose bleeding hallucination', 'shit horse vodka', 'd', 'lost job', 'vomit', 'chicken nuggets', 'beach', 'fat guy', 'glass ceiling', 'facial hair', 'waving green walls', 'sea land', 'rich', 'pleasure', 'reaching up towards the top because the closer you get the exponentially better it gets', 'self dissection', 'high (first lyric in song)', 'follow the light', 'dad offering beer', 'acid interstate', 'driving through the jungles of germany', 'Jägermeister in coke', 'wasp swarm', 'her balcony', 'bending mushroomey houses and buildings', 'the restaurant in the middle of the forest', 'the pathway on the edge of the forest', 'half faking the panorama shake', 'dark green red and blue treetops', 'bugs in the forest', 'water dam', 'dark forest pathways', 'controlling your brain', 'begging for life and forgiveness', 'him crying', 'red and black scarf', 'i am gonnnnnnnnneeeeeeeeeeee', 'hair splitting reality', 'hugging jacob', 'donkey kong fur flowing', 'calendar pulsating', 'flowers moving', 'clouds on the ceiling', 'horses and bodies on the design with lighting', 'pins and needles stabbing my fingers', 'drawing blood and becoming cold', 'going down the water slide', 'asking a girl for a key card', 'running into their room and bed', 'waking up in destroyed room with paramedics', 'becoming older and older and then god himself', 'hearing them say i was dead', 'the jungle under my monitor', 'cat and dog', 'dinner with shinis family', 'fett', 'wanchu back', 'leo\'s sweater', 'lying down on the cool water dam at 4am', 'eating a sandwich', 'sitting on the bus', 'eating one chicken nugget', 'asking a stranger where the water cups were', 'staring at an older couple across in hospital... i think the guy died that night :(', 'logitech g930 usb ripped open but somehow intact', 'wet sand weird ass taste in mouth. literally unexplainable how fucked it feels.', 'my mouth numbing as i put the tab in, with that bitter taste of 25i..', 'standing on my chair overlooking the highway entrance lane. feeling the cars come towards me', 'glass, everywhere', 'stucco ceiling swerving all around', 'realer than real']
 justicePsych = ['d', 'FUCKING NEPTUNE', 'civilization incepting on my body', 'what the fuck am I looking at', 'Spencer is God', 'Subaru Outback from NASA', 'the gas station is quite green today', 'Smash on a single joycon  is retard central', 'I refuse to fall down the stairs a third time', 'my life is a rainbow', 'my sock is going to kill me', 'omega-cold', 'Mezzanine-Massive Attack', 'HOW DO YOU TURN ON THE FUCKING SHOWER', 'HOW DO YOU TURN OFF THE FUCKING SHOWER', 'I CANT GET OUT OF THE FUCKING SHOWER', 'The shower has brought me great wealth', 'many faces inside of that person', 'look at that Arby\'s sign wow', 'my penis is non-existent what the fuck', 'ice is evil', 'the snow never ends', 'that beer bottle is Satan', 'I am Satan', 'I am definitely not Satan', 'WE HAVE BEEN IN THIS CAR FOREVER I WAS BORN IN THIS CAR', 'why is Chase so far away', 'I cant fucking see anything, but my eyes are pretending they can see']
 
@@ -144,6 +149,40 @@ async def on_message(message):
                     else:
                         await client.send_message(message.channel, 'Please specify a game name.')
                     await client.delete_message(message)
+
+                elif messagecontent[0].lower() == '$usage':
+                    substance = messagecontent[1].lower()
+                    timeframe = messagecontent[2].lower()
+                    unix_time = int(time.time())
+
+                    cursor = db.cursor()
+
+                    # time constants
+                    hour = unix_time - 3600
+                    day = unix_time - 86400
+                    week = unix_time - 604800
+                    month = unix_time - 2419200 # 4x week
+
+                    if substance == 'weed':
+                        measurement = 'g'
+                    else:
+                        measurement = ''
+                    
+
+                    if timeframe == 'hour' or timeframe == 'hr':
+                        cursor.execute("SELECT * FROM substance_tracking WHERE substance = '{substance}' and time > {timeframe} ORDER BY time DESC".format(substance=substance, timeframe=hour))
+                    elif timeframe == 'day':
+                        cursor.execute("SELECT * FROM substance_tracking WHERE substance = '{substance}' and time > {timeframe} ORDER BY time DESC".format(substance=substance, timeframe=day))
+                    elif timeframe == 'week':
+                        cursor.execute("SELECT * FROM substance_tracking WHERE substance = '{substance}' and time > {timeframe} ORDER BY time DESC".format(substance=substance, timeframe=week))
+                    elif timeframe == 'month':
+                        cursor.execute("SELECT * FROM substance_tracking WHERE substance = '{substance}' and time > {timeframe} ORDER BY time DESC".format(substance=substance, timeframe=month))
+                    insight = cursor.fetchall()
+                    i = 0
+                    for x in insight:
+                        await client.send_message(message.channel, '{}: {}{} of {}.'.format(insight[i][2], insight[i][3], measurement, insight[i][2]))
+                        i = i + 1
+                        #await client.send_message(message.channel, '{}'.format(insight[1][4]))
 
                 elif messagecontent[0].lower() == '$info':
                     try:
@@ -265,11 +304,66 @@ async def on_message(message):
                 await client.send_message(message.channel, embed=embed)
                 await client.delete_message(processingMessage)
 
-            elif messagecontent[0].lower() == '$d': # d
+            elif messagecontent[0].lower() == '$d' or messagecontent[0].lower() == 'psychedelic' or messagecontent[0].lower() == 'psych': # d
                 if random.randint(1, 2) == 1:
                     await client.send_message(message.channel, 'cmyui: {}'.format(random.choice(cmyuiPsych)))
                 else:
                     await client.send_message(message.channel, 'Justice: {}'.format(random.choice(justicePsych)))
+
+            elif messagecontent[0].lower() == '$positive':
+                await client.send_message(message.channel, random.choice(positivity))
+
+            elif messagecontent[0].lower() == '$akatsuki': # multipurpose akatsuki info
+                try:
+                    topic = messagecontent[1].lower()
+                except:
+                    topic = ''
+
+                if topic == '' or topic == 'help':
+                    await client.send_message(message.channel, 'Please enter a topic. There are quite a few, so they will not be listed.')
+                elif topic == 'discord':
+                    await client.send_message(message.channel, 'https://discord.gg/5cBtMPW/')
+                elif topic == 'twitch':
+                    await client.send_message(message.channel, 'https://www.twitch.tv/akatsuki_pw/')
+                elif topic == 'youtube' or topic == 'yt':
+                    await client.send_message(message.channel, 'https://www.youtube.com/channel/UCjf8Fx_BlUr-htEy6hficcQ/')
+                elif topic == 'rlb' or topic == 'relaxleaderboard':
+                    await client.send_message(message.channel, 'https://akatsuki.pw/leaderboard?mode=0&p=1&rx=1/')
+                elif topic == 'lb' or topic == 'leaderboard':
+                    await client.send_message(message.channel, 'https://akatsuki.pw/leaderboard?mode=0&p=1&rx=0/')
+                elif topic == 'admin':
+                    await client.send_message(message.channel, 'https://old.akatsuki.pw/index.php?p=100/')
+                elif topic == 'log' or topic == 'adminlog' or topic == 'raplog':
+                    await client.send_message(message.channel, 'https://old.akatsuki.pw/index.php?p=116')
+                elif topic == 'datadog' or topic == 'status':
+                    await client.send_message(message.channel, 'https://p.datadoghq.com/sb/71577ef74-a079587e79/')
+                else:
+                    await client.send_message(message.channel, 'That topic could not be found.')
+
+            elif messagecontent[0].lower() == '$apply': # multipurpose staff application commands
+                try:
+                    position = messagecontent[1].lower()
+                except:
+                    position = ''
+
+                if position == '' or position == 'help':
+                    await client.send_message(message.channel, 'Please use a role name as an arguement. Eg: $apply bn, or $apply beatmap_nominator')
+                elif position == 'admin' or position == 'cm' or position == 'commuinity_manager' or position == 'communitymanager':
+                    await client.send_message(message.channel, 'You cannot apply for this role. Admins are handpicked from the community by cmyui himself :o')
+                elif position == 'mod' or position == 'moderator' or position == 'chatmod' or position == 'chat_mod':
+                    await client.send_message(message.channel, 'You cannot apply for this role. Mods are usually handpicked from lower roles (such as BN, Akatsuki People, Support Team) if we believe they would be better suited with some fancy new powers.')
+                elif position == 'bn' or position == 'beatmap_nominator' or position == 'beatmapnominator' or position == 'bat' or position == 'qat':
+                    await client.send_message(message.channel, 'BNs are currently in high demand! If you\'re interested in this position (and are quite active on the server, this will be checked), feel free to send a DM over to <@285190493703503872> in regards to this position!')
+                elif position == 'support' or position == 'support_team' or position == 'supportteam':
+                    await client.send_message(message.channel, 'To be considered for the support team, you will need to be quite active in the <#365413867167285249> channel already. We use this to ensure that you\'re the right kind of person for the job. Most likely, if we see you being active, we will offer you the position if you seem to be a good pick.')
+                elif position == 'akatsukipeople' or position == 'akatsuki_people' or position == 'uploader':
+                    await client.send_message(message.channel, 'Looking to be an uploader?\n\nThere are actually some PC requirements for this, but they\'re really nothing special.\n- PC Capable of recording 1080p60fps videos without dropping below 4.2ms frametime (240fps).\n\nYea, that\'s it! haha. Even better if you can do 4K, or have editing capabilities.\n\nJust shoot <@285190493703503872> a DM to apply for this role.')
+                elif position == 'premium' or position == 'donor' or position == 'donator' or position == 'supporter':
+                    await client.send_message(message.channel, 'This isn\'t a role you can apply for, silly!\n\nSupporter: https://akatsuki.pw/donate\nPremium: https://akatsuki.pw/premium\n\nThanks for considering to support the server, though!\nIt means a lot!')
+                elif position == 'verified' or position == 'verify':
+                    await client.send_message(message.channel, 'The verified role in-game is for players who we essentially trust (for lack of better wording). These players have either been verified through liveplays, or maybe have even met a staff member IRL to prove their legitimacy (rare, but there are 10+).\n\nYou cannot apply for verified, as it is something we will look to give you, rather than vice versa :^)')
+                else:
+                    await client.send_message(message.channel, 'That position could not be found.')
 
             elif messagecontent[0].lower() == '$cmyui': # cmyui command. Multipurpose information command on the guy
                 try:
@@ -277,7 +371,7 @@ async def on_message(message):
                 except:
                     topic = ''
 
-                if topic == '':
+                if topic == '' or topic == 'help':
                     await client.send_message(message.channel, 'The $cmyui command is just a dictionary of stuff cmyui has saved in it. Some public ones:\n\n$cmyui area - cmyui\'s area\n$cmyui skin - cmyui\'s skins\n$cmyui settings - cmyui\'s settings')
                 elif topic == 'area':
                     await client.send_message(message.author, 'https://i.namir.in/nGm.png')
@@ -288,6 +382,8 @@ async def on_message(message):
                 elif topic == 'skin':
                     await client.send_message(message.author, '**Here are some of the skins cmyui uses frequently**\n\nCurrent main skin (g3p): https://i.namir.in/Q1L.osk\n\nOther skins:\ncmyui v5.3: https://i.namir.in/6CF.osk\ncmyui v6.0 (Blue Crystal v2.1): https://i.namir.in/JS9.osk\ncmyui v7.0: https://i.namir.in/YP7.osk\ncmyui v9.4: https://i.namir.in/jHW.osk\ncmyui v10.0: https://i.namir.in/x6O.osk\nAlacrity 1.2: https://i.namir.in/4Oo.osk\nAbyssal 2018-15-06: https://i.namir.in/Asi.osk\nJustice: https://i.namir.in/b1u.osk\nCookiezi 32: https://i.namir.in/y8v.osk\nCookiezi 35: https://i.namir.in/y8v.osk\n\nIf any of the links are not working, please tell cmyui#0425 :)')
                     await client.send_message(message.channel, 'The response has been sent to you via DM.')
+                elif topic == 'psyqui' or topic == 'yvs':
+                    await client.send_message(message.channel, 'https://www.youtube.com/watch?v=wKgbDk2hXI8')
                 else:
                     await client.send_message(message.channel, '$cmyui subcategory{topic} does not exist..'.format(topic=' ' + topic if len(topic) > 0 else ''))
 
