@@ -179,10 +179,13 @@ async def on_message(message):
                         cursor.execute("SELECT * FROM substance_tracking WHERE substance = '{substance}' and time > {timeframe} ORDER BY time DESC".format(substance=substance, timeframe=month))
                     insight = cursor.fetchall()
                     i = 0
-                    for x in insight:
-                        await client.send_message(message.channel, '{}: {}{} of {}.'.format(insight[i][2], insight[i][3], measurement, insight[i][2]))
-                        i = i + 1
-                        #await client.send_message(message.channel, '{}'.format(insight[1][4]))
+                    if insight is not None:
+                        for x in insight:
+                            await client.send_message(message.channel, '{}: {}{} of {}.'.format(insight[i][2], insight[i][3], measurement, insight[i][2]))
+                            i = i + 1
+                            #await client.send_message(message.channel, '{}'.format(insight[1][4]))
+                    else:
+                        await client.send_message(message.channel, 'You have not had any {} in the past {}.'.format(substance, timeframe))
 
                 elif messagecontent[0].lower() == '$info':
                     try:
