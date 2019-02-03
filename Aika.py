@@ -452,6 +452,12 @@ async def on_message(message):
                     embed.add_field(name="** **", value="Akatsuki!Premium is essentially a means to step up support for the server. These members are basically Akatsuki's backbones in paying for the server, as this role is specifically for those who have chosen to give more than we'd ever expect. Haha. More information and perks can be found [here](https://akatsuki.pw/premium).\n\nThank you for your support!", inline=False)
                     embed.set_footer(icon_url='', text='At no point do we ever expect our users to pay for the service. But we accept donations because, of course, we need to pay for the server too haha.')
                     await client.send_message(message.channel, embed=embed)
+
+                elif topic == 'cache':
+                    embed = discord.Embed(title="Why is my browser redirecting me to Akatsuki?'", description='** **', color=0x00ff00)
+                    embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
+                    embed.add_field(name="** **", value="If you have already disabled your switcher and are being redirected to Akatsuki, your browser has cached the redirect. To fix this, you can usually just restart your browser; although if this does not work, you will have to clear the cookies from your browser (Ctrl + H in Chrome).", inline=False)
+                    await client.send_message(message.channel, embed=embed)
                 else:
                     await client.send_message(message.channel, 'Invalid FAQ callback{topic}.'.format(topic=' ' + topic if len(topic) > 0 else ''))
 
