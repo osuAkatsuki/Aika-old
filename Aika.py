@@ -210,9 +210,17 @@ async def on_message(message):
                         embed.add_field(name="** **", value='These are the rules that apply in-game on the Akatsuki Server.\n\n1. Cheating and any other form of hacking are strictly prohibited.\n2. You are allowed to have 1 account on the Akatsuki server.\n3. Impersonation of any other player is not permitted.\n4. Edited clients are not permitted on Akatsuki (with the exception of osu!Sync).\n5. Shared or boosted accounts are not allowed.\n6. Do not try to exploit bugs found on the server, report them to a developer immediately.', inline=False)
                         embed.set_footer(icon_url='', text='Overall, do not abuse our patience. We provide this server free of charge for the community, and you will be banned from the community if we deem it necessary.')
                         await client.send_message(message.channel, embed=embed)
+                    elif topic == 'bnguide':
+                        embed = discord.Embed(title="Akatsuki BN Guide", description='** **', color=0x00ff00)
+                        embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
+                        embed.add_field(name="** **", value='The new beatmap nomination system on Akatsuki is actually quite simple. It comprises of a !request command for regular users who wish to have their requests ranked, and also the !greq (getrequest) and !map (multi-purpose beatmap nomination command) for Beatmap Nominators.', inline=False)
+                        embed.add_field(name="The !greq (get request) command", value='The !greq command will randomly retireve a request submitted by a user, and it will delete the request (**This means that if you greq a request, you are expected to decide the ranked status of the map before moving on, as the request has already been deleted!**).', inline=False)
+                        embed.add_field(name="The !map (beatmap edit) command", value='Next, the BN can use the !map command if they believe the beatmap is suitable for a different ranked status.\n\nHow to use the map command:\n!map rank/unrank/love map/set beatmapID gameMode\nExample: !map rank set 1100110 taiko\nThe map/set setting is for either ranking the entire beatmap set, or just the single difficulty. In both cases, you are required to use the Beatmap ID (/b/ link), **NOT THE BEATMAP SET ID!** (/s/ link).', inline=False)
+                        embed.add_field(name="** **", value='If you do not believe the map is suitable for a different ranked section, simply leave the map as it is; the request has already been removed (In the future, blacklisting will be added to !map).', inline=False)
+                        embed.set_footer(icon_url='', text='If you need help with this, ask another member of the staff. We\'re a big family here, no biting :)')
+                        await client.send_message(message.channel, embed=embed)
                     else:
                         await client.send_message(message.channel, 'Invalid INFO callback{topic}.'.format(topic=' ' + topic if len(topic) > 0 else ''))
-
                 elif messagecontent[0].lower() == '$r':
                     try:
                         annmsg = ' '.join(messagecontent[1:]).strip()
