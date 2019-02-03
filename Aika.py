@@ -13,6 +13,7 @@ from urllib.parse import urlencode
 import MySQLdb
 import redis
 import time
+from datetime import datetime
 
 # Initialize colorama owo
 init(autoreset=True)
@@ -165,23 +166,22 @@ async def on_message(message):
 
                     if substance == 'weed':
                         measurement = 'g'
-                    else:
-                        measurement = ''
-                    
+                    elif substance == 'alcohol' or 'shot' in substance:
+                        measurement = 'ml'
 
-                    if timeframe == 'hour' or timeframe == 'hr':
+                    if timeframe == 'hour' or timeframe == 'hr' or timeframe == 'h':
                         cursor.execute("SELECT * FROM substance_tracking WHERE substance = '{substance}' and time > {timeframe} ORDER BY time DESC".format(substance=substance, timeframe=hour))
-                    elif timeframe == 'day':
+                    elif timeframe == 'day' or timeframe == 'd':
                         cursor.execute("SELECT * FROM substance_tracking WHERE substance = '{substance}' and time > {timeframe} ORDER BY time DESC".format(substance=substance, timeframe=day))
-                    elif timeframe == 'week':
+                    elif timeframe == 'week' or timeframe == 'w':
                         cursor.execute("SELECT * FROM substance_tracking WHERE substance = '{substance}' and time > {timeframe} ORDER BY time DESC".format(substance=substance, timeframe=week))
-                    elif timeframe == 'month':
+                    elif timeframe == 'month' or timeframe == 'm':
                         cursor.execute("SELECT * FROM substance_tracking WHERE substance = '{substance}' and time > {timeframe} ORDER BY time DESC".format(substance=substance, timeframe=month))
                     insight = cursor.fetchall()
                     i = 0
                     if insight is not None:
                         for x in insight:
-                            await client.send_message(message.channel, '{}: {}{} of {}.'.format(insight[i][2], insight[i][3], measurement, insight[i][2]))
+                            await client.send_message(message.channel, '[{}] {}{} of {}.'.format(datetime.utcfromtimestamp(insight[i][4]).strftime('%Y-%m-%d %H:%M:%S'), insight[i][3], measurement, insight[i][2]))
                             i = i + 1
                             #await client.send_message(message.channel, '{}'.format(insight[1][4]))
                     else:
@@ -217,7 +217,7 @@ async def on_message(message):
                     try:
                         annmsg = ' '.join(messagecontent[1:]).strip()
                         if any(x in message.content.lower() for x in sql_checks):
-                            await client.send_message(message.channel, 'nice try fucker. <@285190493703503872>')
+                            await client.send_message(message.channel, '<@285190493703503872>')
                         else:
                             processingMessage = await client.send_message(message.channel, 'Processing request...')
                             params = urlencode({"k": config["akatsuki"]["apikey"], "to": "#admin", "msg": annmsg})
@@ -225,7 +225,7 @@ async def on_message(message):
                             await client.send_message(message.channel, 'Successfully executed: `{}` on Akatsuki.'.format(annmsg))
                             await client.delete_message(processingMessage)
                     except:
-                        await client.send_message(message.channel, 'something exploded. L')
+                        await client.send_message(message.channel, 'Something went wrong.')
 
             """
                 elif messagecontent[0].lower() == '$partner':
@@ -356,7 +356,7 @@ async def on_message(message):
                 elif position == 'mod' or position == 'moderator' or position == 'chatmod' or position == 'chat_mod':
                     await client.send_message(message.channel, 'You cannot apply for this role. Mods are usually handpicked from lower roles (such as BN, Akatsuki People, Support Team) if we believe they would be better suited with some fancy new powers.')
                 elif position == 'bn' or position == 'beatmap_nominator' or position == 'beatmapnominator' or position == 'bat' or position == 'qat':
-                    await client.send_message(message.channel, 'BNs are currently in high demand! If you\'re interested in this position (and are quite active on the server, this will be checked), feel free to send a DM over to <@285190493703503872> in regards to this position!')
+                    await client.send_message(message.channel, 'BNs are currently in high demand! If you\'re interested in this position (and are quite active on the server, this will be checked), feel free to apply here! https://goo.gl/forms/a93TjOSVZDxFfjQ03')
                 elif position == 'support' or position == 'support_team' or position == 'supportteam':
                     await client.send_message(message.channel, 'To be considered for the support team, you will need to be quite active in the <#365413867167285249> channel already. We use this to ensure that you\'re the right kind of person for the job. Most likely, if we see you being active, we will offer you the position if you seem to be a good pick.')
                 elif position == 'akatsukipeople' or position == 'akatsuki_people' or position == 'uploader':
