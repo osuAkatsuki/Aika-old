@@ -364,7 +364,7 @@ async def on_message(message):
                 elif position == 'mod' or position == 'moderator' or position == 'chatmod' or position == 'chat_mod':
                     await client.send_message(message.channel, 'You cannot apply for this role. Mods are usually handpicked from lower roles (such as BN, Akatsuki People, Support Team) if we believe they would be better suited with some fancy new powers.')
                 elif position == 'bn' or position == 'beatmap_nominator' or position == 'beatmapnominator' or position == 'bat' or position == 'qat':
-                    await client.send_message(message.channel, 'BNs are currently in high demand! If you\'re interested in this position (and are quite active on the server, this will be checked), feel free to apply here! https://goo.gl/forms/a93TjOSVZDxFfjQ03')
+                    await client.send_message(message.channel, 'BNs are currently in high demand! If you\'re interested in this position (and are quite active on the server, this will be checked), feel free to apply here! https://goo.gl/forms/XyLMtFlaA6mHAiIB3')
                 elif position == 'support' or position == 'support_team' or position == 'supportteam':
                     await client.send_message(message.channel, 'To be considered for the support team, you will need to be quite active in the <#365413867167285249> channel already. We use this to ensure that you\'re the right kind of person for the job. Most likely, if we see you being active, we will offer you the position if you seem to be a good pick.')
                 elif position == 'akatsukipeople' or position == 'akatsuki_people' or position == 'uploader':
