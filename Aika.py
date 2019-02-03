@@ -41,7 +41,7 @@ db.ping(True)
 
 # Constants
 version = 1.47
-filters = ['yozo', 'y0zo', 'yoz0', 'y0z0', 'ainu', 'kotorikku', 'kawata', 'ryusei', 'ryu-sei', 'enjuu', 'verge', 'katori', 'nigger', 'nigga', 'discord.gg/', 'gatari', 'ripple'] # bad boy words
+filters = ['yozo', 'y0zo', 'yoz0', 'y0z0', 'ainu', 'kotorikku', 'kawata', 'ryusei', 'ryu-sei', 'enjuu', 'verge', 'katori', 'nig', 'n1g', 'negr', 'discord.gg/', 'gatari'] # bad boy words
 email_checks = ['verify e', 'verification', 'on email', 'verify m', 'verify a', 'email t', 'w verify', 'i verify']
 sql_checks = [';', 'drop', 'ripple', 'select', 'delete', 'update', '*'] # Because I'm paranoid as fuck
 
@@ -106,7 +106,7 @@ async def on_message(message):
 
         elif any(x in message.content.lower() for x in filters) and message.author.id != config['discord']['owner_id']:
             await client.delete_message(message)
-            await client.send_message(message.author, 'Hello,\n\nYour message in osu!Akatsuki has been removed as it has been deemed unsuitable.\n```{}```'.format(message.content))
+            await client.send_message(message.author, 'Hello,\n\nYour message in osu!Akatsuki has been removed as it has been deemed unsuitable.\n\nIf this makes no sense, please report it to <@285190493703503872>.\n**Do not try to evade this filter as it is considered fair ground for a ban**.\n\n```{}```'.format(message.content))
             print(Fore.MAGENTA + "Filtered message | '{}: {}'".format(message.author, message.content))
 
         if message.server is None: # Private messages
@@ -158,7 +158,7 @@ async def on_message(message):
 
                     cursor = db.cursor()
 
-                    # time constants
+                    # Time constants
                     hour = unix_time - 3600
                     day = unix_time - 86400
                     week = unix_time - 604800
@@ -182,8 +182,7 @@ async def on_message(message):
                     if insight is not None:
                         for x in insight:
                             await client.send_message(message.channel, '[{}] {}{} of {}.'.format(datetime.utcfromtimestamp(insight[i][4]).strftime('%Y-%m-%d %H:%M:%S'), insight[i][3], measurement, insight[i][2]))
-                            i = i + 1
-                            #await client.send_message(message.channel, '{}'.format(insight[1][4]))
+                            i = i + 1 # omega scuffed
                     else:
                         await client.send_message(message.channel, 'You have not had any {} in the past {}.'.format(substance, timeframe))
 
