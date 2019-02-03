@@ -193,24 +193,24 @@ async def on_message(message):
                     except:
                         topic = ''
 
-                    if topic == 'welcome':
+                    if topic == 'welcome' or topic == 1:
                         embed = discord.Embed(title="Welcome to the Akatsuki Discord!", description='** **', color=0x00ff00)
                         embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
                         embed.add_field(name="** **", value='Hi! Welcome to our little corner of the internet.\n\nYou\'re probably rushing around trying to figure out to verify, but I\'m here to tell you to calm down. We have the 10-minute waiting period for a reason, and that is so that you take a moment to read <#426852938107977738>. Please do this, as I bet that it\'ll fix your issues. After you\'ve read through it and 10 minutes have passed, feel free to type $verify in the <#459856640049676299> channel to get full access to all the cool features of the discord.\n\nAkatsuki is an osu! private server and community run predominantly by <@285190493703503872>. We currently run an osu! server with some pretty unique and awesome features, such as relax score submission, with a custom PP algorithm . None of this would be possible without our contributors, donators (both premium, and supporters), and especially the Ripple developers for the base of which we started this project on.\n\n[osu!Akatsuki](https://akatsuki.pw/)', inline=False)
                         await client.send_message(message.channel, embed=embed)
-                    elif topic == 'chatrules':
+                    elif topic == 'chatrules' or topic == 2:
                         embed = discord.Embed(title="Akatsuki Discord & Chat Rules", description='** **', color=0x00ff00)
                         embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
                         embed.add_field(name="** **", value='These are the rules that apply to the Akatsuki Discord, and also the in-game chat on the Akatsuki Server.\n\n1. NSFW material is only permitted within the <#428460752698081291> and <#505960162411020288> channels.\n2. No talk about other osu! private servers will be permitted.\n3. Racism, sexism, toxicity, and hate speech will not be tolerated.\n4. Spamming is obviously not permitted.\n5. Do not make any kind of cheating accusation, use <#367068661837725706>.\n6. Keep memes and such to the <#463420430552662017> channel.\n7. Treat all members of Akatsuki with respect.\n8. Advertising other discord servers in any way is not allowed.\n9. Do not excessively highlight other members of the community.\n10. Do not discuss cheating activities.\n11. If you leave the discord, you permanently forfeit your roles. Don’t expect to rejoin and bug staff for them back.', inline=False)
                         embed.set_footer(icon_url='', text='Please remember we reserve the right to kick you without a reason/notice.')
                         await client.send_message(message.channel, embed=embed)
-                    elif topic == 'gamerules':
+                    elif topic == 'gamerules' or topic == 3:
                         embed = discord.Embed(title="Akatsuki In-game Rules", description='** **', color=0x00ff00)
                         embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
                         embed.add_field(name="** **", value='These are the rules that apply in-game on the Akatsuki Server.\n\n1. Cheating and any other form of hacking are strictly prohibited.\n2. You are allowed to have 1 account on the Akatsuki server.\n3. Impersonation of any other player is not permitted.\n4. Edited clients are not permitted on Akatsuki (with the exception of osu!Sync).\n5. Shared or boosted accounts are not allowed.\n6. Do not try to exploit bugs found on the server, report them to a developer immediately.', inline=False)
                         embed.set_footer(icon_url='', text='Overall, do not abuse our patience. We provide this server free of charge for the community, and you will be banned from the community if we deem it necessary.')
                         await client.send_message(message.channel, embed=embed)
-                    elif topic == 'bnguide':
+                    elif topic == 'bnguide' or topic == 4:
                         embed = discord.Embed(title="Akatsuki BN Guide", description='** **', color=0x00ff00)
                         embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
                         embed.add_field(name="** **", value='The new beatmap nomination system on Akatsuki is actually quite simple. It comprises of a !request command for regular users who wish to have their requests ranked, and also the !greq (getrequest) and !map (multi-purpose beatmap nomination command) for Beatmap Nominators.', inline=False)
@@ -404,56 +404,56 @@ async def on_message(message):
                 except:
                     topic = ''
 
-                if topic == 'namechange':
+                if topic == 'namechange' or topic == 1:
                     embed = discord.Embed(title="Akatsuki name changes.", description='** **', color=0x00ff00)
                     embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
                     embed.add_field(name="** **", value='Name changes (both in-game, and on the discord), are an Akatsuki Supporter donation perk. Additional details can be found here: https://akatsuki.pw/donate', inline=False)
                     await client.send_message(message.channel, embed=embed)
 
-                elif topic == 'appeal':
+                elif topic == 'appeal' or topic == 2:
                     embed = discord.Embed(title="Appealing your Akatsuki restriction.", description='** **', color=0x00ff00)
                     embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
                     embed.add_field(name="** **", value='Akatsuki does not accept unrestriction appeals under usual circumstances. If you believe your restriction was false, you may contact an Administrator. Remember that we are not idiots, and that we are usually 100% confident in our restrictions. If you try to abuse this, you will be permanently blacklisted from the community alltogether.', inline=False)
                     await client.send_message(message.channel, embed=embed)
 
-                elif topic == 'email':
+                elif topic == 'email' or topic == 3:
                     embed = discord.Embed(title="Why has my verification email not arrived?", description='** **', color=0x00ff00)
                     embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
                     embed.add_field(name="** **", value='As the verification page says, Akatsuki does not use verification emails. To verify your account, simply install the switcher, install the certificate, click the server you\'d like to play on, and click On/Off, then login to osu! to complete the verification process.', inline=False)
                     await client.send_message(message.channel, embed=embed)
 
-                elif topic == 'readonly':
+                elif topic == 'readonly' or topic == 4:
                     embed = discord.Embed(title="\"Error writing to hosts file, readonly mode\" error while using switcher", description='** **', color=0x00ff00)
                     embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
                     embed.add_field(name="** **", value="Ensure you are running the switcher as Administrator, and disable your anti-virus (or add the switcher as an exclusion) and try again. As mentioned before, this is triggered since the switcher edits a system file (hosts).\n\nIf it still does not work, feel free to edit your hosts file yourself by adding these to the bottom of your hosts file (found at \"C:\\Windows\\System32\\Drivers\\etc\"). You will need to run notepad as admin, then use ctrl + o to open the file, as it is a system file.\n\n```\n163.172.67.35    osu.ppy.sh\n163.172.67.35    c.ppy.sh\n163.172.67.35    c1.ppy.sh\n163.172.67.35    c2.ppy.sh\n163.172.67.35    c3.ppy.sh\n163.172.67.35    c4.ppy.sh\n163.172.67.35    c5.ppy.sh\n163.172.67.35    c6.ppy.sh\n163.172.67.35    ce.ppy.sh\n163.172.67.35    a.ppy.sh\n163.172.67.35    s.ppy.sh\n163.172.67.35    i.ppy.sh```", inline=False)
                     await client.send_message(message.channel, embed=embed)
 
-                elif topic == 'cert':
+                elif topic == 'cert' or topic == 5:
                     embed = discord.Embed(title="\"Connection failed. Retrying in 30s...\" while connecting to Akatsuki", description='** **', color=0x00ff00)
                     embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
                     embed.add_field(name="** **", value="This means that your hosts file has most likely successfully been redirected via the hosts file, but your certificate is somehow not working. Please check https://c.ppy.sh/ and refer to the possibilities below:\n\nA. Page unsafe warning\nFix: This means the certificate is infact invalid/not working. If this happens, please install the certificate 'ca.crt', which can be found at the bottom of the <#365413867167285249> channel, as this gif does: https://cdn.discordapp.com/attachments/365413867167285249/405175068965076992/2017-11-27_03-41-35.gif.\n\nB. osu!Bancho page\nFix: This means your hosts file actually was not written, or redirection is not working in some way, but somehow your osu! is still being redirected? Move to <#365413867167285249>.", inline=False)
                     await client.send_message(message.channel, embed=embed)
 
-                elif topic == 'hosts':
+                elif topic == 'hosts' or topic == 6:
                     embed = discord.Embed(title="\"Bancho authentication failed. Please check your username/password by clicking the user panel on the main menu.\" while connecting to Akatsuki.", description='** **', color=0x00ff00)
                     embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
                     embed.add_field(name="** **", value="This means that your osu! is connected to either Akatsuki or Bancho (or whatever other server you were playing on), but is failing on login. This usually either means:\nA. You registered on the wrong server; Akatsuki has two servers, regular and relax.\nFix: Please ensure you registered on the correct website for the respective servers, as they have separate logins (https://osu.akatsuki.pw/, https://relax.akatsuki.pw/).\n\nB. Your switcher did not properly write to the hosts file, and you are still connected to a different server (most likely Bancho).\nFix: Refer to the first FAQ to locate your hosts file, and ensure the ppy.sh related lines are there. If not, add them and try again. If you cannot solve your problem, move to <#365413867167285249>.\n\nC. You did not restart your osu! after switching servers\nFix: Simply restart your game and try again.", inline=False)
                     await client.send_message(message.channel, embed=embed)
 
-                elif topic == 'linux':
+                elif topic == 'linux' or topic == 7:
                     embed = discord.Embed(title="\"Error writing to hosts file, readonly mode\" error while using switcher", description='** **', color=0x00ff00)
                     embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
                     embed.add_field(name="** **", value="Connecting via Linux or OS X is a bit more tricky than windows, as you will have to do it manually, rather than using a server switcher.\nFirst, you will need to locate your hosts file. Since different non-windows operating systems have different directories for this file, please just google your operating system's hosts file to save some time.\nOnce you have located this file, paste the following lines in:\n\nRelax```\n163.172.67.35    osu.ppy.sh\n163.172.67.35    c.ppy.sh\n163.172.67.35    c1.ppy.sh\n163.172.67.35    c2.ppy.sh\n163.172.67.35    c3.ppy.sh\n163.172.67.35    c4.ppy.sh\n163.172.67.35    c5.ppy.sh\n163.172.67.35    c6.ppy.sh\n163.172.67.35    ce.ppy.sh\n163.172.67.35    a.ppy.sh\n163.172.67.35    s.ppy.sh\n163.172.67.35    i.ppy.sh```\n\nNext, you will need to install the certificate. Again, this is different from OS to OS, so you'll need to google this one aswell. The cerificate you'll need to install is 'ca.crt', which can be found at the bottom of this channel.", inline=False)
                     await client.send_message(message.channel, embed=embed)
 
-                elif topic == 'premium':
+                elif topic == 'premium' or topic == 8:
                     embed = discord.Embed(title="What is 'Akatsuki Premium?'", description='** **', color=0x00ff00)
                     embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
                     embed.add_field(name="** **", value="Akatsuki!Premium is essentially a means to step up support for the server. These members are basically Akatsuki's backbones in paying for the server, as this role is specifically for those who have chosen to give more than we'd ever expect. Haha. More information and perks can be found [here](https://akatsuki.pw/premium).\n\nThank you for your support!", inline=False)
                     embed.set_footer(icon_url='', text='At no point do we ever expect our users to pay for the service. But we accept donations because, of course, we need to pay for the server too haha.')
                     await client.send_message(message.channel, embed=embed)
 
-                elif topic == 'cache':
+                elif topic == 'cache' or topic == 9:
                     embed = discord.Embed(title="Why is my browser redirecting me to Akatsuki?'", description='** **', color=0x00ff00)
                     embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
                     embed.add_field(name="** **", value="If you have already disabled your switcher and are being redirected to Akatsuki, your browser has cached the redirect. To fix this, you can usually just restart your browser; although if this does not work, you will have to clear the cookies from your browser (Ctrl + H in Chrome).", inline=False)
