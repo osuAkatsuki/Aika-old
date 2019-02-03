@@ -170,13 +170,13 @@ async def on_message(message):
                         measurement = 'ml'
 
                     if timeframe == 'hour' or timeframe == 'hr' or timeframe == 'h':
-                        cursor.execute("SELECT * FROM substance_tracking WHERE substance = '{substance}' and time > {timeframe} ORDER BY time DESC".format(substance=substance, timeframe=hour))
+                        cursor.execute("SELECT * FROM substance_tracking WHERE substance = '{substance}' and time > {timeframe} ORDER BY time ASC".format(substance=substance, timeframe=hour))
                     elif timeframe == 'day' or timeframe == 'd':
-                        cursor.execute("SELECT * FROM substance_tracking WHERE substance = '{substance}' and time > {timeframe} ORDER BY time DESC".format(substance=substance, timeframe=day))
+                        cursor.execute("SELECT * FROM substance_tracking WHERE substance = '{substance}' and time > {timeframe} ORDER BY time ASC".format(substance=substance, timeframe=day))
                     elif timeframe == 'week' or timeframe == 'w':
-                        cursor.execute("SELECT * FROM substance_tracking WHERE substance = '{substance}' and time > {timeframe} ORDER BY time DESC".format(substance=substance, timeframe=week))
+                        cursor.execute("SELECT * FROM substance_tracking WHERE substance = '{substance}' and time > {timeframe} ORDER BY time ASC".format(substance=substance, timeframe=week))
                     elif timeframe == 'month' or timeframe == 'm':
-                        cursor.execute("SELECT * FROM substance_tracking WHERE substance = '{substance}' and time > {timeframe} ORDER BY time DESC".format(substance=substance, timeframe=month))
+                        cursor.execute("SELECT * FROM substance_tracking WHERE substance = '{substance}' and time > {timeframe} ORDER BY time ASC".format(substance=substance, timeframe=month))
                     insight = cursor.fetchall()
                     i = 0
                     if insight is not None:
