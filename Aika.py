@@ -41,7 +41,7 @@ db.ping(True)
 
 # Constants
 version = 1.47
-filters = ['yozo', 'y0zo', 'yoz0', 'y0z0', 'ainu', 'kotorikku', 'kawata', 'ryusei', 'ryu-sei', 'enjuu', 'verge', 'katori', 'nig', 'n1g', 'negr', 'discord.gg/', 'gatari'] # bad boy words
+filters = ['yozo', 'y0zo', 'yoz0', 'y0z0', 'ainu', 'okamura', 'kotorikku', 'kawata', 'ryusei', 'ryu-sei', 'enjuu', 'verge', 'katori', 'osu-thailand', 'nigger', 'discord.gg/', 'gatari', 'hidesu'] # bad boy words
 email_checks = ['verify e', 'verification', 'on email', 'verify m', 'verify a', 'email t', 'w verify', 'i verify']
 sql_checks = [';', 'drop', 'ripple', 'select', 'delete', 'update', '*'] # Because I'm paranoid as fuck
 
@@ -105,6 +105,8 @@ async def on_message(message):
                 print(Fore.MAGENTA + "Aborted Trigger: Email Verification Support, due to \"badge\" contents of the message.\nUser: {}".format(message.author))
 
         elif any(x in message.content.lower() for x in filters) and message.author.id != config['discord']['owner_id']:
+            cursor = db.cursor()
+            cursor.execute("INSERT INTO profanity_filter (user, message, time) VALUES ('{user}', '{message}', '{time}');".format(user=message.author.id, message=message.content, time=int(time.time())))
             await client.delete_message(message)
             await client.send_message(message.author, 'Hello,\n\nYour message in osu!Akatsuki has been removed as it has been deemed unsuitable.\n\nIf this makes no sense, please report it to <@285190493703503872>.\n**Do not try to evade this filter as it is considered fair ground for a ban**.\n\n```{}```'.format(message.content))
             print(Fore.MAGENTA + "Filtered message | '{}: {}'".format(message.author, message.content))
