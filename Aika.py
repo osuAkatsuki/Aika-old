@@ -455,7 +455,7 @@ async def on_message(message):
                     await client.send_message(message.channel, embed=embed)
 
                 elif topic == 'cache' or topic == '9':
-                    embed = discord.Embed(title="Why is my browser redirecting me to Akatsuki?'", description='** **', color=0x00ff00)
+                    embed = discord.Embed(title="Why is my browser redirecting me to Akatsuki?", description='** **', color=0x00ff00)
                     embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
                     embed.add_field(name="** **", value="If you have already disabled your switcher and are being redirected to Akatsuki, your browser has cached the redirect. To fix this, you can usually just restart your browser; although if this does not work, you will have to clear the cookies from your browser (Ctrl + H in Chrome).", inline=False)
                     await client.send_message(message.channel, embed=embed)
