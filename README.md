@@ -35,6 +35,7 @@ general = your server's #general id
 server_id = your server's id
 player_reporting = your server's #player-reporting id
 reports = your server's #reports id
+help = your server's #help id
 verify = your server's verify channel
 apikey = your banchos apikey
 ip = your server's ip
