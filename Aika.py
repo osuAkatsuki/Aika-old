@@ -173,8 +173,6 @@ async def on_message(message):
                 elif messagecontent[0].lower() == '$hs':
                     userID = re.findall('\d+', messagecontent[1])[0]
 
-                    print(userID)
-
                     cursor = db.cursor()
                     cursor.execute("SELECT quality FROM help_logs WHERE user = {}".format(userID))
                     logs = cursor.fetchall()
