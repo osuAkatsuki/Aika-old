@@ -171,7 +171,9 @@ async def on_message(message):
                     await client.delete_message(message)
 
                 elif messagecontent[0].lower() == '$hs':
-                    userID = messagecontent[1]
+                    userID = re.findall('\d+', messagecontent[1])[0]
+
+                    print(userID)
 
                     cursor = db.cursor()
                     cursor.execute("SELECT quality FROM help_logs WHERE user = {}".format(userID))
@@ -499,7 +501,7 @@ async def on_message(message):
                 elif topic == 'premium' or topic == '8':
                     embed = discord.Embed(title="What is 'Akatsuki Premium?'", description='** **', color=0x00ff00)
                     embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
-                    embed.add_field(name="** **", value="Akatsuki!Premium is essentially a means to step up support for the server. These members are basically Akatsuki's backbones in paying for the server, as this role is specifically for those who have chosen to give more than we'd ever expect. Haha. More information and perks can be found [here](https://akatsuki.pw/premium).\n\nThank you for your support!", inline=False)
+                    embed.add_field(name="** **", value="Premium is essentially a means to step up support for the server. These members are basically Akatsuki's backbones in paying for the server, as this role is specifically for those who have chosen to give more than we'd ever expect. Haha. More information and perks can be found [here](https://akatsuki.pw/premium).\n\nThank you for your support!", inline=False)
                     embed.set_footer(icon_url='', text='At no point do we ever expect our users to pay for the service. But we accept donations because, of course, we need to pay for the server too haha.')
                     await client.send_message(message.channel, embed=embed)
 
@@ -548,7 +550,7 @@ async def on_message(message):
                     else:
                         await client.send_message(message.channel, "You already have an account linked!")
                 else:
-                    await client.send_message(message.channel, "You must first use the following command in #osu (in-game in the osu! client) (The # is your Discord ID).\n>> `!linkdiscord {}`".format(message.author.id))
+                    await client.send_message(message.channel, "Linking process initiated\n\nNext, please use the following command in #osu, or in a DM with 'Aika' ingame (in-game in the osu! client).\n`>> !linkdiscord {}`".format(message.author.id))
 
 print(Fore.CYAN + "\nLogging in with credentials: {}".format('*' * len(config['discord']['token'])))
 client.run(str(config['discord']['token']))
