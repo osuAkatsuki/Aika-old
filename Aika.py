@@ -77,18 +77,7 @@ async def on_error(event, *args):
 async def on_message(message):
     client.wait_until_ready()
 
-    if message.channel.id == config['akatsuki']['help']: # Message sent in #help, log to db
-        if any(x in message.content.lower() for x in profanity):
-            quality = 0
-        elif any(x in message.content.lower() for x in high_quality):
-            quality = 2
-        else:
-            quality = 1
-
-        cursor = db.cursor()
-        cursor.execute("INSERT INTO help_logs (user, content, datetime, quality) VALUES ('{user}', '{content}', '{time}', '{quality}');".format(user=message.author.id, content=message.content, time=int(time.time()), quality=quality))
-
-    elif message.channel.id == config['akatsuki']['player_reporting']: # Message sent in #player-reporting, move to #reports
+    if message.channel.id == config['akatsuki']['player_reporting']: # Message sent in #player-reporting, move to #reports
         await client.delete_message(message) # Delete the message from #player-reporting
 
         # Prepare, and send the report in #reports
@@ -110,6 +99,18 @@ async def on_message(message):
             print(Fore.CYAN + "Report recieved. It has been moved to #reports.")
 
     elif message.author != client.user:
+        # Message sent in #help, log to db
+        if message.channel.id == config['akatsuki']['help']:
+            if any(x in message.content.lower() for x in profanity):
+                quality = 0
+            elif any(x in message.content.lower() for x in high_quality):
+                quality = 2
+            else:
+                quality = 1
+
+            cursor = db.cursor()
+            cursor.execute("INSERT INTO help_logs (user, content, datetime, quality) VALUES ('{user}', '{content}', '{time}', '{quality}');".format(user=message.author.id, content=message.content, time=int(time.time()), quality=quality))
+
         # Checks for things in message
         if any(x in message.content.lower() for x in email_checks) and message.server.id == config['akatsuki']['server_id']:
             if "badge" not in message.content.lower():
