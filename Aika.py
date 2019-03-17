@@ -398,6 +398,8 @@ async def on_message(message):
                     await client.send_message(message.channel, 'https://old.akatsuki.pw/index.php?p=116')
                 elif topic == 'datadog' or topic == 'status':
                     await client.send_message(message.channel, 'https://p.datadoghq.com/sb/71577ef74-a079587e79/')
+                elif topic == 'vote':
+                    await client.send_message(message.channel, 'https://topg.org/osu-private-servers/in-509809')
                 else:
                     await client.send_message(message.channel, 'That topic could not be found.')
 
