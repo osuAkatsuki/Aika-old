@@ -492,7 +492,7 @@ async def on_message(message):
             elif messagecontent[0].lower() == '$verify' and message.channel.id == config['akatsuki']['verify']: # Verify command
                 verified = discord.utils.get(message.server.roles, name="Members")
                 await client.add_roles(message.author, verified)
-                await client.send_message(message.channel, "User verified successfully.")
+                await client.delete_message(message)
 
             elif messagecontent[0].lower() == '$botinfo': # Bot info command
                 embed = discord.Embed(title="Why hello! I'm Aika.", description='** **', color=0x00ff00)
