@@ -40,7 +40,7 @@ db.autocommit(True)
 db.ping(True)
 
 # Constants
-version = 1.56
+version = 1.60
 
 filters = ['yozo', 'y0zo', 'yoz0', 'y0z0', 'ainu', 'okamura', 'kotorikku', 'kurikku', 'kawata', 'ryusei', 'ryu-sei', 'enjuu', 'verge', 'katori', 'osu-thailand', 'discord.gg/', 'gatari', 'hidesu'] # bad boy words
 
