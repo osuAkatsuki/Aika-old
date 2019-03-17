@@ -236,56 +236,7 @@ async def on_message(message):
                             i = i + 1 # omega scuffed
                     else:
                         await client.send_message(message.channel, 'You have not had any {} in the past {}.'.format(substance, timeframe))
-
-                elif messagecontent[0].lower() == '$info':
-                    try:
-                        topic = messagecontent[1].lower()
-                    except:
-                        topic = ''
-
-                    if topic == 'welcome' or topic == '1':
-                        embed = discord.Embed(title="Welcome to Akatsuki\'s official Discord!", description='** **', color=0x00ff00)
-                        embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
-                        embed.add_field(name="** **", value='Hey! Welcome to our little corner of the internet.\n\n**Verification**\nYou\'re probably rushing around trying to figure out to verify, but I\'m here to tell you to calm down. We have the 10-minute waiting period for a reason, and that is so that you take a moment to read <#426852938107977738>. Please do this, as I bet that it\'ll fix your issues. After you\'ve read through it and 10 minutes have passed, feel free to type $verify in the <#459856640049676299> channel to get full access to all the cool features of the discord.\n\nAkatsuki is an osu! private server and community run predominantly by <@285190493703503872>. We currently run an osu! server with some pretty unique and awesome features, such as relax score submission, with a custom PP algorithm. None of this would be possible without our contributors, donators (both premium, and supporters), and especially the Ripple developers for the base of which we started this project on.\n\n[osu!Akatsuki](https://akatsuki.pw/)', inline=False)
-                        await client.send_message(message.channel, embed=embed)
-                    elif topic == 'chatrules' or topic == '2':
-                        embed = discord.Embed(title="Akatsuki Discord & Chat Rules", description='** **', color=0x00ff00)
-                        embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
-                        embed.add_field(name="** **", value='These are the rules that apply to Akatsuki\'s Discord, and also the in-game chat on the Akatsuki Server.\n\n1. NSFW material is only permitted within the <#428460752698081291>, <#505960162411020288>, and <#546755701687713823> channels.\n2. No talk about other osu! private servers will be permitted.\n3. Racism, sexism, toxicity, and hate speech will not be tolerated.\n4. Spamming of any kind (text, reaction, etc.) obviously not permitted.\n5. Do not make any kind of cheating accusation. Instead, please use <#367068661837725706>.\n6. Keep memes and such to the <#463420430552662017> channel.\n7. Treat all members of Akatsuki with respect.\n8. Advertising other discord servers in any way is not allowed.\n9. Do not excessively highlight other members of the community.\n10. Do not discuss cheating activities.\n11. If you leave the discord, you permanently forfeit your roles. Don’t expect to rejoin and bug staff for them back.', inline=False)
-                        embed.set_footer(icon_url='', text='Please remember we reserve the right to kick you without a reason/notice.')
-                        await client.send_message(message.channel, embed=embed)
-                    elif topic == 'gamerules' or topic == '3':
-                        embed = discord.Embed(title="Akatsuki In-game Rules", description='** **', color=0x00ff00)
-                        embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
-                        embed.add_field(name="** **", value='These are the rules that apply in-game on Akatsuki\'s Server.\n\n1. Cheating and any other form of hacking are strictly prohibited.\n2. You are allowed to have 1 account on the Akatsuki server.\n3. Impersonation of any other player is not permitted.\n4. Edited clients are not permitted on Akatsuki (with the exception of osu!Sync).\n5. Shared or boosted accounts are not allowed.\n6. Do not try to exploit bugs found on the server, report them to a developer immediately.', inline=False)
-                        embed.set_footer(icon_url='', text='Overall, do not abuse our patience. We provide this server free of charge for the community, and you will be banned from the community if we deem it necessary.')
-                        await client.send_message(message.channel, embed=embed)
-                    elif topic == 'bnguide' or topic == '4':
-                        embed = discord.Embed(title="Akatsuki BN Guide", description='** **', color=0x00ff00)
-                        embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
-                        embed.add_field(name="** **", value='The new beatmap nomination system on Akatsuki is actually quite simple. It comprises of a !request command for regular users who wish to have their requests ranked, and also the !greq (getrequest) and !map (multi-purpose beatmap nomination command) for Beatmap Nominators.', inline=False)
-                        embed.add_field(name="The !greq (get request) command", value='The !greq command will randomly retireve a request submitted by a user, and it will delete the request (**This means that if you greq a request, you are expected to decide the ranked status of the map before moving on, as the request has already been deleted!**).', inline=False)
-                        embed.add_field(name="The !map (beatmap edit) command", value='Next, the BN can use the !map command if they believe the beatmap is suitable for a different ranked status.\n\nHow to use the map command:\n!map rank/unrank/love map/set beatmapID gameMode\nExample: !map rank set 1100110 taiko\nThe map/set setting is for either ranking the entire beatmap set, or just the single difficulty. In both cases, you are required to use the Beatmap ID (/b/ link), **NOT THE BEATMAP SET ID!** (/s/ link).', inline=False)
-                        embed.add_field(name="** **", value='If you do not believe the map is suitable for a different ranked section, simply leave the map as it is; the request has already been removed (In the future, blacklisting will be added to !map).', inline=False)
-                        embed.set_footer(icon_url='', text='If you need help with this, ask another member of the staff. We\'re a big family here, no biting :)')
-                        await client.send_message(message.channel, embed=embed)
-                    else:
-                        await client.send_message(message.channel, 'Invalid INFO callback{topic}.'.format(topic=' ' + topic if len(topic) > 0 else ''))
-                elif messagecontent[0].lower() == '$r':
-                    try:
-                        annmsg = ' '.join(messagecontent[1:]).strip()
-                        if any(x in message.content.lower() for x in sql_checks):
-                            await client.send_message(message.channel, '<@285190493703503872>')
-                        else:
-                            processingMessage = await client.send_message(message.channel, 'Processing request...')
-                            params = urlencode({"k": config["akatsuki"]["apikey"], "to": "#admin", "msg": annmsg})
-                            requests.get("http://{}:5001/api/v1/fokabotMessage?{}".format(config["akatsuki"]["ip"], params))
-                            await client.send_message(message.channel, 'Successfully executed: `{}` on Akatsuki.'.format(annmsg))
-                            await client.delete_message(processingMessage)
-                    except:
-                        await client.send_message(message.channel, 'Something went wrong.')
-
-            """
+                """
                 elif messagecontent[0].lower() == '$partner':
                     userID = messagecontent[1]
                     streamName = messagecontent[2]
@@ -457,7 +408,7 @@ async def on_message(message):
                     callback = ''
 
                 cursor = db.cursor()
-                cursor.execute("SELECT * FROM discord_faq WHERE {type} = '{callback}'".format(type='id' if callback.isdigit() else 'topic', callback=callback))
+                cursor.execute("SELECT * FROM discord_faq WHERE {type} = '{callback}' AND type = 1".format(type='id' if callback.isdigit() else 'topic', callback=callback))
                 result = cursor.fetchone()
 
                 if result is not None:
@@ -468,18 +419,11 @@ async def on_message(message):
                         embed.set_footer(icon_url='', text=result[5].replace('\\n', '\n'))
                     await client.send_message(message.channel, embed=embed)
                 else:
-                    cursor.execute("SELECT id, topic, title from discord_faq")
+                    cursor.execute("SELECT id, topic, title from discord_faq WHERE type = 1")
                     faq_db = cursor.fetchall()
                     faq_list = ''
                     i = 0
                     for x in faq_db:
-                        """ overkill
-                        add_len_base = 0
-                        while len(int(faq_db[i][1]) > 13):
-                            add_len_base += 1
-
-                        add_len = (16 + add_len_base) - len(faq_db[i][1])
-                        """
                         add_len = 16 - len(faq_db[i][1])
                         spaces = ''
                         spaces += ' ' * add_len
@@ -488,6 +432,40 @@ async def on_message(message):
                         i += 1
 
                     await client.send_message(message.channel, 'Invalid FAQ callback{topic}.\n\nHere is a list of available FAQ:\n```{faqlist}```'.format(topic=' ' + callback if len(callback) > 0 else '', faqlist=faq_list))
+
+            elif messagecontent[0].lower() == '$info': # info command
+                try:
+                    callback = messagecontent[1].lower()
+                except:
+                    callback = ''
+
+                cursor = db.cursor()
+                cursor.execute("SELECT * FROM discord_faq WHERE {type} = '{callback}' AND type = 0".format(type='id' if callback.isdigit() else 'topic', callback=callback))
+                result = cursor.fetchone()
+
+                if result is not None:
+                    embed = discord.Embed(title=result[2], description='** **', color=0x00ff00)
+                    embed.set_thumbnail(url=result[3])
+                    embed.add_field(name="** **", value=result[4].replace('\\n', '\n'), inline=result[6])
+                    if result[5] is not None:
+                        embed.set_footer(icon_url='', text=result[5].replace('\\n', '\n'))
+                    await client.send_message(message.channel, embed=embed)
+                else:
+                    cursor.execute("SELECT id, topic, title from discord_faq WHERE type = 0")
+
+                    info_db = cursor.fetchall()
+
+                    info_list = ''
+                    i = 0
+                    for x in info_db:
+                        add_len = 16 - len(info_db[i][1])
+                        spaces = ''
+                        spaces += ' ' * add_len
+
+                        info_list += '{}. {}{}|| {}\n'.format(i + 1, info_db[i][1], spaces, info_db[i][2])
+                        i += 1
+
+                    await client.send_message(message.channel, 'Invalid INFO callback{topic}.\n\nHere is a list of available INFO:\n```{infolist}```'.format(topic=' ' + callback if len(callback) > 0 else '', infolist=info_list))
 
             elif messagecontent[0].lower() == '$verify' and message.channel.id == config['akatsuki']['verify']: # Verify command
                 verified = discord.utils.get(message.server.roles, name="Members")
