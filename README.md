@@ -37,6 +37,7 @@ player_reporting = your server's #player-reporting id
 reports = your server's #reports id
 help = your server's #help id
 verify = your server's verify channel
+rank_requests = your server's rank requests channel
 apikey = your banchos apikey
 ip = your server's ip
 

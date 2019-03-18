@@ -40,7 +40,7 @@ db.autocommit(True)
 db.ping(True)
 
 # Constants
-version = 1.60
+version = 1.65
 
 filters = ['yozo', 'y0zo', 'yoz0', 'y0z0', 'ainu', 'okamura', 'kotorikku', 'kurikku', 'kawata', 'ryusei', 'ryu-sei', 'enjuu', 'verge', 'katori', 'osu-thailand', 'discord.gg/', 'gatari', 'hidesu'] # bad boy words
 
@@ -97,6 +97,10 @@ async def on_message(message):
 
             # Print result to console
             print(Fore.CYAN + "Report recieved. It has been moved to #reports.")
+
+    elif message.channel.id == config['akatsuki']['rank_requests']: # Request sent in rank_requests, add base thumbs
+        await client.add_reaction(message, '👍')
+        await client.add_reaction(message, '👎')
 
     elif message.author != client.user:
         # Message sent in #help, log to db
