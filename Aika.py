@@ -44,7 +44,7 @@ version = 1.65
 
 filters = ['yozo', 'y0zo', 'yoz0', 'y0z0', 'ainu', 'okamura', 'kotorikku', 'kurikku', 'kawata', 'ryusei', 'ryu-sei', 'enjuu', 'verge', 'katori', 'osu-thailand', 'discord.gg/', 'gatari', 'hidesu'] # bad boy words
 
-profanity = ['nigg', 'n1gg', 'retard', 'idiot', 'fuck off']
+profanity = ['nigg', 'n1gg', 'retard', 'idiot', 'fuck off', 'shut the fuck up']
 high_quality = ['$faq', 'welcome', 'have a good one']
 email_checks = ['verify e', 'verification', 'on email', 'verify m', 'verify a', 'email t', 'w verify', 'i verify']
 
@@ -240,6 +240,19 @@ async def on_message(message):
                             i = i + 1 # omega scuffed
                     else:
                         await client.send_message(message.channel, 'You have not had any {} in the past {}.'.format(substance, timeframe))
+                elif messagecontent[0].lower() == '$r':
+                    try:
+                        annmsg = ' '.join(messagecontent[1:]).strip()
+                        if any(x in message.content.lower() for x in sql_checks):
+                            await client.send_message(message.channel, '<@285190493703503872>')
+                        else:
+                            processingMessage = await client.send_message(message.channel, 'Processing request...')
+                            params = urlencode({"k": config["akatsuki"]["apikey"], "to": "#admin", "msg": annmsg})
+                            requests.get("http://{}:5001/api/v1/fokabotMessage?{}".format(config["akatsuki"]["ip"], params))
+                            await client.send_message(message.channel, 'Successfully executed: `{}` on Akatsuki.'.format(annmsg))
+                            await client.delete_message(processingMessage)
+                    except:
+                        await client.send_message(message.channel, 'Something went wrong.')
                 """
                 elif messagecontent[0].lower() == '$partner':
                     userID = messagecontent[1]
