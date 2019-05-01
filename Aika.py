@@ -205,45 +205,6 @@ async def on_message(message):
                     else:
                         await client.send_message(message.channel, 'No logs found on the specified user..')
 
-                """
-                elif messagecontent[0].lower() == '$usage':
-                    substance = messagecontent[1].lower()
-                    timeframe = messagecontent[2].lower()
-                    unix_time = int(time.time())
-
-                    cursor = db.cursor()
-
-                    # Time constants
-                    hour = unix_time - 3600
-                    day = unix_time - 86400
-                    week = unix_time - 604800
-                    month = unix_time - 2419200 # 4x week
-
-                    if substance == 'weed':
-                        measurement = 'g'
-                    elif substance == 'alcohol' or 'shot' in substance:
-                        measurement = 'ml'
-
-                    if timeframe == 'hour' or timeframe == 'hr' or timeframe == 'h':
-                        _timeframe = hour
-                    elif timeframe == 'day' or timeframe == 'd':
-                        _timeframe = day
-                    elif timeframe == 'week' or timeframe == 'w':
-                        _timeframe = week
-                    elif timeframe == 'month' or timeframe == 'm':
-                        _timeframe = month
-
-                    cursor.execute("SELECT * FROM substance_tracking WHERE substance = '{substance}' and time > {timeframe} ORDER BY time ASC".format(substance=substance, timeframe=_timeframe))
-
-                    insight = cursor.fetchall()
-                    i = 0
-                    if insight is not None:
-                        for x in insight:
-                            await client.send_message(message.channel, '[{}] {}{} of {}.'.format(datetime.utcfromtimestamp(insight[i][4]).strftime('%Y-%m-%d %H:%M:%S'), insight[i][3], measurement, insight[i][2]))
-                            i = i + 1 # omega scuffed
-                    else:
-                        await client.send_message(message.channel, 'You have not had any {} in the past {}.'.format(substance, timeframe))
-                """
                 elif messagecontent[0].lower() == '$r':
                     try:
                         annmsg = ' '.join(messagecontent[1:]).strip()
