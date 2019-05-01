@@ -66,7 +66,7 @@ async def on_ready():
     # Send an announcement that the bots been started in Akatsuki's #general (if debug)
     if int(config['default']['announce_online']) == 1:
         announceOnline = discord.Embed(title="Aika v{versionNum} Online".format(versionNum=version), description='Ready for commands <3\n\nSource code can be found at https://github.com/osuAkatsuki/Aika.', color=0x00ff00)
-        announceOnline.set_thumbnail(url='https://namir.in/xMzGya.png')
+        announceOnline.set_thumbnail(url='https://cdn.discordapp.com/attachments/285250367732842516/572989444723048498/s.png')
         await client.send_message(client.get_channel(config['akatsuki']['general']), embed=announceOnline)
 
 # On exceptions, don't make the whole thing die :)
