@@ -310,17 +310,6 @@ async def on_message(message):
                     except:
                         await client.send_message(message.channel, "Either that user does not exist, or the format of your message was incorrect. Format: | $stats username_spaced_like_this -rx\n\n(-rx is optional and will return -rx stats)")
 
-            """
-            elif messagecontent[0].lower() == '$d' or messagecontent[0].lower() == 'psychedelic' or messagecontent[0].lower() == 'psych': # d
-                if random.randint(1, 2) == 1:
-                    await client.send_message(message.channel, 'cmyui: {}'.format(random.choice(cmyuiPsych)))
-                else:
-                    await client.send_message(message.channel, 'Justice: {}'.format(random.choice(justicePsych)))
-
-            elif messagecontent[0].lower() == '$positive':
-                await client.send_message(message.channel, random.choice(positivity))
-            """
-
             elif messagecontent[0].lower() == '$akatsuki': # multipurpose akatsuki info
                 try:
                     topic = messagecontent[1].lower()
