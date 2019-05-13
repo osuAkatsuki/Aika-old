@@ -42,7 +42,7 @@ db.ping(True)
 # Constants
 version = 1.70
 
-filters = ['paypal.me', 'yozo', 'y0zo', 'yoz0', 'y0z0', 'ainu', 'okamura', 'kotorikku', 'kurikku', 'kawata', 'ryusei', 'ryu-sei', 'enjuu', 'verge', 'katori', 'osu-thailand', 'discord.gg/', 'gatari', 'hidesu'] # bad boy words
+filters = ['pp.me', 'paypal.me', 'yozo', 'y0zo', 'yoz0', 'y0z0', 'ainu', 'okamura', 'kotorikku', 'kurikku', 'kawata', 'ryusei', 'ryu-sei', 'enjuu', 'verge', 'katori', 'osu-thailand', 'discord.gg/', 'gatari', 'hidesu'] # bad boy words
 
 profanity = ['nigg', 'n1gg', 'retard', 'idiot', 'fuck off', 'shut the fuck up']
 high_quality = ['$faq', 'welcome', 'have a good one']
