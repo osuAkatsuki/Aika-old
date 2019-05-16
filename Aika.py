@@ -465,6 +465,8 @@ async def on_message(message):
                 await client.send_message(message.channel, embed=embed)
 
             elif messagecontent[0].lower() == '$prune' and message.author.server_permissions.manage_messages: # Prune messages
+                await client.send_message(message.channel, "This command has been depreciated. Please use Tatsumaki's ;;prune instead.")
+                """
                 try:
                     amtMessages = messagecontent[1]
                 except:
@@ -476,6 +478,7 @@ async def on_message(message):
                     await client.send_message(message.channel, 'Deleted {messages} message{plural}.'.format(messages=message_count, plural='s' if message_count > 1 else ''))
                 else:
                     await client.send_message(message.channel, 'Incorrect syntax. Please use: $prune <1 - 1000>.')
+                """
 
             elif messagecontent[0].lower() == '$linkosu':
                 cursor = db.cursor()
