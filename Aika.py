@@ -84,6 +84,7 @@ async def on_message(message):
     # Akatsuki's logo.
     # To be used mostly for embed thumbnails.
     akatsuki_logo = 'https://akatsuki.pw/static/logos/logo.png'
+    aika_pfp = 'https://a.akatsuki.pw/999.png'
 
     if message.channel.id == config['akatsuki']['player_reporting']: # Message sent in #player-reporting, move to #reports
         await client.delete_message(message) # Delete the message from #player-reporting
@@ -380,10 +381,10 @@ async def on_message(message):
                 if topic == '' or topic == 'help':
                     await client.send_message(message.channel, 'The $cmyui command is just a dictionary of stuff cmyui has saved in it. Some public ones:\n\n$cmyui area - cmyui\'s area\n$cmyui skin - cmyui\'s skins\n$cmyui settings - cmyui\'s settings')
                 elif topic == 'area':
-                    await client.send_message(message.author, 'https://i.namir.in/nGm.png')
+                    await client.send_message(message.author, 'Wacom CTH-480 (CTL470 Pen) | 100mm width (forced proportions) [1.778:1], X : 0mm, Y : 57.79mm')
                     await client.send_message(message.channel, 'The response has been sent to you via DM.')
                 elif topic == 'settings':
-                    await client.send_message(message.author, '1.0x sens, video and storyboard off, dim 100%, fullscreen 1920x1080@240-256hz (depends on day), snaking sliders, cursor size 0.5-0.85, hit lighting off, raw input on')
+                    await client.send_message(message.author, '1.0x sens, video and storyboard off, dim 100%, fullscreen 1920x1080@240hz, snaking sliders, cursor size 0.60-0.84, hit lighting off, raw input off')
                     await client.send_message(message.channel, 'The response has been sent to you via DM.')
                 elif topic == 'skin':
                     await client.send_message(message.author, '**Here are some of the skins cmyui uses frequently**\n\nCurrent main skin (Abyssal 2018-15-06): https://i.namir.in/Asi.osk\n\nOther skins:\ncmyui v5.3: https://i.namir.in/6CF.osk\ncmyui v6.0 (Blue Crystal v2.1): https://i.namir.in/JS9.osk\ncmyui v7.0: https://i.namir.in/YP7.osk\ncmyui v9.4: https://i.namir.in/jHW.osk\nAlacrity 1.2: https://i.namir.in/4Oo.osk\ng3p: https://i.namir.in/Q1L.osk\nJustice: https://i.namir.in/b1u.osk\nCookiezi 32: https://i.namir.in/y8v.osk\nCookiezi 35: https://i.namir.in/y8v.osk\n\nIf any of the links are not working, please tell cmyui#0425 :)')
@@ -459,20 +460,22 @@ async def on_message(message):
 
                     await client.send_message(message.channel, 'Invalid INFO callback{topic}.\n\nHere is a list of available INFO:\n```{infolist}```'.format(topic=' ' + callback if len(callback) > 0 else '', infolist=info_list))
 
-            elif messagecontent[0].lower() in ('$verify', '!verify') and message.channel.id == config['akatsuki']['verify']: # Verify command
+            elif messagecontent[0].lower() == '$verify' and message.channel.id == config['akatsuki']['verify']: # Verify command
                 verified = discord.utils.get(message.server.roles, name="Members")
                 await client.add_roles(message.author, verified)
                 await client.delete_message(message)
 
             elif messagecontent[0].lower() == '$botinfo': # Bot info command
                 embed = discord.Embed(title="Why hello! I'm Aika.", description='** **', color=0x00ff00)
-                embed.set_thumbnail(url='https://i.namir.in/IUY.png')
+                embed.set_thumbnail(url=aika_pfp)
                 embed.add_field(name="** **", value='I\'m Akatsuki\'s (and cmyui\'s) bot. I provide the server with things such as commands to track ingame stats, help out members in need, and provide overall fun (and lots of useless) commands!\n\nSource code: https://github.com/osuAkatsuki/Aika.\nIngame: https://akatsuki.pw/u/999\nCreator: https://akatsuki.pw/u/1001', inline=False)
                 embed.set_footer(icon_url='', text='Good vibes <3')
                 await client.send_message(message.channel, embed=embed)
 
             elif messagecontent[0].lower() == '$prune' and message.author.server_permissions.manage_messages: # Prune messages
                 await client.send_message(message.channel, "This command has been depreciated. Please use Tatsumaki's ;;prune instead.")
+                if messagecontent.isdigit():
+                    await client.send_message(message.channel, ";;prune {}".format(messagecontent[1]))
                 """
                 try:
                     amtMessages = messagecontent[1]
