@@ -406,9 +406,9 @@ async def on_message(message):
                 if result is not None:
                     embed = discord.Embed(title=result[2], description='** **', color=0x00ff00)
                     embed.set_thumbnail(url=akatsuki_logo)
-                    embed.add_field(name="** **", value=result[4].replace('\\n', '\n'), inline=result[6])
-                    if result[5] is not None:
-                        embed.set_footer(icon_url='', text=result[5].replace('\\n', '\n'))
+                    embed.add_field(name="** **", value=result[3].replace('\\n', '\n'), inline=result[5])
+                    if result[4] is not None:
+                        embed.set_footer(icon_url='', text=result[4].replace('\\n', '\n'))
                     await client.send_message(message.channel, embed=embed)
                 else:
                     cursor.execute("SELECT id, topic, title from discord_faq WHERE type = 1")
@@ -437,10 +437,10 @@ async def on_message(message):
 
                 if result is not None:
                     embed = discord.Embed(title=result[2], description='** **', color=0x00ff00)
-                    embed.set_thumbnail(url=result[3])
-                    embed.add_field(name="** **", value=result[4].replace('\\n', '\n'), inline=result[6])
-                    if result[5] is not None:
-                        embed.set_footer(icon_url='', text=result[5].replace('\\n', '\n'))
+                    embed.set_thumbnail(url=akatsuki_logo)
+                    embed.add_field(name="** **", value=result[3].replace('\\n', '\n'), inline=result[5])
+                    if result[4] is not None:
+                        embed.set_footer(icon_url='', text=result[4].replace('\\n', '\n'))
                     await client.send_message(message.channel, embed=embed)
                 else:
                     cursor.execute("SELECT id, topic, title from discord_faq WHERE type = 0")
