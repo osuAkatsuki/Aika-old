@@ -459,7 +459,7 @@ async def on_message(message):
 
                     await client.send_message(message.channel, 'Invalid INFO callback{topic}.\n\nHere is a list of available INFO:\n```{infolist}```'.format(topic=' ' + callback if len(callback) > 0 else '', infolist=info_list))
 
-            elif messagecontent[0].lower() == '$verify' and message.channel.id == config['akatsuki']['verify']: # Verify command
+            elif messagecontent[0].lower() in ('$verify', '!verify') and message.channel.id == config['akatsuki']['verify']: # Verify command
                 verified = discord.utils.get(message.server.roles, name="Members")
                 await client.add_roles(message.author, verified)
                 await client.delete_message(message)
