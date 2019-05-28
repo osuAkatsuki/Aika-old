@@ -122,7 +122,7 @@ async def on_message(message):
                 quality = 1
 
             cursor = db.cursor()
-            cursor.execute("INSERT INTO help_logs (user, content, datetime, quality) VALUES ('{user}', '{content}', '{time}', '{quality}');".format(user=message.author.id, content=message.content, time=int(time.time()), quality=quality))
+            cursor.execute("INSERT INTO help_logs (user, content, datetime, quality) VALUES (`{user}`, `{content}`, `{time}`, `{quality}`);".format(user=message.author.id, content=message.content, time=int(time.time()), quality=quality))
 
         # Checks for things in message
         if any(x in message.content.lower() for x in email_checks) and message.server.id == config['akatsuki']['server_id']:
@@ -381,10 +381,10 @@ async def on_message(message):
                 if topic == '' or topic == 'help':
                     await client.send_message(message.channel, 'The $cmyui command is just a dictionary of stuff cmyui has saved in it. Some public ones:\n\n$cmyui area - cmyui\'s area\n$cmyui skin - cmyui\'s skins\n$cmyui settings - cmyui\'s settings')
                 elif topic == 'area':
-                    await client.send_message(message.author, 'Wacom CTH-480 (CTL470 Pen) | 100mm width (forced proportions) [1.778:1], X : 0mm, Y : 57.79mm')
+                    await client.send_message(message.author, 'Wacom CTH-480 (CTL470 Pen)\n\n100mm width (forced proportions) [16:9 screen, making it 1.778:1]\nX : 0mm\nY : 57.79mm')
                     await client.send_message(message.channel, 'The response has been sent to you via DM.')
                 elif topic == 'settings':
-                    await client.send_message(message.author, '1.0x sens, video and storyboard off, dim 100%, fullscreen 1920x1080@240hz, snaking sliders, cursor size 0.60-0.84, hit lighting off, raw input off')
+                    await client.send_message(message.author, '1.0x sens, video and storyboard off, dim 100%, fullscreen 1920x1080@240hz, snaking sliders, cursor size 0.60-0.84, hit lighting off, raw input off.')
                     await client.send_message(message.channel, 'The response has been sent to you via DM.')
                 elif topic == 'skin':
                     await client.send_message(message.author, '**Here are some of the skins cmyui uses frequently**\n\nCurrent main skin (Abyssal 2018-15-06): https://i.namir.in/Asi.osk\n\nOther skins:\ncmyui v5.3: https://i.namir.in/6CF.osk\ncmyui v6.0 (Blue Crystal v2.1): https://i.namir.in/JS9.osk\ncmyui v7.0: https://i.namir.in/YP7.osk\ncmyui v9.4: https://i.namir.in/jHW.osk\nAlacrity 1.2: https://i.namir.in/4Oo.osk\ng3p: https://i.namir.in/Q1L.osk\nJustice: https://i.namir.in/b1u.osk\nCookiezi 32: https://i.namir.in/y8v.osk\nCookiezi 35: https://i.namir.in/y8v.osk\n\nIf any of the links are not working, please tell cmyui#0425 :)')
@@ -474,8 +474,6 @@ async def on_message(message):
 
             elif messagecontent[0].lower() == '$prune' and message.author.server_permissions.manage_messages: # Prune messages
                 await client.send_message(message.channel, "This command has been depreciated. Please use Tatsumaki's ;;prune instead.")
-                if messagecontent[1].isdigit():
-                    await client.send_message(message.channel, ";;prune {}".format(messagecontent[1]))
                 """
                 try:
                     amtMessages = messagecontent[1]
