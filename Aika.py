@@ -79,19 +79,25 @@ async def on_error(event, *args):
 async def on_message(message):
     client.wait_until_ready()
 
+    """ Constants """
+
+    # Akatsuki's logo.
+    # To be used mostly for embed thumbnails.
+    akatsuki_logo = 'https://akatsuki.pw/static/logos/logo.png'
+
     if message.channel.id == config['akatsuki']['player_reporting']: # Message sent in #player-reporting, move to #reports
         await client.delete_message(message) # Delete the message from #player-reporting
 
         # Prepare, and send the report in #reports
         embed = discord.Embed(title="New report recieved.", description='** **', color=0x00ff00)
-        embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
+        embed.set_thumbnail(url=akatsuki_logo)
         embed.add_field(name="Report content", value=message.content, inline=True)
         embed.add_field(name="Author", value=message.author.mention, inline=True)
 
         # Prepare, and send the report to the reporter
         embedPrivate = discord.Embed(title="Thank you for the player report.", description="We will review the report shortly.".format(message.content), color=0x00ff00)
         embedPrivate.add_field(name="Report content", value=message.content, inline=True)
-        embedPrivate.set_thumbnail(url='https://i.namir.in/Mbp.png')
+        embedPrivate.set_thumbnail(url=akatsuki_logo)
 
         if not message.content.startswith('$'): # Do not pm or link to #reports if it is a command
             await client.send_message(message.author, embed=embedPrivate)
@@ -196,7 +202,7 @@ async def on_message(message):
                             i = i + 1
 
                         embed = discord.Embed(title="Helplogs report | {}".format(userID), description='** **', color=0x00ff00)
-                        embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
+                        embed.set_thumbnail(url=akatsuki_logo)
                         embed.add_field(name="Total", value=positive + neutral + negative, inline=True)
                         embed.add_field(name="Positive", value=positive, inline=True)
                         embed.add_field(name="Neutral", value=neutral, inline=True)
@@ -294,7 +300,7 @@ async def on_message(message):
                             modeNice = 'osu!mania'
 
                         embed = discord.Embed(title="{flag} {username} | {gm} {rx}".format(flag=":flag_{}:".format(userInfo["country"].lower()), username=userInfo["username"], rx='(Relax)' if relax == '-rx' else '(Vanilla)', gm=modeNice), description='** **', color=0x00ff00)
-                        embed.set_thumbnail(url='https://i.namir.in/Mbp.png')
+                        embed.set_thumbnail(url=akatsuki_logo)
 
                         embed.add_field(name="Global Rank", value="#{:,}".format(userInfo["{}".format(mode)]["global_leaderboard_rank"]), inline=True)
                         embed.add_field(name="Country Rank", value="#{:,}".format(userInfo["{}".format(mode)]["country_leaderboard_rank"]), inline=True)
