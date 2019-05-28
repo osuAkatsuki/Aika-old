@@ -474,7 +474,7 @@ async def on_message(message):
 
             elif messagecontent[0].lower() == '$prune' and message.author.server_permissions.manage_messages: # Prune messages
                 await client.send_message(message.channel, "This command has been depreciated. Please use Tatsumaki's ;;prune instead.")
-                if messagecontent.isdigit():
+                if messagecontent[1].isdigit():
                     await client.send_message(message.channel, ";;prune {}".format(messagecontent[1]))
                 """
                 try:
