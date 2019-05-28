@@ -57,7 +57,7 @@ justicePsych = ['d', 'FUCKING NEPTUNE', 'civilization incepting on my body', 'wh
 """
 
 def safeMessage(message):
-    return message.replace("'", "").replace("\\", "")
+    return message.replace("'", "\\'").replace("\\", "\\\\")
 
 # Startup, after login action
 @client.event
@@ -410,9 +410,9 @@ async def on_message(message):
                 if result is not None:
                     embed = discord.Embed(title=result[2], description='** **', color=0x00ff00)
                     embed.set_thumbnail(url=akatsuki_logo)
-                    embed.add_field(name="** **", value=result[3].replace('\\n', '\n'), inline=result[5])
+                    embed.add_field(name="** **", value=safeMessage(result[3]), inline=result[5])
                     if result[4] is not None:
-                        embed.set_footer(icon_url='', text=result[4].replace('\\n', '\n'))
+                        embed.set_footer(icon_url='', text=safeMessage(result[4]))
                     await client.send_message(message.channel, embed=embed)
                 else:
                     cursor.execute("SELECT id, topic, title from discord_faq WHERE type = 1")
@@ -431,7 +431,7 @@ async def on_message(message):
 
             elif messagecontent[0].lower() == '$info': # info command
                 try:
-                    callback = safeMessage(messagecontent[1].lower().replace())
+                    callback = safeMessage(messagecontent[1].lower())
                 except:
                     callback = ''
 
@@ -442,9 +442,9 @@ async def on_message(message):
                 if result is not None:
                     embed = discord.Embed(title=result[2], description='** **', color=0x00ff00)
                     embed.set_thumbnail(url=akatsuki_logo)
-                    embed.add_field(name="** **", value=result[3].replace('\\n', '\n'), inline=result[5])
+                    embed.add_field(name="** **", value=safeMessage(result[3]), inline=result[5])
                     if result[4] is not None:
-                        embed.set_footer(icon_url='', text=result[4].replace('\\n', '\n'))
+                        embed.set_footer(icon_url='', text=safeMessage(result[4]))
                     await client.send_message(message.channel, embed=embed)
                 else:
                     cursor.execute("SELECT id, topic, title from discord_faq WHERE type = 0")
