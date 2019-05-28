@@ -122,7 +122,7 @@ async def on_message(message):
                 quality = 1
 
             cursor = db.cursor()
-            cursor.execute("INSERT INTO help_logs (user, content, datetime, quality) VALUES (`{user}`, `{content}`, `{time}`, `{quality}`);".format(user=message.author.id, content=message.content, time=int(time.time()), quality=quality))
+            cursor.execute("INSERT INTO help_logs (user, content, datetime, quality) VALUES ('{user}', '{content}', '{time}', '{quality}');".format(user=message.author.id, content=message.content.replace("'", ""), time=int(time.time()), quality=quality))
 
         # Checks for things in message
         if any(x in message.content.lower() for x in email_checks) and message.server.id == config['akatsuki']['server_id']:
