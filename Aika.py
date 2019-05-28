@@ -56,6 +56,9 @@ cmyuiPsych = ['jamming out to blue zenith while talking to deallly and others in
 justicePsych = ['d', 'FUCKING NEPTUNE', 'civilization incepting on my body', 'what the fuck am I looking at', 'Spencer is God', 'Subaru Outback from NASA', 'the gas station is quite green today', 'Smash on a single joycon is retard central', 'I refuse to fall down the stairs a third time', 'my life is a rainbow', 'my sock is going to kill me', 'omega-cold', 'Mezzanine-Massive Attack', 'HOW DO YOU TURN ON THE FUCKING SHOWER', 'HOW DO YOU TURN OFF THE FUCKING SHOWER', 'I CANT GET OUT OF THE FUCKING SHOWER', 'The shower has brought me great wealth', 'many faces inside of that person', 'look at that Arby\'s sign wow', 'my penis is non-existent what the fuck', 'ice is evil', 'the snow never ends', 'that beer bottle is Satan', 'I am Satan', 'I am definitely not Satan', 'WE HAVE BEEN IN THIS CAR FOREVER I WAS BORN IN THIS CAR', 'why is Chase so far away', 'I cant fucking see anything, but my eyes are pretending they can see']
 """
 
+def safeMessage(message):
+    return message.replace("'", "").replace("\\", "")
+
 # Startup, after login action
 @client.event
 async def on_ready():
@@ -66,7 +69,7 @@ async def on_ready():
     # Send an announcement that the bots been started in Akatsuki's #general (if debug)
     if int(config['default']['announce_online']) == 1:
         announceOnline = discord.Embed(title="Aika v{versionNum} Online".format(versionNum=version), description='Ready for commands <3\n\nSource code can be found at https://github.com/osuAkatsuki/Aika.', color=0x00ff00)
-        announceOnline.set_thumbnail(url='https://cdn.discordapp.com/attachments/285250367732842516/572989444723048498/s.png')
+        announceOnline.set_thumbnail(url='http://akatsuki.pw/static/characters/quaver.png')
         await client.send_message(client.get_channel(config['akatsuki']['general']), embed=announceOnline)
 
 # On exceptions, don't make the whole thing die :)
@@ -84,7 +87,7 @@ async def on_message(message):
     # Akatsuki's logo.
     # To be used mostly for embed thumbnails.
     akatsuki_logo = 'https://akatsuki.pw/static/logos/logo.png'
-    aika_pfp = 'https://a.akatsuki.pw/999.png'
+    aika_pfp = 'http://akatsuki.pw/static/characters/quaver.png'
 
     if message.channel.id == config['akatsuki']['player_reporting']: # Message sent in #player-reporting, move to #reports
         await client.delete_message(message) # Delete the message from #player-reporting
@@ -122,7 +125,7 @@ async def on_message(message):
                 quality = 1
 
             cursor = db.cursor()
-            cursor.execute("INSERT INTO help_logs (user, content, datetime, quality) VALUES ('{user}', '{content}', '{time}', '{quality}');".format(user=message.author.id, content=message.content.replace("'", "").replace("\\", ""), time=int(time.time()), quality=quality))
+            cursor.execute("INSERT INTO help_logs (user, content, datetime, quality) VALUES ('{user}', '{content}', '{time}', '{quality}');".format(user=message.author.id, content=safeMessage(message.content), time=int(time.time()), quality=quality))
 
         # Checks for things in message
         if any(x in message.content.lower() for x in email_checks) and message.server.id == config['akatsuki']['server_id']:
@@ -136,7 +139,7 @@ async def on_message(message):
 
         elif any(x in message.content.lower() for x in filters) and message.author.id != config['discord']['owner_id']:
             cursor = db.cursor()
-            cursor.execute("INSERT INTO profanity_filter (user, message, time) VALUES ('{user}', '{message}', '{time}');".format(user=message.author.id, message=message.content, time=int(time.time())))
+            cursor.execute("INSERT INTO profanity_filter (user, message, time) VALUES ('{user}', '{message}', '{time}');".format(user=message.author.id, message=safeMessage(message.content), time=int(time.time())))
             await client.delete_message(message)
             await client.send_message(message.author, 'Hello,\n\nYour message in osu!Akatsuki has been removed as it has been deemed unsuitable.\n\nIf this makes no sense, please report it to <@285190493703503872>.\n**Do not try to evade this filter as it is considered fair ground for a ban**.\n\n```{}```'.format(message.content))
             print(Fore.MAGENTA + "Filtered message | '{}: {}'".format(message.author, message.content))
@@ -184,7 +187,7 @@ async def on_message(message):
                     await client.delete_message(message)
 
                 elif messagecontent[0].lower() == '$hs':
-                    userID = re.findall('\d+', messagecontent[1])[0]
+                    userID = re.findall('\d+', safeMessage(messagecontent[1]))[0]
 
                     cursor = db.cursor()
                     cursor.execute("SELECT quality FROM help_logs WHERE user = {}".format(userID))
@@ -227,9 +230,9 @@ async def on_message(message):
                         await client.send_message(message.channel, 'Something went wrong.')
                 """
                 elif messagecontent[0].lower() == '$partner':
-                    userID = messagecontent[1]
-                    streamName = messagecontent[2]
-                    platform = messagecontent[3]
+                    userID = safeMessage(messagecontent[1])
+                    streamName = safeMessage(messagecontent[2])
+                    platform = safeMessage(messagecontent[3])
 
                     if not platform.isdigit():
                         if platform == 'twitch':
@@ -249,7 +252,7 @@ async def on_message(message):
                         await client.send_message(message.channel, "That userID is already partnered!")
 
                 elif messagecontent[0].lower() == '$removepartner':
-                    streamName = messagecontent[1]
+                    streamName = safeMessage(messagecontent[1])
 
                     cursor = db.cursor()
                     cursor.execute("SELECT * FROM partners WHERE stream_username = {}".format(streamName))
@@ -396,7 +399,7 @@ async def on_message(message):
 
             elif messagecontent[0].lower() == '$faq': # FAQ command
                 try:
-                    callback = messagecontent[1].lower()
+                    callback = safeMessage(messagecontent[1].lower())
                 except:
                     callback = ''
 
@@ -428,7 +431,7 @@ async def on_message(message):
 
             elif messagecontent[0].lower() == '$info': # info command
                 try:
-                    callback = messagecontent[1].lower()
+                    callback = safeMessage(messagecontent[1].lower().replace())
                 except:
                     callback = ''
 
