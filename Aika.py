@@ -405,7 +405,7 @@ async def on_message(message):
 
                 if result is not None:
                     embed = discord.Embed(title=result[2], description='** **', color=0x00ff00)
-                    embed.set_thumbnail(url=result[3])
+                    embed.set_thumbnail(url=akatsuki_logo)
                     embed.add_field(name="** **", value=result[4].replace('\\n', '\n'), inline=result[6])
                     if result[5] is not None:
                         embed.set_footer(icon_url='', text=result[5].replace('\\n', '\n'))
