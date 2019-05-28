@@ -57,7 +57,7 @@ justicePsych = ['d', 'FUCKING NEPTUNE', 'civilization incepting on my body', 'wh
 """
 
 def safeMessage(message):
-    return message.replace("'", "\'").replace("\\", "")
+    return message.replace("'", "").replace("\\", "")
 
 # Startup, after login action
 @client.event
