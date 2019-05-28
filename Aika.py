@@ -309,6 +309,7 @@ async def on_message(message):
                         embed.add_field(name="Total Score", value="{:,}".format(userInfo["{}".format(mode)]["total_score"]), inline=True)
                         embed.add_field(name="Accuracy", value=userInfo["{}".format(mode)]["accuracy"], inline=True)
                         embed.add_field(name="Playcount", value="{:,}".format(userInfo["{}".format(mode)]["playcount"]), inline=True)
+                        embed.add_field(name="Playtime", value="{:,} hours".format(int(userInfo["{}".format(mode)]["playtime"]) / 3600), inline=True)
                         embed.add_field(name="Replays Watched", value="{:,}".format(userInfo["{}".format(mode)]["replays_watched"]), inline=True)
 
                         await client.send_message(message.channel, embed=embed)
