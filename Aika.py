@@ -40,7 +40,7 @@ db.autocommit(True)
 db.ping(True)
 
 # Constants
-version = 1.75
+version = 1.80
 
 filters = ['pp.me', 'paypal.me', 'yozo', 'y0zo', 'yoz0', 'y0z0', 'ainu', 'okamura', 'kotorikku', 'kurikku', 'kawata', 'ryusei', 'ryu-sei', 'enjuu', 'verge', 'katori', 'osu-thailand', 'discord.gg/', 'gatari', 'hidesu'] # bad boy words
 
@@ -55,9 +55,6 @@ positivity = ['YES, you can do it! NO, it won\'t be easy, but it\'ll be worth it
 cmyuiPsych = ['jamming out to blue zenith while talking to deallly and others in Akatsuki VC', 'listening to his mom laugh', 'him and the others seeming much further away than they really were', 'driving in the ambulance', 'watching his blood get sucked out into a needle', 'trying to act sober in the face of authority', 'understanding someone that speaks no english', 'the afterimages as i wave my phone back and forth', 'seizure in the kids pool', 'humans split into 5 parts', 'the cat and the praying mantis', 'feeling wrong in my own skin', 'not being able to tell whether hot or cold', 'the relief of drinking the whole bottle of iced tea', 'strange throat feeling, almost as if my tongue had become a plant and sprouted or something', 'feeling music rather than just hearing it', 'intense visible pleasure wave on demand', 'pentap AiAe [a bit jumpy] HD', 'i thought i had bit my tongue but it was my immune system', 'smoke', 'seeing everything even when i closed my eyes', 'pulsating teleportation', 'feeling like we had something to do', 'nose bleeding hallucination', 'shit horse vodka', 'd', 'lost job', 'vomit', 'chicken nuggets', 'beach', 'fat guy', 'glass ceiling', 'facial hair', 'waving green walls', 'sea land', 'rich', 'pleasure', 'reaching up towards the top because the closer you get the exponentially better it gets', 'self dissection', 'high (first lyric in song)', 'follow the light', 'dad offering beer', 'acid interstate', 'driving through the jungles of germany', 'Jägermeister in coke', 'wasp swarm', 'her balcony', 'bending mushroomey houses and buildings', 'the restaurant in the middle of the forest', 'the pathway on the edge of the forest', 'half faking the panorama shake', 'dark green red and blue treetops', 'bugs in the forest', 'water dam', 'dark forest pathways', 'controlling your brain', 'begging for life and forgiveness', 'him crying', 'red and black scarf', 'i am gonnnnnnnnneeeeeeeeeeee', 'hair splitting reality', 'hugging jacob', 'donkey kong fur flowing', 'calendar pulsating', 'flowers moving', 'clouds on the ceiling', 'horses and bodies on the design with lighting', 'pins and needles stabbing my fingers', 'drawing blood and becoming cold', 'going down the water slide', 'asking a girl for a key card', 'running into their room and bed', 'waking up in destroyed room with paramedics', 'becoming older and older and then god himself', 'hearing them say i was dead', 'the jungle under my monitor', 'cat and dog', 'dinner with shinis family', 'fett', 'wanchu back', 'leo\'s sweater', 'lying down on the cool water dam at 4am', 'eating a sandwich', 'sitting on the bus', 'eating one chicken nugget', 'asking a stranger where the water cups were', 'staring at an older couple across in hospital... i think the guy died that night :(', 'logitech g930 usb ripped open but somehow intact', 'wet sand weird ass taste in mouth. literally unexplainable how fucked it feels.', 'my mouth numbing as i put the tab in, with that bitter taste of 25i..', 'standing on my chair overlooking the highway entrance lane. feeling the cars come towards me', 'glass, everywhere', 'stucco ceiling swerving all around', 'realer than real', 'trying to convince jacobs brother of how uncool i am', 'disappearing and reappearing strobe visuals', 'noticing the things on the walls and ceiling i would never otherwise notice', 'its like that-....', 'fighting my brain', 'inferno sounding like a mission', 'F.I becoming the scariest thing I have ever heard, like twisted vines wanted to rip me apart from my core', 'examining my juul for an hour', 'jacobs dad becoming king k rool for 1 frame of existence', 'gracie looking dangerous', 'the flash "plus" as i looked out jacobs back window', 'eyes morphing into other eyes', '"FUCK YOU!" written in my vision everywhere', 'smoking a bowl even though all the odds are stacked against it being a good idea']
 justicePsych = ['d', 'FUCKING NEPTUNE', 'civilization incepting on my body', 'what the fuck am I looking at', 'Spencer is God', 'Subaru Outback from NASA', 'the gas station is quite green today', 'Smash on a single joycon is retard central', 'I refuse to fall down the stairs a third time', 'my life is a rainbow', 'my sock is going to kill me', 'omega-cold', 'Mezzanine-Massive Attack', 'HOW DO YOU TURN ON THE FUCKING SHOWER', 'HOW DO YOU TURN OFF THE FUCKING SHOWER', 'I CANT GET OUT OF THE FUCKING SHOWER', 'The shower has brought me great wealth', 'many faces inside of that person', 'look at that Arby\'s sign wow', 'my penis is non-existent what the fuck', 'ice is evil', 'the snow never ends', 'that beer bottle is Satan', 'I am Satan', 'I am definitely not Satan', 'WE HAVE BEEN IN THIS CAR FOREVER I WAS BORN IN THIS CAR', 'why is Chase so far away', 'I cant fucking see anything, but my eyes are pretending they can see']
 """
-
-def safeMessage(message):
-    return message.replace("'", "").replace("\\", "")
 
 # Startup, after login action
 @client.event
@@ -125,7 +122,7 @@ async def on_message(message):
                 quality = 1
 
             cursor = db.cursor()
-            cursor.execute("INSERT INTO help_logs (user, content, datetime, quality) VALUES ('{user}', '{content}', '{time}', '{quality}');".format(user=message.author.id, content=safeMessage(message.content), time=int(time.time()), quality=quality))
+            cursor.execute("INSERT INTO help_logs (user, content, datetime, quality) VALUES (%s, %s, %s, %s);", [message.author.id, message.content, int(time.time()), quality])
 
         # Checks for things in message
         if any(x in message.content.lower() for x in email_checks) and message.server.id == config['akatsuki']['server_id']:
@@ -139,7 +136,7 @@ async def on_message(message):
 
         elif any(x in message.content.lower() for x in filters) and message.author.id != config['discord']['owner_id']:
             cursor = db.cursor()
-            cursor.execute("INSERT INTO profanity_filter (user, message, time) VALUES ('{user}', '{message}', '{time}');".format(user=message.author.id, message=safeMessage(message.content), time=int(time.time())))
+            cursor.execute("INSERT INTO profanity_filter (user, message, time) VALUES (%s, %s, %s);", [message.author.id, message.content, int(time.time())])
             await client.delete_message(message)
             await client.send_message(message.author, 'Hello,\n\nYour message in osu!Akatsuki has been removed as it has been deemed unsuitable.\n\nIf this makes no sense, please report it to <@285190493703503872>.\n**Do not try to evade this filter as it is considered fair ground for a ban**.\n\n```{}```'.format(message.content))
             print(Fore.MAGENTA + "Filtered message | '{}: {}'".format(message.author, message.content))
@@ -187,10 +184,10 @@ async def on_message(message):
                     await client.delete_message(message)
 
                 elif messagecontent[0].lower() == '$hs':
-                    userID = re.findall('\d+', safeMessage(messagecontent[1]))[0]
+                    userID = re.findall('\d+', messagecontent[1])[0]
 
                     cursor = db.cursor()
-                    cursor.execute("SELECT quality FROM help_logs WHERE user = {}".format(userID))
+                    cursor.execute("SELECT quality FROM help_logs WHERE user = %s", [userID])
                     logs = cursor.fetchall()
 
                     positive, neutral, negative, i = 0, 0, 0, 0
@@ -230,9 +227,9 @@ async def on_message(message):
                         await client.send_message(message.channel, 'Something went wrong.')
                 """
                 elif messagecontent[0].lower() == '$partner':
-                    userID = safeMessage(messagecontent[1])
-                    streamName = safeMessage(messagecontent[2])
-                    platform = safeMessage(messagecontent[3])
+                    userID = messagecontent[1]
+                    streamName = messagecontent[2]
+                    platform = messagecontent[3]
 
                     if not platform.isdigit():
                         if platform == 'twitch':
@@ -243,22 +240,22 @@ async def on_message(message):
                             platform = 3
 
                     cursor = db.cursor()
-                    cursor.execute("SELECT * FROM partners WHERE userid = {}".format(userID))
+                    cursor.execute("SELECT * FROM partners WHERE userid = %s", [userID])
                     result = cursor.fetchone()
                     if result is None:
-                        cursor.execute("INSERT INTO partners (userid, stream_username, platform) VALUES ('{}', '{}', '{}')".format(userID, streamName, platform))
+                        cursor.execute("INSERT INTO partners (userid, stream_username, platform) VALUES (%s, %s, %s)", [userID, streamName, platform])
                         await client.send_message(message.channel, "{} has been sucessfully registered as an Akatsuki partner.".format(streamName))
                     else:
                         await client.send_message(message.channel, "That userID is already partnered!")
 
                 elif messagecontent[0].lower() == '$removepartner':
-                    streamName = safeMessage(messagecontent[1])
+                    streamName = messagecontent[1]
 
                     cursor = db.cursor()
-                    cursor.execute("SELECT * FROM partners WHERE stream_username = {}".format(streamName))
+                    cursor.execute("SELECT * FROM partners WHERE stream_username = %s", [streamName])
 
                     if result is not None:
-                        cursor.execute("DELETE FROM partners WHERE stream_username = {}".format(streamName))
+                        cursor.execute("DELETE FROM partners WHERE stream_username = %s", [streamName])
                         await client.send_message(message.channel, "{}'s partnership sucessfully revoked.".format(streamName))
                     else:
                         await client.send_message(message.channel, "{} is not a registered partner.".format(streamName))
@@ -399,20 +396,20 @@ async def on_message(message):
 
             elif messagecontent[0].lower() == '$faq': # FAQ command
                 try:
-                    callback = safeMessage(messagecontent[1].lower())
+                    callback = messagecontent[1].lower()
                 except:
                     callback = ''
 
                 cursor = db.cursor()
-                cursor.execute("SELECT * FROM discord_faq WHERE {type} = '{callback}' AND type = 1".format(type='id' if callback.isdigit() else 'topic', callback=callback))
+                cursor.execute("SELECT * FROM discord_faq WHERE {type} = %s AND type = 1".format(type='id' if callback.isdigit() else 'topic'), [callback])
                 result = cursor.fetchone()
 
                 if result is not None:
                     embed = discord.Embed(title=result[2], description='** **', color=0x00ff00)
                     embed.set_thumbnail(url=akatsuki_logo)
-                    embed.add_field(name="** **", value=safeMessage(result[3]), inline=result[5])
+                    embed.add_field(name="** **", value=result[3], inline=result[5])
                     if result[4] is not None:
-                        embed.set_footer(icon_url='', text=safeMessage(result[4]))
+                        embed.set_footer(icon_url='', text=result[4])
                     await client.send_message(message.channel, embed=embed)
                 else:
                     cursor.execute("SELECT id, topic, title from discord_faq WHERE type = 1")
@@ -431,20 +428,20 @@ async def on_message(message):
 
             elif messagecontent[0].lower() == '$info': # info command
                 try:
-                    callback = safeMessage(messagecontent[1].lower())
+                    callback = messagecontent[1].lower()
                 except:
                     callback = ''
 
                 cursor = db.cursor()
-                cursor.execute("SELECT * FROM discord_faq WHERE {type} = '{callback}' AND type = 0".format(type='id' if callback.isdigit() else 'topic', callback=callback))
+                cursor.execute("SELECT * FROM discord_faq WHERE {type} = %s AND type = 0".format(type='id' if callback.isdigit() else 'topic'), [callback])
                 result = cursor.fetchone()
 
                 if result is not None:
                     embed = discord.Embed(title=result[2], description='** **', color=0x00ff00)
                     embed.set_thumbnail(url=akatsuki_logo)
-                    embed.add_field(name="** **", value=safeMessage(result[3]), inline=result[5])
+                    embed.add_field(name="** **", value=result[3], inline=result[5])
                     if result[4] is not None:
-                        embed.set_footer(icon_url='', text=safeMessage(result[4]))
+                        embed.set_footer(icon_url='', text=result[4])
                     await client.send_message(message.channel, embed=embed)
                 else:
                     cursor.execute("SELECT id, topic, title from discord_faq WHERE type = 0")
@@ -493,13 +490,13 @@ async def on_message(message):
 
             elif messagecontent[0].lower() == '$linkosu':
                 cursor = db.cursor()
-                cursor.execute("SELECT * FROM discord_roles WHERE discordid = {}".format(message.author.id))
+                cursor.execute("SELECT * FROM discord_roles WHERE discordid = %s", [message.author.id])
                 result = cursor.fetchone()
                 if result is not None:
                     if result[4] == 0:
                         role = discord.utils.get(message.server.roles, id=result[3])
                         await client.add_roles(message.author, role)
-                        cursor.execute("UPDATE discord_roles SET verified = 1 WHERE discordid = {}".format(message.author.id))
+                        cursor.execute("UPDATE discord_roles SET verified = 1 WHERE discordid = %s", [message.author.id])
                         await client.send_message(message.channel, "Your Discord has been sucessfully linked to your Akatsuki account.")
                     else:
                         await client.send_message(message.channel, "You already have an account linked!")
