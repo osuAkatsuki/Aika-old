@@ -45,10 +45,6 @@ db.ping(True)
 # The version number of Aika!
 version = 2.00
 
-# Debug bool.
-# This will be used when we want to test the program.
-debug = False
-
 # A list of filters.
 # These are to be used to wipe messages that are deemed inappropriate,
 # or break rules. For the most part, these are of other private servers,
@@ -78,18 +74,16 @@ email_checks  = ['verify e', 'verification', 'on email', 'verify m', 'verify a',
 akatsuki_logo = "https://akatsuki.pw/static/logos/logo.png"
 aika_pfp      = "https://akatsuki.pw/static/characters/quaver.png"
 
-
 """ Functions """
 
-# Function to clear the screen (reset).
-def clear():
-    system('clear')
-
+# Used to print info when debug is enabled.
+def debug_print(string):
+    if config['default']['debug'] != '0':
+        print(Fore.MAGENTA + "\nDEBUG: {}\n".format(string))
 
 # Startup, after login action
 @client.event
 async def on_ready():
-    clear()
     print(Fore.GREEN + 'Authentication Successful.\n{} | {}\n--------------------------\n'
         .format(client.user.name, client.user.id))
 
@@ -101,9 +95,9 @@ async def on_ready():
     if int(config['default']['announce_online']) == 1:
         announceOnline = discord.Embed(title="Aika v{versionNum} Online"
                                         .format(versionNum=version),
-                                            description='Ready for commands <3\n\n \
-                                                Source code can be found at \
-                                                https://github.com/osuAkatsuki/Aika.',
+                                            description="Ready for commands <3\n\n "
+                                                "Source code can be found at "
+                                                "https://github.com/osuAkatsuki/Aika.",
                                             color=0x00ff00)
 
         announceOnline.set_thumbnail(url='http://akatsuki.pw/static/characters/quaver.png')
@@ -119,6 +113,7 @@ async def on_error(event, *args):
 @client.event
 async def on_message(message):
     client.wait_until_ready()
+
     # Message sent in #player-reporting, move to #reports
     if message.channel.id == config['akatsuki']['player_reporting']: 
         await client.delete_message(message) # Delete the message from #player-reporting
@@ -150,11 +145,20 @@ async def on_message(message):
         await client.add_reaction(message, '👎')
 
     elif message.author != client.user:
+
+        messagelen = len(message.content)
+
+        if messagelen > 0:
+            print(message.content[0], message.content[messagelen - 1])
+
         # Message sent in #help, log to db
         if message.channel.id == config['akatsuki']['help']:
             if any(x in message.content.lower() for x in profanity):
                 quality = 0
-            elif any(x in message.content.lower() for x in high_quality):
+            elif any(x in message.content.lower() for x in high_quality) \
+            or message.content[0].isupper():
+                if config['default']['debug'] != '0':
+                    debug_print('isupper')
                 quality = 2
             else:
                 quality = 1
@@ -183,25 +187,25 @@ async def on_message(message):
         if any(x in message.content.lower() for x in email_checks) and message.server.id == config['akatsuki']['server_id']:
             if "badge" not in message.content.lower():
                 await client.send_message(message.author,
-                                        'Right, this is an automated message as it \
-                                        was assumed you needed assitance in Akatsuki \
-                                        with: Email Verification\n\nAs the verification \
-                                        page says, Akatsuki does not use verification \
-                                        emails. To verify your account, simply install \
-                                        the switcher, install the certificate, click the \
-                                        server you\'d like to play on, and click On/Off, \
-                                        then login to osu! to complete the verification process.')
+                                        "Right, this is an automated message as it "
+                                        "was assumed you needed assitance in Akatsuki "
+                                        "with: Email Verification\n\nAs the verification "
+                                        "page says, Akatsuki does not use verification "
+                                        "emails. To verify your account, simply install "
+                                        "the switcher, install the certificate, click the "
+                                        "server you\'d like to play on, and click On/Off, "
+                                        "then login to osu! to complete the verification process.")
 
                 await client.delete_message(message)
                 if int(config['default']['debug']) == 1:
                     print(Fore.MAGENTA + "Triggered: Verification Email Support\nUser: {}"
                         .format(message.author))
             else:
-                print(Fore.MAGENTA +    "Aborted Trigger: Email Verification Support, due \
-                                        to \"badge\" contents of the message.\nUser: {}"
+                print(Fore.MAGENTA +    "Aborted Trigger: Email Verification Support, due "
+                                        "to \"badge\" contents of the message.\nUser: {}"
                                             .format(message.author))
 
-        elif any(x in message.content.lower() for x in filters) and message.author.id != config['discord']['owner_id']:
+        elif any(x in message.content.lower() for x in filters):
             cursor = db.cursor()
             cursor.execute("""
                             INSERT INTO profanity_filter
@@ -219,12 +223,12 @@ async def on_message(message):
 
             await client.delete_message(message)
             await client.send_message(message.author,
-                                    'Hello,\n\nYour message in osu!Akatsuki \
-                                    has been removed as it has been deemed \
-                                    unsuitable.\n\nIf this makes no sense, \
-                                    please report it to <@285190493703503872>. \
-                                    \n**Do not try to evade this filter as it is \
-                                    considered fair ground for a ban**.\n\n```{}```'
+                                    "Hello,\n\nYour message in osu!Akatsuki "
+                                    "has been removed as it has been deemed "
+                                    "unsuitable.\n\nIf this makes no sense, "
+                                    "please report it to <@285190493703503872>. "
+                                    "\n**Do not try to evade this filter as it is "
+                                    "considered fair ground for a ban**.\n\n```{}```"
                                     .format(message.content))
 
             print(Fore.MAGENTA + "Filtered message | '{}: {}'"
@@ -260,10 +264,6 @@ async def on_message(message):
             print("{} [{} ({})] {}: {}"
                 .format(message.timestamp, message.server, message.channel,
                         message.author, message.content))
-
-        messagelen = len(message.content)
-
-        print(message.content[0], message.content[messagelen - 1])
 
         if message.content.startswith('$') or message.content.startswith('!verify'): # The message is a command
 
@@ -343,9 +343,12 @@ async def on_message(message):
                         await client.delete_message(processingMessage)
                     except:
                         await client.send_message(message.channel, 'Something went wrong.')
+
                 elif messagecontent[0].lower() == '$d':
-                    debug = not debug
-                    await client.send_message(message.channel, "✨Debug value has been set to : {}".format(debug))
+                    config.set('default', 'debug', '{}'.format('1' if config['default']['debug'] == '0' else 0))
+                    print('1' if config['default']['debug'] == '0' else 0)
+                    await client.send_message(message.channel, "✨Debug: {}".format('Disabled' if config['default']['debug'] == '0' else 'Enabled'))
+
             """
             Process regular user command.
 
@@ -435,11 +438,11 @@ async def on_message(message):
                         await client.delete_message(processingMessage)
                     except:
                         await client.send_message(message.channel,
-                                                "Either that user does not exist, \
-                                                or the format of your message was \
-                                                incorrect. Format: | $stats username\
-                                                _spaced_like_this -rx\n\n(-rx is \
-                                                optional and will return -rx stats)")
+                                                "Either that user does not exist, "
+                                                "or the format of your message was "
+                                                "incorrect. Format: | $stats username"
+                                                "_spaced_like_this -rx\n\n(-rx is "
+                                                "optional and will return -rx stats)")
 
             elif messagecontent[0].lower() == '$akatsuki': # multipurpose akatsuki info
                 try:
@@ -498,70 +501,71 @@ async def on_message(message):
 
                 if position == '' or position == 'help':
                     await client.send_message(message.channel,
-                                            'Please use a role name as an arguement. \
-                                            Eg: $apply bn, or $apply beatmap_nominator')
+                                            "Please use a role name as an arguement. "
+                                            "Eg: $apply bn, or $apply beatmap_nominator")
                 elif 'admin' in position or position == 'commuinity_manager' or position == 'communitymanager':
                     await client.send_message(message.channel,
-                                            'You cannot apply for this role. \
-                                            Admins are handpicked from the community \
-                                            by cmyui himself :o')
+                                            "You cannot apply for this role. "
+                                            "Admins are handpicked from the community "
+                                            "by cmyui himself :o")
                 elif 'mod' in position:
                     await client.send_message(message.channel,
-                                            'You cannot apply for this role. \
-                                            Mods are usually handpicked from \
-                                            lower roles (such as BN, Akatsuki \
-                                            People, Support Team) if we believe \
-                                            they would be better suited with some \
-                                            fancy new powers.')
+                                            "You cannot apply for this role. "
+                                            "Mods are usually handpicked from "
+                                            "lower roles (such as BN, Akatsuki "
+                                            "People, Support Team) if we believe "
+                                            "they would be better suited with some "
+                                            "fancy new powers.")
 
                 elif 'beat' in position or position == 'bn':
                     await client.send_message(message.channel,
-                                            'BNs are currently in high demand! If \
-                                            you\'re interested in this position \
-                                            (and are quite active on the server, \
-                                            this will be checked), feel free to \
-                                            apply here! https://goo.gl/forms/XyLMtFlaA6mHAiIB3')
+                                            "BNs are currently in high demand! If "
+                                            "you\'re interested in this position "
+                                            "(and are quite active on the server, "
+                                            "this will be checked), feel free to "
+                                            "apply here! https://goo.gl/forms/XyLMtFlaA6mHAiIB3")
 
                 elif 'support' in position:
                     await client.send_message(message.channel,
-                                            'To be considered for the support team, \
-                                            you will need to be quite active in the \
-                                            <#365413867167285249> channel already. We \
-                                            use this to ensure that you\'re the right \
-                                            kind of person for the job. Most likely, \
-                                            if we see you being active, we will offer \
-                                            you the position if you seem to be a good pick.')
-
-                elif 'akatsuki' in position or 'people' in position or 'uploader' in position:
-                    await client.send_message(message.channel,
-                                            'Looking to be an uploader?\n\nThere are \
-                                            actually some PC requirements for this, \
-                                            but they\'re really nothing special.\n- \
-                                            PC Capable of recording 1080p60fps videos \
-                                            without dropping below 4.2ms frametime (240fps).\
-                                            \n\nYea, that\'s it! haha. Even better if you can \
-                                            do 4K, or have editing capabilities.\n\nJust shoot \
-                                            <@285190493703503872> a DM to apply for this role.')
+                                            "To be considered for the support team, "
+                                            "you will need to be quite active in the "
+                                            "<#365413867167285249> channel already. We "
+                                            "use this to ensure that you\'re the right "
+                                            "kind of person for the job. Most likely, "
+                                            "if we see you being active, we will offer "
+                                            "you the position if you seem to be a good pick.")
+                
+                #elif 'akatsuki' in position or 'people' in position or 'uploader' in position:
+                #    await client.send_message(message.channel,
+                #                            "Looking to be an uploader?\n\nThere are "
+                #                            "actually some PC requirements for this, "
+                #                            "but they\'re really nothing special.\n- "
+                #                            "PC Capable of recording 1080p60fps videos "
+                #                            "without dropping below 4.2ms frametime (240fps)."
+                #                            "\n\nYea, that\'s it! haha. Even better if you can "
+                #                            "do 4K, or have editing capabilities.\n\nJust shoot "
+                #                            "<@285190493703503872> a DM to apply for this role.")
+                
 
                 elif position == 'premium' or position == 'donor' or position == 'donator' or position == 'supporter':
                     await client.send_message(message.channel,
-                                            'This isn\'t a role you can apply for, \
-                                            silly!\n\nSupporter: https://akatsuki.pw\
-                                            /donate\nPremium: https://akatsuki.pw/premium\
-                                            \n\nThanks for considering to support the \
-                                            server, though!\nIt means a lot!')
+                                            "This isn\'t a role you can apply for, "
+                                            "silly!\n\nSupporter: https://akatsuki.pw"
+                                            "/donate\nPremium: https://akatsuki.pw/premium"
+                                            "\n\nThanks for considering to support the "
+                                            "server, though!\nIt means a lot!'")
 
                 elif 'verif' in position:
                     await client.send_message(message.channel,
-                                            'The verified role in-game is for players \
-                                            who we essentially trust (for lack of \
-                                            better wording). These players have either \
-                                            been verified through liveplays, or maybe \
-                                            have even met a staff member IRL to prove \
-                                            their legitimacy (rare, but there are 10+).\
-                                            \n\nYou cannot apply for verified, as it is \
-                                            something we will look to give you, rather \
-                                            than vice versa :^)')
+                                            "The verified role in-game is for players "
+                                            "who we essentially trust (for lack of "
+                                            "better wording). These players have either "
+                                            "been verified through liveplays, or maybe "
+                                            "have even met a staff member IRL to prove "
+                                            "their legitimacy (rare, but there are 10+)."
+                                            "\n\nYou cannot apply for verified, as it is "
+                                            "something we will look to give you, rather "
+                                            "than vice versa :^)")
                 else:
                     await client.send_message(message.channel, 'That position could not be found.')
 
@@ -573,55 +577,55 @@ async def on_message(message):
 
                 if topic == '' or topic == 'help':
                     await client.send_message(message.channel,
-                                            'The $cmyui command is just a dictionary \
-                                            of stuff cmyui has saved in it. Some public \
-                                            ones:\n\n$cmyui area - cmyui\'s area\n$cmyui \
-                                            skin - cmyui\'s skins\n$cmyui settings - \
-                                            cmyui\'s settings')
+                                            "The $cmyui command is just a dictionary "
+                                            "of stuff cmyui has saved in it. Some public "
+                                            "ones:\n\n$cmyui area - cmyui\'s area\n$cmyui "
+                                            "skin - cmyui\'s skins\n$cmyui settings - "
+                                            "cmyui\'s settings")
 
                 elif topic == 'area':
                     await client.send_message(message.author,
-                                            'Wacom CTH-480 (CTL470 Pen)\n\n100mm width \
-                                            (forced proportions) [16:9 screen, making it \
-                                            1.778:1]\nX : 0mm\nY : 57.79mm')
+                                            "Wacom CTH-480 (CTL470 Pen)\n\n100mm width "
+                                            "(forced proportions) [16:9 screen, making it "
+                                            "1.778:1]\nX : 0mm\nY : 57.79mm")
 
                     await client.send_message(message.channel,
-                                            'The response has been sent to you via DM.')
+                                            "The response has been sent to you via DM.")
 
                 elif topic == 'settings':
                     await client.send_message(message.author,
-                                            '1.0x sens, video and storyboard off, dim \
-                                            100%, fullscreen 1920x1080@240hz, snaking \
-                                            sliders, cursor size 0.60-0.84, hit lighting \
-                                            off, raw input off.')
+                                            "1.0x sens, video and storyboard off, dim "
+                                            "100%, fullscreen 1920x1080@240hz, snaking "
+                                            "sliders, cursor size 0.60-0.84, hit lighting "
+                                            "off, raw input off.")
 
                     await client.send_message(message.channel,
                                             'The response has been sent to you via DM.')
                 elif topic == 'skin':
                     await client.send_message(message.author,
-                                            '**Here are some of the skins cmyui uses \
-                                            frequently**\n\nCurrent main skin \
-                                            (Abyssal \2018-15-06): https://i.namir.in/Asi.osk\
-                                            \n\nOther skins:\
-                                            \ncmyui v5.3: https://i.namir.in/6CF.osk\
-                                            \ncmyui v6.0 (Blue Crystal v2.1): https://i.namir.in/JS9.osk\
-                                            \ncmyui v7.0: https://i.namir.in/YP7.osk\
-                                            \ncmyui v9.4: https://i.namir.in/jHW.osk\
-                                            \nAlacrity 1.2: https://i.namir.in/4Oo.osk\
-                                            \ng3p: https://i.namir.in/Q1L.osk\
-                                            \nJustice: https://i.namir.in/b1u.osk\
-                                            \nCookiezi 32: https://i.namir.in/y8v.osk\
-                                            \nCookiezi 35: https://i.namir.in/y8v.osk\
-                                            \n\nIf any of the links are not working, \
-                                            please tell cmyui#0425 :)')
+                                            "**Here are some of the skins cmyui uses "
+                                            "frequently**\n\nCurrent main skin "
+                                            "(Abyssal \2018-15-06): https://i.namir.in/Asi.osk"
+                                            "\n\nOther skins:"
+                                            "\ncmyui v5.3: https://i.namir.in/6CF.osk"
+                                            "\ncmyui v6.0 (Blue Crystal v2.1): https://i.namir.in/JS9.osk"
+                                            "\ncmyui v7.0: https://i.namir.in/YP7.osk"
+                                            "\ncmyui v9.4: https://i.namir.in/jHW.osk"
+                                            "\nAlacrity 1.2: https://i.namir.in/4Oo.osk"
+                                            "\ng3p: https://i.namir.in/Q1L.osk"
+                                            "\nJustice: https://i.namir.in/b1u.osk"
+                                            "\nCookiezi 32: https://i.namir.in/y8v.osk"
+                                            "\nCookiezi 35: https://i.namir.in/y8v.osk"
+                                            "\n\nIf any of the links are not working, "
+                                            "please tell cmyui#0425 :)")
 
                     await client.send_message(message.channel,
-                                            'The response has been sent to you via DM.')
+                                            "The response has been sent to you via DM.")
 
                 elif topic == 'psyqui' or topic == 'yvs':
-                    await client.send_message(message.channel, 'https://www.youtube.com/watch?v=wKgbDk2hXI8')
+                    await client.send_message(message.channel, "https://www.youtube.com/watch?v=wKgbDk2hXI8")
                 else:
-                    await client.send_message(message.channel, '$cmyui subcategory{topic} does not exist..'
+                    await client.send_message(message.channel, "$cmyui subcategory{topic} does not exist.."
                         .format(topic=' ' + topic if len(topic) > 0 else ''))
 
             elif messagecontent[0].lower() == '$faq': # FAQ command
@@ -669,9 +673,9 @@ async def on_message(message):
                         i += 1
 
                     await client.send_message(message.channel,
-                                'Invalid FAQ callback{topic}.\
-                                \n\nHere is a list of available \
-                                FAQ:\n```{faqlist}```'
+                                "Invalid FAQ callback{topic}."
+                                "\n\nHere is a list of available "
+                                "FAQ:\n```{faqlist}```"
                                 .format(
                                     topic=' ' + callback if len(callback) > 0 else '',
                                     faqlist=faq_list))
@@ -724,9 +728,9 @@ async def on_message(message):
                         i += 1
 
                     await client.send_message(message.channel,
-                                'Invalid FAQ callback{topic}.\
-                                \n\nHere is a list of available \
-                                INFO:\n```{infolist}```'
+                                "Invalid FAQ callback{topic}."
+                                "\n\nHere is a list of available "
+                                "INFO:\n```{infolist}```"
                                 .format(
                                     topic=' ' + callback if len(callback) > 0 else '',
                                     infolist=info_list))
@@ -741,22 +745,22 @@ async def on_message(message):
                 embed = discord.Embed(title="Why hello! I'm Aika.", description='** **', color=0x00ff00)
                 embed.set_thumbnail(url=aika_pfp)
                 embed.add_field(
-                    name="** **", value='I\'m Akatsuki\'s (and cmyui\'s) bot. \
-                                        I provide the server with things such as \
-                                        commands to track ingame stats, help out \
-                                        members in need, and provide overall fun \
-                                        (and lots of useless) commands!\n\nSource \
-                                        code: https://github.com/osuAkatsuki/Aika.\
-                                        \nIngame: https://akatsuki.pw/u/999\nCreator: \
-                                        https://akatsuki.pw/u/1001', inline=False)
+                    name="** **", value="I\'m Akatsuki\'s (and cmyui\'s) bot. "
+                                        "I provide the server with things such as "
+                                        "commands to track ingame stats, help out "
+                                        "members in need, and provide overall fun "
+                                        "(and lots of useless) commands!\n\nSource "
+                                        "code: https://github.com/osuAkatsuki/Aika."
+                                        "\nIngame: https://akatsuki.pw/u/999\nCreator: "
+                                        "https://akatsuki.pw/u/1001", inline=False)
 
                 embed.set_footer(icon_url='', text='Good vibes <3')
                 await client.send_message(message.channel, embed=embed)
 
             elif messagecontent[0].lower() == '$prune' and message.author.server_permissions.manage_messages: # Prune messages
                 await client.send_message(message.channel, 
-                                        "This command has been depreciated. \
-                                        Please use Tatsumaki's ;;prune instead.")
+                                        "This command has been depreciated. "
+                                        "Please use Tatsumaki's ;;prune instead.")
 
                 """
                 try:
@@ -774,23 +778,40 @@ async def on_message(message):
 
             elif messagecontent[0].lower() == '$linkosu':
                 cursor = db.cursor()
-                cursor.execute("SELECT * FROM discord_roles WHERE discordid = %s", [message.author.id])
+                cursor.execute("""
+                                SELECT *
+                                FROM discord_roles
+                                WHERE
+                                discordid = %s
+                                """,
+                                [message.author.id])
+
                 result = cursor.fetchone()
                 if result is not None:
                     if result[4] == 0:
                         role = discord.utils.get(message.server.roles, id=result[3])
                         await client.add_roles(message.author, role)
-                        cursor.execute("UPDATE discord_roles SET verified = 1 WHERE discordid = %s", [message.author.id])
-                        await client.send_message(message.channel, "Your Discord has been sucessfully linked to your Akatsuki account.")
+                        cursor.execute("""
+                                    UPDATE discord_roles
+                                    SET
+                                    verified = 1
+                                    WHERE
+                                    discordid = %s
+                                    """,
+                                    [message.author.id])
+
+                        await client.send_message(message.channel,
+                            "Your Discord has been sucessfully linked to your Akatsuki account.")
                     else:
-                        await client.send_message(message.channel, "You already have an account linked!")
+                        await client.send_message(message.channel,
+                            "You already have an account linked!")
                 else:
                     await client.send_message(message.channel,
-                                            "Linking process initiated\n\nNext, \
-                                            please use the following command in \
-                                            #osu, or in a DM with 'Aika' ingame \
-                                            (in-game in the osu! client).\n`>> \
-                                            !linkdiscord {}`".format(message.author.id))
+                                            "Linking process initiated\n\nNext, "
+                                            "please use the following command in "
+                                            "#osu, or in a DM with 'Aika' ingame "
+                                            "(in-game in the osu! client).\n`>> "
+                                            "!linkdiscord {}`".format(message.author.id))
 
 print(Fore.CYAN + "\nLogging in with credentials: {}".format('*' * len(config['discord']['token'])))
 client.run(str(config['discord']['token']))
