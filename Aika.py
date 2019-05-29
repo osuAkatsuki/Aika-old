@@ -43,7 +43,7 @@ db.ping(True)
 """ Constants """
 
 # The version number of Aika!
-version = 2.00
+version = 2.10
 
 # A list of filters.
 # These are to be used to wipe messages that are deemed inappropriate,
