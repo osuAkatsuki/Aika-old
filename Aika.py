@@ -41,7 +41,13 @@ db.ping(True)
 
 
 """ Constants """
+
+# The version number of Aika!
 version = 2.00
+
+# Debug bool.
+# This will be used when we want to test the program.
+debug = False
 
 # A list of filters.
 # These are to be used to wipe messages that are deemed inappropriate,
@@ -49,17 +55,19 @@ version = 2.00
 # as required by rule #2 of the Akatsuki Discord & Chat Rules
 # (https://akatsuki.pw/doc/rules).
 filters       = ['pp.me', 'paypal.me', 'yozo', 'y0zo', 'yoz0', 'y0z0',
-                'ainu', 'okamura', 'kotorikku', 'kurikku', 'kawata',
-                'ryusei', 'ryu-sei', 'enjuu', 'verge', 'katori',
-                'osu-thailand', 'discord.gg/', 'gatari', 'hidesu',
-                'hiragi', 'asuki', 'mikoto', 'homaru']
+                 'ainu', 'okamura', 'kotorikku', 'kurikku', 'kawata',
+                 'ryusei', 'ryu-sei', 'enjuu', 'verge', 'katori',
+                 'osu-thailand', 'discord.gg/', 'gatari', 'hidesu',
+                 'hiragi', 'asuki', 'mikoto', 'homaru', 'awasu']
 
 # A list of message (sub)strings that we will use to deem
 # a quantifiable value for the "quality" of a message.
 profanity     = ['nigg', 'n1gg', 'retard', 'idiot',
-                'fuck off','shut the fuck up']
+                 'fuck off', 'shut the fuck up', '??']
 
-high_quality  = ['$faq', 'welcome', 'have a good', 'enjoy', 'no problem', 'of course']
+high_quality  = ['$faq', 'welcome', 'have a good',
+                 'enjoy', 'no problem', 'of course',
+                 'can help', 'i can', 'how can i help you']
 
 # A list of message (sub)strings used to determine when a user
 # is asking about email verification (which does not exist on Akatsuki).
@@ -263,7 +271,7 @@ async def on_message(message):
 
         print(message.content[0], message.content[messagelen - 1])
 
-        if message.content.startswith('$'): # The message is a command
+        if message.content.startswith('$') or message.content.startswith('!verify'): # The message is a command
 
             # First of all, make a simpler way to deal with message content so u don't develop stage 4 cancer
             messagecontent = message.content.split(' ')
@@ -341,7 +349,9 @@ async def on_message(message):
                         await client.delete_message(processingMessage)
                     except:
                         await client.send_message(message.channel, 'Something went wrong.')
-
+                elif messagecontent[0].lower() == '$d':
+                    debug = not debug
+                    await client.send_message(message.channel, "✨Debug value has been set to : {}".format(debug))
             """
             Process regular user command.
 
@@ -727,10 +737,11 @@ async def on_message(message):
                                     topic=' ' + callback if len(callback) > 0 else '',
                                     infolist=info_list))
 
-            elif messagecontent[0].lower() == '$verify' and message.channel.id == config['akatsuki']['verify']: # Verify command
-                verified = discord.utils.get(message.server.roles, name="Members")
-                await client.add_roles(message.author, verified)
-                await client.delete_message(message)
+            elif messagecontent[0].lower() in ('$verify', '!verify') and message.channel.id == config['akatsuki']['verify']: # Verify command
+                if message.author.id != config['discord']['owner_id']: # Dont for cmyui, he's probably pinging @everyone to verify.
+                    verified = discord.utils.get(message.server.roles, name="Members")
+                    await client.add_roles(message.author, verified)
+                    await client.delete_message(message)
 
             elif messagecontent[0].lower() == '$botinfo': # Bot info command
                 embed = discord.Embed(title="Why hello! I'm Aika.", description='** **', color=0x00ff00)
