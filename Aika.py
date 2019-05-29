@@ -83,13 +83,7 @@ aika_pfp      = "https://akatsuki.pw/static/characters/quaver.png"
 
 # Function to clear the screen (reset).
 def clear():
-    # for windows
-    if name == 'nt':
-        _ = system('cls')
-
-    # for mac and linux (here, os.name is 'posix').
-    else:
-        _ = system('clear')
+    system('clear')
 
 
 # Startup, after login action
