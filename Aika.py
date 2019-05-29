@@ -87,9 +87,7 @@ async def on_ready():
     print(Fore.GREEN + 'Authentication Successful.\n{} | {}\n--------------------------\n'
         .format(client.user.name, client.user.id))
 
-    if int(config['default']['debug']) == 1:
-        print(Fore.MAGENTA + "\n\nConfiguration:\nDebug: {debug}\n\n"
-            .format(debug="True" if int(config['default']['debug']) == 1 else "False"))
+    debug_print("Debug enabled.")
 
     # Send an announcement that the bots been started in Akatsuki's #general (if debug)
     if int(config['default']['announce_online']) == 1:
