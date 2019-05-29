@@ -74,12 +74,50 @@ email_checks  = ['verify e', 'verification', 'on email', 'verify m', 'verify a',
 akatsuki_logo = "https://akatsuki.pw/static/logos/logo.png"
 aika_pfp      = "https://akatsuki.pw/static/characters/quaver.png"
 
+
 """ Functions """
 
-# Used to print info when debug is enabled.
+
 def debug_print(string):
+    """
+    Print a debug message to the console.
+    
+    Example in use:      https://nanahira.life/dOgXljmmKW336gro3Ts5gJmU7P4hNDZz.png
+
+    :param string:       The message to be printed to the console.
+    """
+
     if config['default']['debug'] != '0':
         print(Fore.MAGENTA + "\nDEBUG: {}\n".format(string))
+
+
+async def send_message_formatted(type, message, first_line, string_array=[]):
+    """
+    Send a response via discord to the channel.
+
+    Example in use:      https://nanahira.life/qxb2f7j0EvrR7DftvHfBxosXTvtL5s9u.png
+
+    :param message:      The message object provided from discord.
+    :param first_line:   The first line of the response. The only one required.
+    :param string_array: The array of strings to follow. Optional.
+    """
+
+    # Choose what kind of emoticon to open the response with.
+    if type == "error":
+        emoticon = "🔴"
+    elif type == "success":
+        emoticon = "🔵"
+    else: # neutral
+        emoticon = type
+
+    # Build the response string.
+    resp =  "{emoticon} **{author_name}**, {first_line}.".format(emoticon=emoticon, author_name=message.author.name, first_line=first_line)
+    for line in string_array:
+        resp += "        {string}\n".format(string=line)
+
+    # Send the response off to discord.
+    await client.send_message(message.channel, resp)
+
 
 # Startup, after login action
 @client.event
@@ -139,27 +177,34 @@ async def on_message(message):
 
     # Request sent in rank_requests, add base thumbs
     elif message.channel.id == config['akatsuki']['rank_requests']:
-        await client.add_reaction(message, '👍')
-        await client.add_reaction(message, '👎')
+        await client.add_reaction(message, "👍")
+        await client.add_reaction(message, "👎")
 
     elif message.author != client.user:
 
         messagelen = len(message.content)
 
+        properly_formatted = False
+
         if messagelen > 0:
-            print(message.content[0], message.content[messagelen - 1])
+            #debug_print("First character: {}\n"
+            #            "Last character:  {}\n"
+            #            "First isupper?:  {u}\n"
+            #            "Last isperiod?:  {p}".format(message.content[0], message.content[messagelen - 1], u=message.content[0].isupper(), p=message.content[messagelen - 1] == "."))
+
+            properly_formatted = message.content[0].isupper() and message.content[messagelen - 1] in (".", "?", "!")
+
 
         # Message sent in #help, log to db
         if message.channel.id == config['akatsuki']['help']:
             if any(x in message.content.lower() for x in profanity):
                 quality = 0
-            elif any(x in message.content.lower() for x in high_quality) \
-            or message.content[0].isupper():
-                if config['default']['debug'] != '0':
-                    debug_print('isupper')
+            elif any(x in message.content.lower() for x in high_quality) or properly_formatted:
                 quality = 2
             else:
                 quality = 1
+
+            debug_print("Quality of message {}: {}".format(message.id, quality))
 
             cursor = db.cursor()
             cursor.execute("""
@@ -195,13 +240,13 @@ async def on_message(message):
                                         "then login to osu! to complete the verification process.")
 
                 await client.delete_message(message)
-                if int(config['default']['debug']) == 1:
-                    print(Fore.MAGENTA + "Triggered: Verification Email Support\nUser: {}"
-                        .format(message.author))
+
+                debug_print("Triggered: Verification Email Support\nUser: {}"
+                    .format(message.author))
             else:
-                print(Fore.MAGENTA +    "Aborted Trigger: Email Verification Support, due "
-                                        "to \"badge\" contents of the message.\nUser: {}"
-                                            .format(message.author))
+                debug_print("Aborted Trigger: Email Verification Support, due "
+                            "to \"badge\" contents of the message.\nUser: {}"
+                            .format(message.author))
 
         elif any(x in message.content.lower() for x in filters):
             cursor = db.cursor()
@@ -289,10 +334,11 @@ async def on_message(message):
                         await client.change_presence(
                             game=discord.Game(name=game, url='https://akatsuki.pw/', type=0))
 
-                        await client.send_message(message.channel, 'Game successfully changed to: \'{}\'.'
-                            .format(game))
+                        await send_message_formatted("success", message,
+                            "Game successfully changed to: {}".format(game))
                     else:
-                        await client.send_message(message.channel, 'Please specify a game name.')
+                        await send_message_formatted("error", message,
+                            "Please specify a game name")
                     await client.delete_message(message)
 
                 elif messagecontent[0].lower() == '$hs':
@@ -308,6 +354,8 @@ async def on_message(message):
                                     [userID])
 
                     logs = cursor.fetchall()
+
+                    debug_print(logs)
 
                     positive, neutral, negative, i = 0, 0, 0, 0
 
@@ -329,23 +377,35 @@ async def on_message(message):
                         embed.add_field(name="Negative", value=negative, inline=True)
                         await client.send_message(message.channel, embed=embed)
                     else:
-                        await client.send_message(message.channel, 'No logs found on the specified user..')
+                        await send_message_formatted("error", message,
+                            "No logs found on the specified user")
 
                 elif messagecontent[0].lower() == '$r':
                     try:
                         annmsg = ' '.join(messagecontent[1:]).strip()
-                        processingMessage = await client.send_message(message.channel, 'Processing request...')
+
+                        processingMessage = await send_message_formatted("success", message,
+                                             "Processing request.")
+
                         params = urlencode({"k": config["akatsuki"]["apikey"], "to": "#admin", "msg": annmsg})
                         requests.get("http://{}:5001/api/v1/fokabotMessage?{}".format(config["akatsuki"]["ip"], params))
-                        await client.send_message(message.channel, 'Successfully executed: `{}` on Akatsuki.'.format(annmsg))
+
+                        await send_message_formatted("success", message,
+                            "Successfully executed: `{}` on Akatsuki"
+                            .format(annmsg))
+
                         await client.delete_message(processingMessage)
                     except:
-                        await client.send_message(message.channel, 'Something went wrong.')
+                        await send_message_formatted("error", message,
+                            "Something went wrong during the request")
 
                 elif messagecontent[0].lower() == '$d':
                     config.set('default', 'debug', '{}'.format('1' if config['default']['debug'] == '0' else 0))
                     print('1' if config['default']['debug'] == '0' else 0)
-                    await client.send_message(message.channel, "✨Debug: {}".format('Disabled' if config['default']['debug'] == '0' else 'Enabled'))
+
+                    await send_message_formatted("✨", message,
+                        "Debug: {}"
+                        .format('Disabled' if config['default']['debug'] == '0' else 'Enabled'))
 
             """
             Process regular user command.
@@ -361,10 +421,12 @@ async def on_message(message):
                     relax = ''
 
                 if relax != '' and relax != '-rx':
-                    await client.send_message(message.channel, "Please use underscores in your username rather than spaces.")
+                    await send_message_formatted("error", message,
+                        "Please use underscores in your username rather than spaces")
                 else:
                     try:
-                        processingMessage = await client.send_message(message.channel, 'Processing request...')
+                        processingMessage = await send_message_formatted("success", message,
+                                             "Processing request.")
 
                         gamer = requests.get('https://akatsuki.pw/api/v1/get_user?u={}'.format(username)).text
 
@@ -377,6 +439,7 @@ async def on_message(message):
                         
                         userInfo = json.loads(resp)
 
+                        debug_print("{}\n\n{}".format(resp, userInfo))
                         if userInfo["favourite_mode"] == 0: # osu!
                             mode = 'std'
                             modeNice = 'osu!'
@@ -394,102 +457,109 @@ async def on_message(message):
                             .format(userInfo["country"].lower()), username=userInfo["username"],
                                     rx='(Relax)' if relax == '-rx' else '(Vanilla)',
                                     gm=modeNice), description='** **', color=0x00ff00)
- 
+
                         embed.set_thumbnail(url=akatsuki_logo)
 
-                        embed.add_field(name="Global Rank", value="#{:,}"
-                            .format(userInfo["{}".format(mode)]["global_leaderboard_rank"]),
-                            inline=True)
-                        embed.add_field(name="Country Rank", value="#{:,}"
-                            .format(userInfo["{}".format(mode)]["country_leaderboard_rank"]),
-                            inline=True)
+                        if userInfo["{}".format(mode)]["global_leaderboard_rank"] is not None:
+                            embed.add_field(name="Global Rank", value="#{:,}"
+                                .format(userInfo["{}".format(mode)]["global_leaderboard_rank"]),
+                                inline=True)
 
-                        embed.add_field(name="PP", value="{:,}pp"
-                            .format(userInfo["{}".format(mode)]["pp"]),
-                            inline=True)
+                        if userInfo["{}".format(mode)]["country_leaderboard_rank"] is not None:
+                            embed.add_field(name="Country Rank", value="#{:,}"
+                                .format(userInfo["{}".format(mode)]["country_leaderboard_rank"]),
+                                inline=True)
 
-                        embed.add_field(name="Ranked Score", value="{:,}"
-                            .format(userInfo["{}".format(mode)]["ranked_score"]),
-                            inline=True)
+                        if userInfo["{}".format(mode)]["pp"] is not None:
+                            embed.add_field(name="PP", value="{:,}pp"
+                                .format(userInfo["{}".format(mode)]["pp"]),
+                                inline=True)
 
-                        embed.add_field(name="Total Score", value="{:,}"
-                            .format(userInfo["{}".format(mode)]["total_score"]),
-                            inline=True)
+                        if userInfo["{}".format(mode)]["ranked_score"] is not None:
+                            embed.add_field(name="Ranked Score", value="{:,}"
+                                .format(userInfo["{}".format(mode)]["ranked_score"]),
+                                inline=True)
 
-                        embed.add_field(name="Accuracy", value="{}%"
-                            .format(round(userInfo["{}".format(mode)]["accuracy"], 2)),
-                            inline=True)
+                        if userInfo["{}".format(mode)]["total_score"] is not None:
+                            embed.add_field(name="Total Score", value="{:,}"
+                                .format(userInfo["{}".format(mode)]["total_score"]),
+                                inline=True)
 
-                        embed.add_field(name="Playcount", value="{:,}"
-                            .format(userInfo["{}".format(mode)]["playcount"]),
-                            inline=True)
+                        if userInfo["{}".format(mode)]["accuracy"] is not None:
+                            embed.add_field(name="Accuracy", value="{}%"
+                                .format(round(userInfo["{}".format(mode)]["accuracy"], 2)),
+                                inline=True)
 
-                        embed.add_field(name="Playtime", value="{:,} hours"
-                            .format(round(int(userInfo["{}".format(mode)]["playtime"]) / 3600, 2)),
-                            inline=True)
+                        if userInfo["{}".format(mode)]["playcount"] is not None:
+                            embed.add_field(name="Playcount", value="{:,}"
+                                .format(userInfo["{}".format(mode)]["playcount"]),
+                                inline=True)
 
-                        embed.add_field(name="Replays Watched", value="{:,}"
-                            .format(userInfo["{}".format(mode)]["replays_watched"]),
-                            inline=True)
+                        if userInfo["{}".format(mode)]["playtime"] is not None:
+                            embed.add_field(name="Playtime", value="{:,} hours"
+                                .format(round(int(userInfo["{}".format(mode)]["playtime"]) / 3600, 2)),
+                                inline=True)
+
+                        if userInfo["{}".format(mode)]["replays_watched"] is not None:
+                            embed.add_field(name="Replays Watched", value="{:,}"
+                                .format(userInfo["{}".format(mode)]["replays_watched"]),
+                                inline=True)
 
                         await client.send_message(message.channel, embed=embed)
-                        await client.delete_message(processingMessage)
                     except:
-                        await client.send_message(message.channel,
-                                                "Either that user does not exist, "
-                                                "or the format of your message was "
-                                                "incorrect. Format: | $stats username"
-                                                "_spaced_like_this -rx\n\n(-rx is "
-                                                "optional and will return -rx stats)")
+                        await send_message_formatted("error", message,
+                                        "either that user does not exist, or your syntax was incorrect",
+                                        ["Syntax: `$stats username_spaced_like_this (-rx)`"])
 
-            elif messagecontent[0].lower() == '$akatsuki': # multipurpose akatsuki info
+                    await client.delete_message(processingMessage)
+
+            elif messagecontent[0].lower() == '$akatsuki': # multipurpose akatsuki info TODO: unhardcode
                 try:
                     topic = messagecontent[1].lower()
                 except:
                     topic = ''
 
                 if topic == '' or topic == 'help':
-                    await client.send_message(message.channel,
-                        'Please enter a topic. There are quite a few, so they will not be listed.')
+                    await send_message_formatted("✨", message,
+                        "Please enter a topic."
+                        "There are quite a few, so they will not be listed")
+
+                    return
+
                 elif topic == 'discord':
-                    await client.send_message(message.channel,
-                        'https://discord.gg/5cBtMPW/')
+                    resp = 'https://discord.gg/5cBtMPW/'
 
                 elif topic == 'twitch':
-                    await client.send_message(message.channel,
-                        'https://www.twitch.tv/akatsuki_pw/')
+                    resp = 'https://www.twitch.tv/akatsuki_pw/'
 
                 elif topic == 'youtube' or topic == 'yt':
-                    await client.send_message(message.channel,
-                        'https://www.youtube.com/channel/UCjf8Fx_BlUr-htEy6hficcQ/')
+                    resp = 'https://www.youtube.com/channel/UCjf8Fx_BlUr-htEy6hficcQ/'
 
                 elif topic == 'rlb' or topic == 'relaxleaderboard':
-                    await client.send_message(message.channel,
-                        'https://akatsuki.pw/leaderboard?mode=0&p=1&rx=1/')
+                    resp = 'https://akatsuki.pw/leaderboard?mode=0&p=1&rx=1/'
 
                 elif topic == 'lb' or topic == 'leaderboard':
-                    await client.send_message(message.channel,
-                        'https://akatsuki.pw/leaderboard?mode=0&p=1&rx=0/')
+                    resp = 'https://akatsuki.pw/leaderboard?mode=0&p=1&rx=0/'
 
                 elif topic == 'admin':
-                    await client.send_message(message.channel,
-                        'https://old.akatsuki.pw/index.php?p=100/')
+                    resp = 'https://old.akatsuki.pw/index.php?p=100/'
 
                 elif topic == 'log' or topic == 'adminlog' or topic == 'raplog':
-                    await client.send_message(message.channel,
-                        'https://old.akatsuki.pw/index.php?p=116')
+                    resp = 'https://old.akatsuki.pw/index.php?p=116'
 
                 elif topic == 'datadog' or topic == 'status':
-                    await client.send_message(message.channel,
-                        'https://p.datadoghq.com/sb/71577ef74-a079587e79/')
+                    resp = 'https://p.datadoghq.com/sb/71577ef74-a079587e79/'
 
                 elif topic == 'vote':
-                    await client.send_message(message.channel,
-                        'https://topg.org/osu-private-servers/in-509809')
+                    resp = 'https://topg.org/osu-private-servers/in-509809'
 
                 else:
-                    await client.send_message(message.channel,
-                        'That topic could not be found.')
+                    await send_message_formatted("error", message,
+                        "I couldn't find a topic by that name")
+                    return
+                
+                
+                await send_message_formatted("success", message, resp)
 
             elif messagecontent[0].lower() == '$apply': # multipurpose staff application commands
                 try:
@@ -565,7 +635,8 @@ async def on_message(message):
                                             "something we will look to give you, rather "
                                             "than vice versa :^)")
                 else:
-                    await client.send_message(message.channel, 'That position could not be found.')
+                    await send_message_formatted("error", message,
+                        "I couldn't find a position by that name")
 
             elif messagecontent[0].lower() == '$cmyui': # cmyui command. Multipurpose information command on the guy
                 try:
@@ -623,8 +694,8 @@ async def on_message(message):
                 elif topic == 'psyqui' or topic == 'yvs':
                     await client.send_message(message.channel, "https://www.youtube.com/watch?v=wKgbDk2hXI8")
                 else:
-                    await client.send_message(message.channel, "$cmyui subcategory{topic} does not exist.."
-                        .format(topic=' ' + topic if len(topic) > 0 else ''))
+                    await send_message_formatted("error", message,
+                        "I couldn't find a subcategory by that name")
 
             elif messagecontent[0].lower() == '$faq': # FAQ command
                 try:
@@ -663,20 +734,18 @@ async def on_message(message):
                     faq_list = ''
                     i = 0
                     for x in faq_db:
-                        add_len = 16 - len(faq_db[i][1])
+                        add_len = 12 - len(faq_db[i][1])
                         spaces = ''
                         spaces += ' ' * add_len
 
                         faq_list += '{}. {}{}|| {}\n'.format(i + 1, faq_db[i][1], spaces, faq_db[i][2])
                         i += 1
 
-                    await client.send_message(message.channel,
-                                "Invalid FAQ callback{topic}."
-                                "\n\nHere is a list of available "
-                                "FAQ:\n```{faqlist}```"
-                                .format(
-                                    topic=' ' + callback if len(callback) > 0 else '',
-                                    faqlist=faq_list))
+                    await send_message_formatted("error", message,
+                        "I couldn't find a FAQ topic by that name", ["```{faqlist}```"
+                            .format(
+                                topic=' ' + callback if len(callback) > 0 else '',
+                                faqlist=faq_list)])
 
             elif messagecontent[0].lower() == '$info': # info command
                 try:
@@ -718,20 +787,18 @@ async def on_message(message):
                     info_list = ''
                     i = 0
                     for x in info_db:
-                        add_len = 16 - len(info_db[i][1])
+                        add_len = 12 - len(info_db[i][1])
                         spaces = ''
                         spaces += ' ' * add_len
 
                         info_list += '{}. {}{}|| {}\n'.format(i + 1, info_db[i][1], spaces, info_db[i][2])
                         i += 1
 
-                    await client.send_message(message.channel,
-                                "Invalid FAQ callback{topic}."
-                                "\n\nHere is a list of available "
-                                "INFO:\n```{infolist}```"
-                                .format(
-                                    topic=' ' + callback if len(callback) > 0 else '',
-                                    infolist=info_list))
+                    await send_message_formatted("error", message,
+                        "I couldn't find a FAQ topic by that name", ["```{infolist}```"
+                            .format(
+                                topic=' ' + callback if len(callback) > 0 else '',
+                                infolist=info_list)])
 
             elif messagecontent[0].lower() in ('$verify', '!verify') and message.channel.id == config['akatsuki']['verify']: # Verify command
                 if message.author.id != config['discord']['owner_id']: # Dont for cmyui, he's probably pinging @everyone to verify.
@@ -756,9 +823,8 @@ async def on_message(message):
                 await client.send_message(message.channel, embed=embed)
 
             elif messagecontent[0].lower() == '$prune' and message.author.server_permissions.manage_messages: # Prune messages
-                await client.send_message(message.channel, 
-                                        "This command has been depreciated. "
-                                        "Please use Tatsumaki's ;;prune instead.")
+                await send_message_formatted("error", message,
+                    "This command has been depreciated", ["Please use Tatsumaki's ;;prune command instead, as it is **much** more versatile."])
 
                 """
                 try:
@@ -801,8 +867,8 @@ async def on_message(message):
                         await client.send_message(message.channel,
                             "Your Discord has been sucessfully linked to your Akatsuki account.")
                     else:
-                        await client.send_message(message.channel,
-                            "You already have an account linked!")
+                        await send_message_formatted("error", message,
+                            "You already have an account linked")
                 else:
                     await client.send_message(message.channel,
                                             "Linking process initiated\n\nNext, "
