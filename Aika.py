@@ -427,9 +427,6 @@ async def on_message(message):
                         "Please use underscores in your username rather than spaces")
                 else:
                     try:
-                        processingMessage = await send_message_formatted("success", message,
-                                             "Processing request.")
-
                         gamer = requests.get('https://akatsuki.pw/api/v1/get_user?u={}'.format(username)).text
 
                         gamerInfo = json.loads(gamer)
@@ -487,6 +484,11 @@ async def on_message(message):
                                 .format(userInfo["{}".format(mode)]["total_score"]),
                                 inline=True)
 
+                        if userInfo["{}".format(mode)]["level"] is not None:
+                            embed.add_field(name="Level", value="{}"
+                                .format(userInfo["{}".format(mode)]["level"]),
+                                inline=True)
+
                         if userInfo["{}".format(mode)]["accuracy"] is not None:
                             embed.add_field(name="Accuracy", value="{}%"
                                 .format(round(userInfo["{}".format(mode)]["accuracy"], 2)),
@@ -507,13 +509,16 @@ async def on_message(message):
                                 .format(userInfo["{}".format(mode)]["replays_watched"]),
                                 inline=True)
 
+                        if userInfo["followers"] is not None:
+                            embed.add_field(name="Followers", value="{}"
+                                .format(userInfo["{}".format(mode)]["followers"]),
+                                inline=True)
+
                         await client.send_message(message.channel, embed=embed)
                     except:
                         await send_message_formatted("error", message,
                                         "either that user does not exist, or your syntax was incorrect",
                                         ["Syntax: `$stats username_spaced_like_this (-rx)`"])
-
-                    await client.delete_message(processingMessage)
 
             elif messagecontent[0].lower() == '$akatsuki': # multipurpose akatsuki info TODO: unhardcode
                 try:
