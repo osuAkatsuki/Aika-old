@@ -511,7 +511,7 @@ async def on_message(message):
 
                         if userInfo["followers"] is not None:
                             embed.add_field(name="Followers", value="{}"
-                                .format(userInfo["{}".format(mode)]["followers"]),
+                                .format(userInfo["followers"]),
                                 inline=True)
 
                         await client.send_message(message.channel, embed=embed)
