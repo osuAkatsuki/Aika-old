@@ -97,6 +97,8 @@ async def send_message_formatted(type, message, first_line, string_array=[]):
 
     Example in use:      https://nanahira.life/qxb2f7j0EvrR7DftvHfBxosXTvtL5s9u.png
 
+    :param type:         The "type" of the response.
+                         I.E is the message supposed to signify an error?
     :param message:      The message object provided from discord.
     :param first_line:   The first line of the response. The only one required.
     :param string_array: The array of strings to follow. Optional.
@@ -111,7 +113,7 @@ async def send_message_formatted(type, message, first_line, string_array=[]):
         emoticon = type
 
     # Build the response string.
-    resp =  "{emoticon} **{author_name}**, {first_line}.".format(emoticon=emoticon, author_name=message.author.name, first_line=first_line)
+    resp =  "{emoticon} **{author_name}**, {first_line}.\n".format(emoticon=emoticon, author_name=message.author.name, first_line=first_line)
     for line in string_array:
         resp += "        {string}\n".format(string=line)
 
@@ -523,7 +525,6 @@ async def on_message(message):
                     await send_message_formatted("✨", message,
                         "Please enter a topic."
                         "There are quite a few, so they will not be listed")
-
                     return
 
                 elif topic == 'discord':
@@ -567,76 +568,111 @@ async def on_message(message):
                 except:
                     position = ''
 
+                resp_array = []
+                emoticon = "success"
+
                 if position == '' or position == 'help':
-                    await client.send_message(message.channel,
-                                            "Please use a role name as an arguement. "
-                                            "Eg: $apply bn, or $apply beatmap_nominator")
+                    resp = \
+                        "Please use a role name as an arguement"
+
+                    resp_array = \
+                        ["Eg: $apply bn, or $apply beatmap_nominator"]
+
+                    emoticon = "✨"
+
                 elif 'admin' in position or position == 'commuinity_manager' or position == 'communitymanager':
-                    await client.send_message(message.channel,
-                                            "You cannot apply for this role. "
-                                            "Admins are handpicked from the community "
-                                            "by cmyui himself :o")
+                    resp = \
+                        "You cannot apply for this role"
+
+                    resp_array = \
+                        ["Admins are always handpicked from " \
+                        "lower roles or from the community when " \
+                        "we find a member we believe would " \
+                        "be a good fit for the role."]
+
+                    emoticon = "error"
+
                 elif 'mod' in position:
-                    await client.send_message(message.channel,
-                                            "You cannot apply for this role. "
-                                            "Mods are usually handpicked from "
-                                            "lower roles (such as BN, Akatsuki "
-                                            "People, Support Team) if we believe "
-                                            "they would be better suited with some "
-                                            "fancy new powers.")
+                    resp = \
+                        "You cannot apply for this role"
+
+                    resp_array = \
+                        ["Mods are usually handpicked from " \
+                        "lower roles (such as BN, Support Team).",
+                        "This usually happens when we believe " \
+                        "they would be better suited with some " \
+                        "fancy new powers."]
+
+                    emoticon = "error"
 
                 elif 'beat' in position or position == 'bn':
-                    await client.send_message(message.channel,
-                                            "BNs are currently in high demand! If "
-                                            "you\'re interested in this position "
-                                            "(and are quite active on the server, "
-                                            "this will be checked), feel free to "
-                                            "apply here! https://goo.gl/forms/XyLMtFlaA6mHAiIB3")
+                    resp = \
+                        "BNs are currently in high demand!"
+
+                    resp_array = \
+                        ["If you're interested in this position " \
+                         "(and are quite active on the server, " \
+                         "this will be checked), feel free to " \
+                         "apply!",
+                         "https://goo.gl/forms/XyLMtFlaA6mHAiIB3"]
 
                 elif 'support' in position:
-                    await client.send_message(message.channel,
-                                            "To be considered for the support team, "
-                                            "you will need to be quite active in the "
-                                            "<#365413867167285249> channel already. We "
-                                            "use this to ensure that you\'re the right "
-                                            "kind of person for the job. Most likely, "
-                                            "if we see you being active, we will offer "
-                                            "you the position if you seem to be a good pick.")
+                    resp = \
+                        "To be considered for the support team, " \
+                        "you will need to be quite active in the " \
+                        "<#365413867167285249> channel already"
+                    
+                    resp_array = \
+                        ["We use this to ensure that you\'re the right " \
+                        "kind of person for the job.",
+                        "Most likely, if we see you being active, we will offer " \
+                        "you the position if you seem to be a good pick."]
                 
-                #elif 'akatsuki' in position or 'people' in position or 'uploader' in position:
-                #    await client.send_message(message.channel,
-                #                            "Looking to be an uploader?\n\nThere are "
-                #                            "actually some PC requirements for this, "
-                #                            "but they\'re really nothing special.\n- "
-                #                            "PC Capable of recording 1080p60fps videos "
-                #                            "without dropping below 4.2ms frametime (240fps)."
-                #                            "\n\nYea, that\'s it! haha. Even better if you can "
-                #                            "do 4K, or have editing capabilities.\n\nJust shoot "
-                #                            "<@285190493703503872> a DM to apply for this role.")
-                
+                elif 'akatsuki' in position or 'people' in position or 'uploader' in position:
+                    resp = \
+                        "You cannot apply for this role"
 
-                elif position == 'premium' or position == 'donor' or position == 'donator' or position == 'supporter':
-                    await client.send_message(message.channel,
-                                            "This isn\'t a role you can apply for, "
-                                            "silly!\n\nSupporter: https://akatsuki.pw"
-                                            "/donate\nPremium: https://akatsuki.pw/premium"
-                                            "\n\nThanks for considering to support the "
-                                            "server, though!\nIt means a lot!'")
+                    resp_array = \
+                        ["Due to our past experiences with picking " \
+                        "members from the community for this role, " \
+                        "we have decided to no longer make it a public role.",
+                        "Members of the Akatsuki people role are handpicked " \
+                        "by cmyui himself."]
+
+                    emoticon = "error"
+
+                elif position == 'premium' or position.startswith('don') or position == 'supporter':
+                    resp = \
+                        "This isn\'t a role you can apply for, silly"
+                    
+                    resp_array = \
+                        ["Supporter: https://akatsuki.pw/donate",
+                        "Premium: https://akatsuki.pw/premium",
+                        "Thanks for considering to support the " \
+                        "server, though!",
+                        "**It means a lot!**"]
 
                 elif 'verif' in position:
-                    await client.send_message(message.channel,
-                                            "The verified role in-game is for players "
-                                            "who we essentially trust (for lack of "
-                                            "better wording). These players have either "
-                                            "been verified through liveplays, or maybe "
-                                            "have even met a staff member IRL to prove "
-                                            "their legitimacy (rare, but there are 10+)."
-                                            "\n\nYou cannot apply for verified, as it is "
-                                            "something we will look to give you, rather "
-                                            "than vice versa :^)")
+                    resp = \
+                        "The verified role in-game is for players " \
+                        "who we essentially trust (for lack of " \
+                        "better wording)."
+                    
+                    resp_array = \
+                        ["These players have either " \
+                        "been verified through liveplays, or maybe " \
+                        "have even met a staff member IRL to prove " \
+                        "their legitimacy (rare, but there are 10+).",
+                        "",
+                        "You cannot apply for verified, as it is " \
+                        "something we will look to give you, rather " \
+                        "than vice versa :^)"]
                 else:
                     await send_message_formatted("error", message,
                         "I couldn't find a position by that name")
+                    return
+                
+                await send_message_formatted(emoticon, message, resp, resp_array)
 
             elif messagecontent[0].lower() == '$cmyui': # cmyui command. Multipurpose information command on the guy
                 try:
@@ -644,58 +680,65 @@ async def on_message(message):
                 except:
                     topic = ''
 
+                resp_array = []
+
                 if topic == '' or topic == 'help':
-                    await client.send_message(message.channel,
-                                            "The $cmyui command is just a dictionary "
-                                            "of stuff cmyui has saved in it. Some public "
-                                            "ones:\n\n$cmyui area - cmyui\'s area\n$cmyui "
-                                            "skin - cmyui\'s skins\n$cmyui settings - "
-                                            "cmyui\'s settings")
-
-                elif topic == 'area':
-                    await client.send_message(message.author,
-                                            "Wacom CTH-480 (CTL470 Pen)\n\n100mm width "
-                                            "(forced proportions) [16:9 screen, making it "
-                                            "1.778:1]\nX : 0mm\nY : 57.79mm")
-
-                    await client.send_message(message.channel,
-                                            "The response has been sent to you via DM.")
+                    resp = \
+                    "The $cmyui command is just a dictionary of stuff cmyui has saved in it"
+                    emoticon = "✨"
 
                 elif topic == 'settings':
-                    await client.send_message(message.author,
-                                            "1.0x sens, video and storyboard off, dim "
-                                            "100%, fullscreen 1920x1080@240hz, snaking "
-                                            "sliders, cursor size 0.60-0.84, hit lighting "
-                                            "off, raw input off.")
+                    resp = \
+                    "Here are cmyui's normal osu! settings"
 
-                    await client.send_message(message.channel,
-                                            'The response has been sent to you via DM.')
-                elif topic == 'skin':
-                    await client.send_message(message.author,
-                                            "**Here are some of the skins cmyui uses "
-                                            "frequently**\n\nCurrent main skin "
-                                            "(Abyssal \2018-15-06): https://i.namir.in/Asi.osk"
-                                            "\n\nOther skins:"
-                                            "\ncmyui v5.3: https://i.namir.in/6CF.osk"
-                                            "\ncmyui v6.0 (Blue Crystal v2.1): https://i.namir.in/JS9.osk"
-                                            "\ncmyui v7.0: https://i.namir.in/YP7.osk"
-                                            "\ncmyui v9.4: https://i.namir.in/jHW.osk"
-                                            "\nAlacrity 1.2: https://i.namir.in/4Oo.osk"
-                                            "\ng3p: https://i.namir.in/Q1L.osk"
-                                            "\nJustice: https://i.namir.in/b1u.osk"
-                                            "\nCookiezi 32: https://i.namir.in/y8v.osk"
-                                            "\nCookiezi 35: https://i.namir.in/y8v.osk"
-                                            "\n\nIf any of the links are not working, "
-                                            "please tell cmyui#0425 :)")
+                    resp_array = \
+                    ["",
+                     "**osu! Settings**",
+                     "✅ 1.0x Sensitivity",
+                     "❌ Video & Storyboard",
+                     "💯 Background Dim",
+                     "",
+                     "**Peripherals**",
+                     "🖊 Wacom CTH-480 (CTL470 Pen) Area: https://nanahira.life/Z1BVsPqqvsi8el7SjiCPQVV64zgraHw1.png",
+                     "⌨ CM Masterkeys Pro L (Cherry MX Browns)",
+                     "💻 1: Acer 240hz | 2: Asus 144hz | 3: Asus 60hz",
+                     "🖥 CPU: i7-8700 | GPU: GTX 1070Ti | 16GB DDR4 2444MHz"
+                     ]
 
-                    await client.send_message(message.channel,
-                                            "The response has been sent to you via DM.")
+                elif topic.startswith('skin'):
+                    resp = \
+                    "Here are some of the skins cmyui uses frequently"
+
+                    resp_array = \
+                    ["",
+                     "**Current Main Skin(s)**",
+                     "(Abyssal 2018-15-06): https://i.namir.in/Asi.osk",
+                     "",
+                     "**Other skins**",
+                     "cmyui v5.3: https://i.namir.in/6CF.osk",
+                     "cmyui v6.0 (Blue Crystal v2.1): https://i.namir.in/JS9.osk",
+                     "cmyui v7.0: https://i.namir.in/YP7.osk",
+                     "cmyui v9.4: https://i.namir.in/jHW.osk",
+                     "Alacrity 1.2: https://i.namir.in/4Oo.osk",
+                     "g3p: https://i.namir.in/Q1L.osk",
+                     "Justice: https://i.namir.in/b1u.osk",
+                     "Cookiezi 32: https://i.namir.in/y8v.osk",
+                     "Cookiezi 35: https://i.namir.in/y8v.osk",
+                     "",
+                     "**If any of the links are not working, "
+                     "please tell cmyui#0425 :)**"]
 
                 elif topic == 'psyqui' or topic == 'yvs':
-                    await client.send_message(message.channel, "https://www.youtube.com/watch?v=wKgbDk2hXI8")
+                    resp = \
+                    "https://www.youtube.com/watch?v=wKgbDk2hXI8"
+
                 else:
                     await send_message_formatted("error", message,
                         "I couldn't find a subcategory by that name")
+                    return
+
+                # TODO: send this to author rather than channel..
+                await send_message_formatted("✨", message, resp, resp_array)
 
             elif messagecontent[0].lower() == '$faq': # FAQ command
                 try:
@@ -864,18 +907,20 @@ async def on_message(message):
                                     """,
                                     [message.author.id])
 
-                        await client.send_message(message.channel,
-                            "Your Discord has been sucessfully linked to your Akatsuki account.")
+                        await send_message_formatted("success", message,
+                            "Your Discord has been sucessfully linked to your Akatsuki account.",
+                            ["Your roles should now be synced."])
                     else:
                         await send_message_formatted("error", message,
                             "You already have an account linked")
                 else:
-                    await client.send_message(message.channel,
-                                            "Linking process initiated\n\nNext, "
-                                            "please use the following command in "
-                                            "#osu, or in a DM with 'Aika' ingame "
-                                            "(in-game in the osu! client).\n`>> "
-                                            "!linkdiscord {}`".format(message.author.id))
+
+                    await send_message_formatted("✨", message,
+                        "Linking process initiated"
+                        ["Next, please use the following command in #osu, "
+                         "or in a DM with 'Aika' ingame.",
+                         "(in-game in the osu! client).",
+                         ">> `!linkdiscord {}`".format(message.author.id)])
 
 print(Fore.CYAN + "\nLogging in with credentials: {}".format('*' * len(config['discord']['token'])))
 client.run(str(config['discord']['token']))
