@@ -920,7 +920,7 @@ async def on_message(message):
                 else:
 
                     await send_message_formatted("✨", message,
-                        "Linking process initiated"
+                        "Linking process initiated",
                         ["Next, please use the following command in #osu, "
                          "or in a DM with 'Aika' ingame.",
                          "(in-game in the osu! client).",
