@@ -403,7 +403,6 @@ async def on_message(message):
 
                 elif messagecontent[0].lower() == '$d':
                     config.set('default', 'debug', '{}'.format('1' if config['default']['debug'] == '0' else 0))
-                    print('1' if config['default']['debug'] == '0' else 0)
 
                     await send_message_formatted("✨", message,
                         "Debug: {}"
@@ -438,7 +437,7 @@ async def on_message(message):
                         
                         userInfo = json.loads(resp)
 
-                        debug_print("{}\n\n{}".format(resp, userInfo))
+                        debug_print("Raw JSON:\n{}\n\nMinified:\n{}".format(resp, userInfo))
                         if userInfo["favourite_mode"] == 0: # osu!
                             mode = 'std'
                             modeNice = 'osu!'
