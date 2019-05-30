@@ -486,7 +486,7 @@ async def on_message(message):
 
                         if userInfo["{}".format(mode)]["level"] is not None:
                             embed.add_field(name="Level", value="{}"
-                                .format(userInfo["{}".format(mode)]["level"]),
+                                .format(round(userInfo["{}".format(mode)]["level"], 2)),
                                 inline=True)
 
                         if userInfo["{}".format(mode)]["accuracy"] is not None:
