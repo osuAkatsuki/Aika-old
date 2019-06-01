@@ -54,7 +54,8 @@ filters       = ['pp.me', 'paypal.me', 'yozo', 'y0zo', 'yoz0', 'y0z0',
                  'ainu', 'okamura', 'kotorikku', 'kurikku', 'kawata',
                  'ryusei', 'ryu-sei', 'enjuu', 'verge', 'katori',
                  'osu-thailand', 'discord.gg/', 'gatari', 'hidesu',
-                 'hiragi', 'asuki', 'mikoto', 'homaru', 'awasu']
+                 'hiragi', 'asuki', 'mikoto', 'homaru', 'awasu',
+                 'lsd', 'dmt', 'shrooms']
 
 # A list of message (sub)strings that we will use to deem
 # a quantifiable value for the "quality" of a message.
