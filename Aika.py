@@ -387,23 +387,25 @@ async def on_message(message):
                             "No logs found on the specified user")
 
                 elif messagecontent[0].lower() == '$r':
+                    annmsg = ' '.join(messagecontent[1:]).strip()
+
+                    processingMessage = await send_message_formatted("success", message,
+                                            "Processing request.")
+
                     try:
-                        annmsg = ' '.join(messagecontent[1:]).strip()
-
-                        processingMessage = await send_message_formatted("success", message,
-                                             "Processing request.")
-
                         params = urlencode({"k": config["akatsuki"]["apikey"], "to": "#admin", "msg": annmsg})
                         requests.get("http://{}:5001/api/v1/fokabotMessage?{}".format(config["akatsuki"]["ip"], params))
-
-                        await send_message_formatted("success", message,
-                            "Successfully executed: `{}` on Akatsuki"
-                            .format(annmsg))
-
-                        await client.delete_message(processingMessage)
                     except:
                         await send_message_formatted("error", message,
                             "Something went wrong during the request")
+
+                        return
+
+                    await send_message_formatted("success", message,
+                        "Successfully executed: `{}` on Akatsuki"
+                        .format(annmsg))
+
+                    await client.delete_message(processingMessage)
 
                 elif messagecontent[0].lower() == '$d':
                     config.set('default', 'debug', '{}'.format('1' if config['default']['debug'] == '0' else 0))
