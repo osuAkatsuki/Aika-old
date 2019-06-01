@@ -15,18 +15,18 @@ import redis
 import time
 from datetime import datetime
 
-# Initialize colorama
+# Initialize colorama.
 init(autoreset=True)
 
-# Discord Client
+# Discord Client.
 client = discord.Client()
 
-# Configuration
+# Configuration.
 config = configparser.ConfigParser()
 config.sections()
 config.read('config.ini')
 
-# Connect to redis
+# Connect to redis.
 r = redis.Redis(host='localhost', port=6379, db=0)
 
 # MySQL
@@ -121,7 +121,7 @@ async def send_message_formatted(type, message, first_line, string_array=[]):
     await client.send_message(message.channel, resp)
 
 
-# Startup, after login action
+# Startup, after login action.
 @client.event
 async def on_ready():
     print(Fore.GREEN + 'Authentication Successful.\n{} | {}\n--------------------------\n'
@@ -129,7 +129,7 @@ async def on_ready():
 
     debug_print("Debug enabled.")
 
-    # Send an announcement that the bots been started in Akatsuki's #general (if debug)
+    # Send an announcement that the bots been started in Akatsuki's #general (if debug).
     if int(config['default']['announce_online']) == 1:
         announceOnline = discord.Embed(title="Aika v{versionNum} Online"
                                         .format(versionNum=version),
@@ -141,28 +141,28 @@ async def on_ready():
         announceOnline.set_thumbnail(url='http://akatsuki.pw/static/characters/quaver.png')
         await client.send_message(client.get_channel(config['akatsuki']['general']), embed=announceOnline)
 
-# On exceptions, don't make the whole thing die :)
+# On exceptions, don't make the whole thing die :).
 @client.event
 async def on_error(event, *args):
     print(Fore.RED + "\n\nAn exception has occurred.\n\nError: {}\nargs: {}\n\nTraceback: {}\n"
         .format(event, *args, logging.warning(traceback.format_exc())))
 
-# On message event
+# On message event.
 @client.event
 async def on_message(message):
     client.wait_until_ready()
 
-    # Message sent in #player-reporting, move to #reports
+    # Message sent in #player-reporting, move to #reports.
     if message.channel.id == config['akatsuki']['player_reporting']: 
-        await client.delete_message(message) # Delete the message from #player-reporting
+        await client.delete_message(message) # Delete the message from #player-reporting.
 
-        # Prepare, and send the report in #reports
+        # Prepare, and send the report in #reports.
         embed = discord.Embed(title="New report recieved.", description='** **', color=0x00ff00)
         embed.set_thumbnail(url=akatsuki_logo)
         embed.add_field(name="Report content", value=message.content, inline=True)
         embed.add_field(name="Author", value=message.author.mention, inline=True)
 
-        # Prepare, and send the report to the reporter
+        # Prepare, and send the report to the reporter.
         embedPrivate = discord.Embed(title="Thank you for the player report.",
                                     description="We will review the report shortly."
                                     .format(message.content), color=0x00ff00)
@@ -170,17 +170,19 @@ async def on_message(message):
         embedPrivate.add_field(name="Report content", value=message.content, inline=True)
         embedPrivate.set_thumbnail(url=akatsuki_logo)
 
-        if not message.content.startswith('$'): # Do not pm or link to #reports if it is a command
+        if not message.content.startswith('$'): # Do not pm or link to #reports if it is a command.
             await client.send_message(message.author, embed=embedPrivate)
             await client.send_message(client.get_channel(config['akatsuki']['reports']), embed=embed)
 
-            # Print result to console
+            # Print result to console.
             print(Fore.CYAN + "Report recieved. It has been moved to #reports.")
 
-    # Request sent in rank_requests, add base thumbs
+    # Request sent in rank_requests.
     elif message.channel.id == config['akatsuki']['rank_requests']:
+        # Add base thumbs to all requests.
         await client.add_reaction(message, "👍")
         await client.add_reaction(message, "👎")
+        return
 
     elif message.author != client.user:
 
@@ -197,7 +199,7 @@ async def on_message(message):
             properly_formatted = message.content[0].isupper() and message.content[messagelen - 1] in (".", "?", "!")
 
 
-        # Message sent in #help, log to db
+        # Message sent in #help, log to db.
         if message.channel.id == config['akatsuki']['help']:
             if any(x in message.content.lower() for x in profanity):
                 quality = 0
@@ -228,7 +230,7 @@ async def on_message(message):
                             int(time.time()),
                             quality])
 
-        # Checks for things in message
+        # Checks for things in message.
         if any(x in message.content.lower() for x in email_checks) and message.server.id == config['akatsuki']['server_id']:
             if "badge" not in message.content.lower():
                 await client.send_message(message.author,
@@ -279,44 +281,44 @@ async def on_message(message):
             print(Fore.MAGENTA + "Filtered message | '{}: {}'"
                 .format(message.author, message.content))
 
-        # Private messages
+        # Private messages.
         if message.server is None:
                 print(Fore.YELLOW + Style.BRIGHT + "{} [{}] {}: {}"
                     .format(message.timestamp, message.channel,
                             message.author, message.content))
 
-        # When you are pinged
+        # When you are pinged.
         elif config['discord']['owner_id'] in message.content:
                 print(Fore.CYAN + Style.BRIGHT + "{} [{} ({})] {}: {}"
                     .format(message.timestamp, message.server, message.channel,
                             message.author, message.content))
 
-        # When your username is mentioned (either actual one, or custom set in configuration)
+        # When your username is mentioned (either actual one, or custom set in configuration).
         elif (config['discord']['username'] in message.content.lower() \
         and len(config['discord']['username']) > 1):
                 print(Fore.GREEN + Style.BRIGHT + "{} [{} ({})] {}: {}"
                     .format(message.timestamp, message.server, message.channel,
                             message.author, message.content))
 
-        # The server is akatsuki
+        # The server is akatsuki.
         elif message.server.id == config['akatsuki']['server_id']:
             print(Fore.BLUE + Style.BRIGHT + "{} [{} ({})] {}: {}"
                 .format(message.timestamp, message.server, message.channel,
                         message.author, message.content))
 
-        # Regular message
+        # Regular message.
         else:
             print("{} [{} ({})] {}: {}"
                 .format(message.timestamp, message.server, message.channel,
                         message.author, message.content))
 
-        if message.content.startswith('$') or message.content.startswith('!verify'): # The message is a command
+        if message.content.startswith('$') or message.content.startswith('!verify'): # The message is a command.
 
-            # First of all, make a simpler way to deal with message content so u don't develop stage 4 cancer
+            # First of all, make a simpler way to deal with message content so u don't develop stage 4 cancer.
             messagecontent = message.content.split(' ')
 
-            # TODO: Process commands based on discord perms
-            if message.author.id == config['discord']['owner_id']: # Process owner commands
+            # TODO: Process commands based on discord perms.
+            if message.author.id == config['discord']['owner_id']: # Process owner commands.
                 """
                 Process owner commands.
 
@@ -324,9 +326,9 @@ async def on_message(message):
                 """
 
                 if messagecontent[0].lower() == '$game':
-                    # Change your discord users status / game
-                    game = ' '.join(messagecontent[1:]).strip() # Get the game
-                    if game: # Game also changed
+                    # Change your discord users status / game.
+                    game = ' '.join(messagecontent[1:]).strip() # Get the game.
+                    if game: # Game also changed.
                         """
                         game Variables:
                         name = name of the game
@@ -416,7 +418,7 @@ async def on_message(message):
             """
 
             if messagecontent[0].lower() == '$user' \
-            or messagecontent[0].lower() == '$stats': # Akatsuki userinfo command
+            or messagecontent[0].lower() == '$stats': # Akatsuki userinfo command.
                 username = messagecontent[1]
                 try:
                     relax = messagecontent[2]
@@ -522,7 +524,7 @@ async def on_message(message):
                                         "either that user does not exist, or your syntax was incorrect",
                                         ["Syntax: `$stats username_spaced_like_this (-rx)`"])
 
-            elif messagecontent[0].lower() == '$akatsuki': # multipurpose akatsuki info TODO: unhardcode
+            elif messagecontent[0].lower() == '$akatsuki': # Multipurpose akatsuki info command. TODO: unhardcode
                 try:
                     topic = messagecontent[1].lower()
                 except:
@@ -569,7 +571,7 @@ async def on_message(message):
                 
                 await send_message_formatted("success", message, resp)
 
-            elif messagecontent[0].lower() == '$apply': # multipurpose staff application commands
+            elif messagecontent[0].lower() == '$apply': # Multipurpose staff application commands.
                 try:
                     position = messagecontent[1].lower()
                 except:
@@ -681,7 +683,7 @@ async def on_message(message):
 
                 await send_message_formatted(emoticon, message, resp, resp_array)
 
-            elif messagecontent[0].lower() == '$cmyui': # cmyui command. Multipurpose information command on the guy
+            elif messagecontent[0].lower() == '$cmyui': # cmyui command; multipurpose information command on the guy.
                 try:
                     topic = messagecontent[1].lower()
                 except:
@@ -746,7 +748,7 @@ async def on_message(message):
                 # TODO: send this to author rather than channel..
                 await send_message_formatted("✨", message, resp, resp_array)
 
-            elif messagecontent[0].lower() == '$faq': # FAQ command
+            elif messagecontent[0].lower() == '$faq': # FAQ command.
                 try:
                     callback = messagecontent[1].lower()
                 except:
@@ -796,7 +798,7 @@ async def on_message(message):
                                 topic=' ' + callback if len(callback) > 0 else '',
                                 faqlist=faq_list)])
 
-            elif messagecontent[0].lower() == '$info': # info command
+            elif messagecontent[0].lower() == '$info': # Info command.
                 try:
                     callback = messagecontent[1].lower()
                 except:
@@ -849,13 +851,13 @@ async def on_message(message):
                                 topic=' ' + callback if len(callback) > 0 else '',
                                 infolist=info_list)])
 
-            elif messagecontent[0].lower() in ('$verify', '!verify') and message.channel.id == config['akatsuki']['verify']: # Verify command
+            elif messagecontent[0].lower() in ('$verify', '!verify') and message.channel.id == config['akatsuki']['verify']: # Verify command.
                 if message.author.id != config['discord']['owner_id']: # Dont for cmyui, he's probably pinging @everyone to verify.
                     verified = discord.utils.get(message.server.roles, name="Members")
                     await client.add_roles(message.author, verified)
                     await client.delete_message(message)
 
-            elif messagecontent[0].lower() == '$botinfo': # Bot info command
+            elif messagecontent[0].lower() == '$botinfo': # Bot info command.
                 embed = discord.Embed(title="Why hello! I'm Aika.", description='** **', color=0x00ff00)
                 embed.set_thumbnail(url=aika_pfp)
                 embed.add_field(
@@ -871,7 +873,7 @@ async def on_message(message):
                 embed.set_footer(icon_url='', text='Good vibes <3')
                 await client.send_message(message.channel, embed=embed)
 
-            elif messagecontent[0].lower() == '$prune' and message.author.server_permissions.manage_messages: # Prune messages
+            elif messagecontent[0].lower() == '$prune' and message.author.server_permissions.manage_messages: # Prune messages.
                 #await send_message_formatted("error", message,
                 #    "This command has been depreciated", ["Please use Tatsumaki's ;;prune command instead, as it is **much** more versatile."])
 
