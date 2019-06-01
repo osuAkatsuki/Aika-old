@@ -692,7 +692,6 @@ async def on_message(message):
                 if topic == '' or topic == 'help':
                     resp = \
                     "The $cmyui command is just a dictionary of stuff cmyui has saved in it"
-                    emoticon = "✨"
 
                 elif topic == 'settings':
                     resp = \
