@@ -322,17 +322,18 @@ async def on_message(message):
 
                 Only the config['discord']['owner_id'] has access to these.
                 """
+
                 if messagecontent[0].lower() == '$game':
                     # Change your discord users status / game
                     game = ' '.join(messagecontent[1:]).strip() # Get the game
                     if game: # Game also changed
-
                         """
                         game Variables:
                         name = name of the game
                         url = link for the game (usually for streaming probably)
                         type = boolean to show whether streaming or not
                         """
+
                         await client.change_presence(
                             game=discord.Game(name=game, url='https://akatsuki.pw/', type=0))
 
@@ -413,6 +414,7 @@ async def on_message(message):
 
             All users can access these commands.
             """
+
             if messagecontent[0].lower() == '$user' \
             or messagecontent[0].lower() == '$stats': # Akatsuki userinfo command
                 username = messagecontent[1]
@@ -438,6 +440,7 @@ async def on_message(message):
                         userInfo = json.loads(resp)
 
                         debug_print("Raw JSON:\n{}\n\nMinified:\n{}".format(resp, userInfo))
+
                         if userInfo["favourite_mode"] == 0: # osu!
                             mode = 'std'
                             modeNice = 'osu!'
@@ -870,10 +873,10 @@ async def on_message(message):
                 await client.send_message(message.channel, embed=embed)
 
             elif messagecontent[0].lower() == '$prune' and message.author.server_permissions.manage_messages: # Prune messages
-                await send_message_formatted("error", message,
-                    "This command has been depreciated", ["Please use Tatsumaki's ;;prune command instead, as it is **much** more versatile."])
+                #await send_message_formatted("error", message,
+                #    "This command has been depreciated", ["Please use Tatsumaki's ;;prune command instead, as it is **much** more versatile."])
 
-                """
+                # TODO: unspaghetti
                 try:
                     amtMessages = messagecontent[1]
                 except:
@@ -882,10 +885,9 @@ async def on_message(message):
                 if str(amtMessages).isdigit() and int(amtMessages) <= 1000:
                     deleted = await client.purge_from(message.channel, limit=int(amtMessages) + 1)
                     message_count = len(deleted) - 1
-                    await client.send_message(message.channel, 'Deleted {messages} message{plural}.'.format(messages=message_count, plural='s' if message_count > 1 else ''))
+                    await client.send_message_formatted("success", message, 'Successfully pruned {messages} message{plural}.'.format(messages=message_count, plural='s' if message_count > 1 else ''))
                 else:
-                    await client.send_message(message.channel, 'Incorrect syntax. Please use: $prune <1 - 1000>.')
-                """
+                    await client.send_message_formatted("error", message, 'It seems you used the command syntax improperly', ['Correct syntax: `$prune <messagecount (limit: 1000)>`.'])
 
             elif messagecontent[0].lower() == '$linkosu':
                 cursor = db.cursor()
