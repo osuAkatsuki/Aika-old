@@ -886,7 +886,7 @@ async def on_message(message):
                 if str(amtMessages).isdigit() and int(amtMessages) <= 1000:
                     deleted = await client.purge_from(message.channel, limit=int(amtMessages) + 1)
                     message_count = len(deleted) - 1
-                    await send_message_formatted("success", message, 'Successfully pruned {messages} message{plural}.'.format(messages=message_count, plural='s' if message_count > 1 else ''))
+                    await send_message_formatted("success", message, 'Successfully pruned {messages} message{plural}'.format(messages=message_count, plural='s' if message_count > 1 else ''))
                 else:
                     await send_message_formatted("error", message, 'It seems you used the command syntax improperly', ['Correct syntax: `$prune <messagecount (limit: 1000)>`.'])
 
