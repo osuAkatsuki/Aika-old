@@ -389,8 +389,7 @@ async def on_message(message):
                 elif messagecontent[0].lower() == '$r':
                     annmsg = ' '.join(messagecontent[1:]).strip()
 
-                    processingMessage = await send_message_formatted("success", message,
-                                            "Processing request.")
+                    processingMessage = await client.send_message("Processing request..")
 
                     try:
                         params = urlencode({"k": config["akatsuki"]["apikey"], "to": "#admin", "msg": annmsg})
