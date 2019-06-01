@@ -434,7 +434,7 @@ async def on_message(message):
 
                         resp = requests.get('https://akatsuki.pw/api/v1/users/{rx}full?id={userID}'
                             .format(rx="rx" if relax == '-rx' else '', userID=userID), timeout=3).text
-                        
+
                         userInfo = json.loads(resp)
 
                         debug_print("Raw JSON:\n{}\n\nMinified:\n{}".format(resp, userInfo))
@@ -625,13 +625,13 @@ async def on_message(message):
                         "To be considered for the support team, " \
                         "you will need to be quite active in the " \
                         "<#365413867167285249> channel already"
-                    
+
                     resp_array = \
                         ["We use this to ensure that you\'re the right " \
                         "kind of person for the job.",
                         "Most likely, if we see you being active, we will offer " \
                         "you the position if you seem to be a good pick."]
-                
+
                 elif 'akatsuki' in position or 'people' in position or 'uploader' in position:
                     resp = \
                         "You cannot apply for this role"
@@ -648,7 +648,7 @@ async def on_message(message):
                 elif position == 'premium' or position.startswith('don') or position == 'supporter':
                     resp = \
                         "This isn\'t a role you can apply for, silly"
-                    
+
                     resp_array = \
                         ["Supporter: https://akatsuki.pw/donate",
                         "Premium: https://akatsuki.pw/premium",
@@ -661,7 +661,7 @@ async def on_message(message):
                         "The verified role in-game is for players " \
                         "who we essentially trust (for lack of " \
                         "better wording)."
-                    
+
                     resp_array = \
                         ["These players have either " \
                         "been verified through liveplays, or maybe " \
@@ -675,7 +675,7 @@ async def on_message(message):
                     await send_message_formatted("error", message,
                         "I couldn't find a position by that name")
                     return
-                
+
                 await send_message_formatted(emoticon, message, resp, resp_array)
 
             elif messagecontent[0].lower() == '$cmyui': # cmyui command. Multipurpose information command on the guy
