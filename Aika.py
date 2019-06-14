@@ -651,7 +651,7 @@ async def on_message(message):
                     # Add the map to the embed.
                     # This is slowly becoming insanity
                     embed.add_field(
-                        name="", # :crab:
+                        name="**", # :crab:
                         value="{i}. [{song_name}](https://akatsuki.pw/b/{beatmap_id}) ({star_rating}★) {mods_readable}\nScore: {score}\nPP: {pp}\nCombo: {combo_achieved}/{max_combo}x - [{count300}/{count100}/{count50}/{countmiss}]\nDate achieved: {date}" \
                         .format(
                             i              = i,
