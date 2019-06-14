@@ -627,6 +627,8 @@ async def on_message(message):
                 for score in resp[0]:
                     i = 1
 
+                    debug_print(score)
+
                     # Get some basic beatmapdata for the map.
                     # Used: title, difficultyrating.
                     _beatmap = requests.get("https://akatsuki.pw/api/get_beatmaps?b={beatmap_id}"
