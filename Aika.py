@@ -634,7 +634,7 @@ async def on_message(message):
                     # This some shit right here..
                     #time_score = humanize.naturaltime(time.time() - score["date"])
 
-                    field_name = "{i}. [{song_name}](https://akatsuki.pw/b/{beatmap_id}) ({star_rating}★) {mods}"
+                    field_name = "{i}. [{song_name}](https://akatsuki.pw/b/{beatmap_id}) ({star_rating}★) {mods}" \
                         .format(i=i, song_name=beatmap["title"], beatmap_id=beatmap_id,
                             star_rating=beatmap["difficultyrating"],
                             mods=readableMods(score[enabled_mods]))
