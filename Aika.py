@@ -658,7 +658,7 @@ async def on_message(message):
                             song_name      = beatmap["title"],
                             beatmap_id     = score["beatmap_id"],
                             star_rating    = beatmap["difficultyrating"],
-                            mods_readable  = readableMods(int(score["enabled_mods"]))
+                            mods_readable  = readableMods(int(score["enabled_mods"])),
                             score          = score["score"],
                             pp             = score["pp"],
                             combo_achieved = score["maxcombo"],
