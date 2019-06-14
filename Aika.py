@@ -602,7 +602,7 @@ async def on_message(message):
                 _user = requests.get('https://akatsuki.pw/api/v1/get_user?u={}'.format(username)).text
                 user = json.loads(_user)
 
-                userID = int(gamerInfo[0]["user_id"])
+                userID = int(user[0]["user_id"])
 
                 # Perform the request using the username provided and minify
                 # it into the "resp" variable. Temp: "_resp".
