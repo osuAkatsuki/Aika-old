@@ -603,7 +603,8 @@ async def on_message(message):
                     gamemode = 3
                     gamemode_string = "osu!mania"
                 else:
-                    return "Please enter a valid gamemode (std, ctb, taiko, mania)."
+                    await send_message_formatted("error", message, "please enter a valid gamemode.", ["Options: std, ctb, taiko, mania."])
+                    return
 
                 # Perform a request to fetch basic user data and minify
                 # it into the "user" variable. Temp: "_user".
@@ -652,12 +653,14 @@ async def on_message(message):
                     # This is slowly becoming insanity
                     embed.add_field(
                         name="**", # :crab:
-                        value="{i}. [{song_name}](https://akatsuki.pw/b/{beatmap_id}) ({star_rating}★) {mods_readable}\nScore: {score}\nPP: {pp}\nCombo: {combo_achieved}/{max_combo}x - [{count300}/{count100}/{count50}/{countmiss}]\nDate achieved: {date}" \
+                        value="**{i}. [{artist} - {song_name} \[{diff_name}\]](https://akatsuki.pw/b/{beatmap_id}) ({star_rating}★) {mods_readable}**\n**Score**: {score}\n**PP**: {pp}\n**Combo**: {combo_achieved}/{max_combo}x - [{count300}/{count100}/{count50}/{countmiss}]\n**Date achieved**: {date}" \
                         .format(
                             i              = i,
+                            artist         = beatmap["artist"],
                             song_name      = beatmap["title"],
+                            diff_name      = beatmap["version"],
                             beatmap_id     = score["beatmap_id"],
-                            star_rating    = beatmap["difficultyrating"],
+                            star_rating    = round(beatmap["difficultyrating"], 2),
                             mods_readable  = readableMods(int(score["enabled_mods"])),
                             score          = score["score"],
                             pp             = score["pp"],
