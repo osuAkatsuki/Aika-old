@@ -450,6 +450,14 @@ async def on_message(message):
                         "Debug: {}"
                         .format('Disabled' if config['default']['debug'] == '0' else 'Enabled'))
 
+                # Command to remind my dumbass which parts of embeds can be links.
+                elif messagecontent[0].lower() == '$cmyuiisretarded':
+                    embed = discord.Embed(title="[cmyui](https://akatsuki.pw/u/1001)", description='** **', color=0x00ff00)
+                    embed.add_field(name="[cmyui](https://akatsuki.pw/u/1001)", value="[cmyui](https://akatsuki.pw/u/1001)")
+                    embed.set_footer(icon_url=akatsuki_logo, text="[cmyui](https://akatsuki.pw/u/1001)")
+                    await client.send_message(message.channel, embed=embed)
+                    
+
             """
             Process regular user command.
 
