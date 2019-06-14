@@ -606,7 +606,7 @@ async def on_message(message):
 
                 # Perform the request using the username provided and minify
                 # it into the "resp" variable. Temp: "_resp".
-                _resp = requests.get("http://akatsuki.pw/api/get_user_recent?u={user}&limit=5&type=string&m={mode}".format(user=username, mode=gamemode))
+                _resp = requests.get("http://akatsuki.pw/api/get_user_recent?u={user}&limit=5&type=string&m={mode}".format(user=username, mode=gamemode)).text
                 resp = json.loads(_resp)
 
                 # Debug print the data recieved from the Akatsuki API
