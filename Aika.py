@@ -660,7 +660,7 @@ async def on_message(message):
                             song_name      = beatmap["title"],
                             diff_name      = beatmap["version"],
                             beatmap_id     = score["beatmap_id"],
-                            star_rating    = round(beatmap["difficultyrating"], 2),
+                            star_rating    = round(float(beatmap["difficultyrating"]), 2),
                             mods_readable  = readableMods(int(score["enabled_mods"])),
                             score          = score["score"],
                             pp             = score["pp"],
