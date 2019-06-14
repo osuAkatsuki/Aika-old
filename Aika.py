@@ -1,3 +1,4 @@
+# Library imports.
 import discord
 import asyncio
 import configparser
@@ -14,6 +15,10 @@ import MySQLdb
 import redis
 import time
 from datetime import datetime
+#import humanize
+
+# Our imports.
+from constants import mods
 
 # Initialize colorama.
 init(autoreset=True)
@@ -50,25 +55,25 @@ version = 2.26
 # or break rules. For the most part, these are of other private servers,
 # as required by rule #2 of the Akatsuki Discord & Chat Rules
 # (https://akatsuki.pw/doc/rules).
-filters       = ['pp.me', 'paypal.me', 'yozo', 'y0zo', 'yoz0', 'y0z0',
-                 'ainu', 'okamura', 'kotorikku', 'kurikku', 'kawata',
-                 'ryusei', 'ryu-sei', 'enjuu', 'verge', 'katori',
-                 'osu-thailand', 'discord.gg/', 'gatari', 'hidesu',
-                 'hiragi', 'asuki', 'mikoto', 'homaru', 'awasu',
-                 'lsd', 'dmt', 'shrooms']
+filters       = ["pp.me", "paypal.me", "yozo", "y0zo", "yoz0", "y0z0",
+                 "ainu", "okamura", "kotorikku", "kurikku", "kawata",
+                 "ryusei", "ryu-sei", "enjuu", "verge", "katori",
+                 "osu-thailand", "discord.gg/", "gatari", "hidesu",
+                 "hiragi", "asuki", "mikoto", "homaru", "awasu",
+                 "lsd", "dmt", "shrooms"]
 
 # A list of message (sub)strings that we will use to deem
 # a quantifiable value for the "quality" of a message.
-profanity     = ['nigg', 'n1gg', 'retard', 'idiot',
-                 'fuck off', 'shut the fuck up', '??']
+profanity     = ["nigg", "n1gg", "retard", "idiot",
+                 "fuck off", "shut the fuck up", "??"]
 
-high_quality  = ['$faq', 'welcome', 'have a good',
-                 'enjoy', 'no problem', 'of course',
-                 'can help', 'i can', 'how can i help you']
+high_quality  = ["$faq", "welcome", "have a good",
+                 "enjoy", "no problem", "of course",
+                 "can help", "i can", "how can i help you"]
 
 # A list of message (sub)strings used to determine when a user
 # is asking about email verification (which does not exist on Akatsuki).
-email_checks  = ['verify e', 'verification', 'on email', 'verify m', 'verify a', 'email t', 'w verify', 'i verify']
+email_checks  = ["verify e", "verification", "on email", "verify m", "verify a", "email t", "w verify", "i verify"]
 
 # Akatsuki's logo.
 # To be used mostly for embed thumbnails.
@@ -78,6 +83,38 @@ aika_pfp      = "https://akatsuki.pw/static/characters/quaver.png"
 
 """ Functions """
 
+
+def readableMods(m):
+	"""
+	Return a string with readable std mods.
+
+	:param m: mods bitwise number
+	:return: readable mods string, eg HDDT
+	"""
+	r = "+"
+	if m == 0:
+		return ""
+	if m & mods.NOFAIL > 0:
+		r += "NF"
+	if m & mods.EASY > 0:
+		r += "EZ"
+	if m & mods.HIDDEN > 0:
+		r += "HD"
+	if m & mods.HARDROCK > 0:
+		r += "HR"
+	if m & mods.DOUBLETIME > 0:
+		r += "DT"
+	if m & mods.HALFTIME > 0:
+		r += "HT"
+	if m & mods.FLASHLIGHT > 0:
+		r += "FL"
+	if m & mods.SPUNOUT > 0:
+		r += "SO"
+	if m & mods.TOUCHSCREEN > 0:
+		r += "TD"
+	if m & mods.RELAX > 0:
+		r += "RX"
+	return r
 
 def debug_print(string):
     """
@@ -241,7 +278,7 @@ async def on_message(message):
                                         "page says, Akatsuki does not use verification "
                                         "emails. To verify your account, simply install "
                                         "the switcher, install the certificate, click the "
-                                        "server you\'d like to play on, and click On/Off, "
+                                        "server you'd like to play on, and click On/Off, "
                                         "then login to osu! to complete the verification process.")
 
                 await client.delete_message(message)
@@ -419,8 +456,11 @@ async def on_message(message):
             All users can access these commands.
             """
 
+            # Command which grabs the user's info for relax or regular from the Akatsuki API.
+            # Syntax: $user/$stats <username> <-rx>
+            # TODO: Change to one request by username (&type=username&name={}).
             if messagecontent[0].lower() == '$user' \
-            or messagecontent[0].lower() == '$stats': # Akatsuki userinfo command.
+            or messagecontent[0].lower() == '$stats':
                 username = messagecontent[1]
                 try:
                     relax = messagecontent[2]
@@ -525,8 +565,94 @@ async def on_message(message):
                         await send_message_formatted("error", message,
                                         "either that user does not exist, or your syntax was incorrect",
                                         ["Syntax: `$stats username_spaced_like_this (-rx)`"])
+            
+            # Command which grabs most recent (regular) plays from the Akatsuki API.
+            # Syntax: $recent <username>
+            # TODO: Add relax support.
+            elif messagecontent[0].lower() == '$recent':
+                # User input section!
+                # username - The user's username to be used for the command.
+                username = messagecontent[1]
+                # gamemode - The user's gamemode to be used for the command.
+                gamemode = messagecontent[2]
 
-            elif messagecontent[0].lower() == '$akatsuki': # Multipurpose akatsuki info command. TODO: unhardcode
+                # Change gamemode from user input string 
+                # to gamemodeint and beautified gamemode.
+                if 's' in gamemode.lower() \
+                or ('o' in gamemode.lower() \
+                and not 'm' in gamemode.lower() \
+                and not 'c' in gamemode.lower() \
+                and not 't' in gamemode.lower()):
+                    gamemode = 0
+                    gamemode_string = "osu!"
+                elif 't' in gamemode.lower():
+                    gamemode = 1
+                    gamemode_string = "osu!taiko"
+                elif 'c' in gamemode.lower():
+                    gamemode = 2
+                    gamemode_string = "osu!catch"
+                elif 'm' in gamemode.lower():
+                    gamemode = 3
+                    gamemode_string = "osu!mania"
+                else:
+                    return "Please enter a valid gamemode (std, ctb, taiko, mania)."
+
+                # Perform a request to fetch basic user data and minify
+                # it into the "user" variable. Temp: "_user".
+                _user = requests.get('https://akatsuki.pw/api/v1/get_user?u={}'.format(username)).text
+                user = json.loads(_user)
+
+                userID = int(gamerInfo[0]["user_id"])
+
+                # Perform the request using the username provided and minify
+                # it into the "resp" variable. Temp: "_resp".
+                _resp = request.get("http://akatsuki.pw/api/get_user_recent?u={user}&limit=5&type=string&m={mode}".format(user=username, mode=gamemode))
+                resp = json.loads(_resp)
+
+                # Debug print the data recieved from the Akatsuki API
+                # in both raw and minified formats for debugging purposes.
+                debug_print("Raw JSON:\n{}\n\nMinified:\n{}".format(_resp, resp))
+
+                # Create our discord embed.
+                # Let's keep the format similar to our $stats/$user
+                # command for some extra spicy consistency.
+                embed = discord.Embed(title="Recent Plays for {flag} {username} | {gm}".format(flag=":flag_{}:"
+                    .format(userInfo["country"].lower()), username=userInfo["username"],
+                            gm=gamemode_string), description='** **', color=0x00ff00)
+
+                # The thumbnail for the embed should be Akatsuki's logo.
+                embed.set_thumbnail(url=akatsuki_logo)
+
+                for score in resp[0]:
+                    i = 1
+
+                    # Get some basic beatmapdata for the map.
+                    # Used: title, difficultyrating.
+                    beatmap = json.loads(requests.get("https://akatsuki.pw/api/get_beatmaps?b={beatmap_id}"
+                        .format(beatmap_id=score["beatmap_id"])))[0]
+
+                    # This some shit right here..
+                    #time_score = humanize.naturaltime(time.time() - score["date"])
+
+                    field_name = "{i}. [{song_name}](https://akatsuki.pw/b/{beatmap_id}) ({star_rating}★) {mods}"
+                        .format(i=i, song_name=beatmap["title"], beatmap_id=beatmap_id,
+                            star_rating=beatmap["difficultyrating"],
+                            mods=readableMods(score[enabled_mods]))
+
+                    field_value = "Score: {score}\nPP: {pp}\nCombo: x{combo_achieved}/{max_combo} - [{300}/{100}/{50}/{miss}]\nDate achieved: {date}"
+                        .format(score=score["score"], pp=score["pp"], combo_achieved=score["maxcombo"],
+                            max_combo=beatmap["max_combo"], 300=score["count300"], 100=score["count100"],
+                            50=score["count50"], miss=score["countmiss"], date=score["date"])
+
+                    # Add the map to the embed.
+                    embed.add_field(name=field_name, value=field_value)
+
+                    i += 1
+
+            # Multipurpose akatsuki info command.
+            # Syntax: $akatsuki <callback>
+            # TODO: Unhardcode the responses; database.
+            elif messagecontent[0].lower() == '$akatsuki':
                 try:
                     topic = messagecontent[1].lower()
                 except:
@@ -534,7 +660,7 @@ async def on_message(message):
 
                 if topic == '' or topic == 'help':
                     await send_message_formatted("✨", message,
-                        "Please enter a topic."
+                        "please enter a topic."
                         "There are quite a few, so they will not be listed")
                     return
 
