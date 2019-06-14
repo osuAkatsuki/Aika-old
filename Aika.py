@@ -626,9 +626,9 @@ async def on_message(message):
                 # Create our discord embed.
                 # Let's keep the format similar to our $stats/$user
                 # command for some extra spicy consistency.
-                embed = discord.Embed(title="Recent Plays for {flag} [{username}](https://akatsuki.pw/u/{userid}) | {gm}".format(flag=":flag_{}:"
-                    .format(user["country"].lower()), username=user["username"], userid=userID,
-                            gm=gamemode_string), description='** **', color=0x00ff00)
+                embed = discord.Embed(title="Recent Plays for {flag} {username} | {gm}".format(flag=":flag_{}:"
+                    .format(user["country"].lower()), username=user["username"],
+                        gm=gamemode_string), description='** **', color=0x00ff00)
 
                 # The thumbnail for the embed should be Akatsuki's logo.
                 embed.set_thumbnail(url=akatsuki_logo)
