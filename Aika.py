@@ -600,13 +600,14 @@ async def on_message(message):
                 # Perform a request to fetch basic user data and minify
                 # it into the "user" variable. Temp: "_user".
                 _user = requests.get('https://akatsuki.pw/api/v1/get_user?u={}'.format(username)).text
-                user = json.loads(_user)
+                user = json.loads(_user)[0]
 
                 userID = int(user[0]["user_id"])
 
                 # Perform the request using the username provided and minify
                 # it into the "resp" variable. Temp: "_resp".
-                _resp = requests.get("http://akatsuki.pw/api/get_user_recent?u={user}&limit=5&type=string&m={mode}".format(user=username, mode=gamemode)).text
+                _resp = requests.get("http://akatsuki.pw/api/get_user_recent?u={user}&limit=5&type=string&m={mode}"
+                    .format(user=username, mode=gamemode)).text
                 resp = json.loads(_resp)
 
                 # Debug print the data recieved from the Akatsuki API
@@ -628,8 +629,9 @@ async def on_message(message):
 
                     # Get some basic beatmapdata for the map.
                     # Used: title, difficultyrating.
-                    beatmap = json.loads(requests.get("https://akatsuki.pw/api/get_beatmaps?b={beatmap_id}"
-                        .format(beatmap_id=score["beatmap_id"])))[0]
+                    _beatmap = requests.get("https://akatsuki.pw/api/get_beatmaps?b={beatmap_id}"
+                        .format(beatmap_id=score["beatmap_id"])).text
+                    beatmap = json.loads(_beatmap)[0]
 
                     # This some shit right here..
                     #time_score = humanize.naturaltime(time.time() - score["date"])
