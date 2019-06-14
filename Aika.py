@@ -626,7 +626,7 @@ async def on_message(message):
                 # Create our discord embed.
                 # Let's keep the format similar to our $stats/$user
                 # command for some extra spicy consistency.
-                embed = discord.Embed(title="Recent Plays for :lewd: [{username}](https://akatsuki.pw/u/{userid}) | {gm}".format(flag=":flag_{}:"
+                embed = discord.Embed(title="Recent Plays for {flag} [{username}](https://akatsuki.pw/u/{userid}) | {gm}".format(flag=":flag_{}:"
                     .format(user["country"].lower()), username=user["username"], userid=userID,
                             gm=gamemode_string), description='** **', color=0x00ff00)
 
@@ -653,9 +653,10 @@ async def on_message(message):
                     # This is slowly becoming insanity
                     embed.add_field(
                         name="** **", # :crab:
-                        value="**{i}. [{artist} - {song_name} \[{diff_name}\]](https://akatsuki.pw/b/{beatmap_id}) ({star_rating}★) {mods_readable}**\n**Score**: {score}\n**PP**: {pp}\n**Combo**: {combo_achieved}/{max_combo}x - [{count300}/{count100}/{count50}/{countmiss}]\n**Date achieved**: {date}" \
+                        value="**{i}. `{rank_achieved}` [{artist} - {song_name} \[{diff_name}\]](https://akatsuki.pw/b/{beatmap_id}) ({star_rating}★) {mods_readable}**\n**Score**: {score}\n**PP**: {pp}\n**Combo**: {combo_achieved}/{max_combo}x - [{count300}/{count100}/{count50}/{countmiss}]\n**Date achieved**: {date}" \
                         .format(
                             i              = i,
+                            rank_achieved  = score["rank"], # TODO: This is actually disgusting!
                             artist         = beatmap["artist"],
                             song_name      = beatmap["title"],
                             diff_name      = beatmap["version"],
