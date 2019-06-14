@@ -624,8 +624,10 @@ async def on_message(message):
                 # The thumbnail for the embed should be Akatsuki's logo.
                 embed.set_thumbnail(url=akatsuki_logo)
 
+                # Score number.
+                i = 1
+
                 for score in resp:
-                    i = 1
 
                     debug_print(score)
 
@@ -638,18 +640,35 @@ async def on_message(message):
                     # This some shit right here..
                     #time_score = humanize.naturaltime(time.time() - score["date"])
 
+                    """ Duplicate
                     field_name = "{i}. [{song_name}](https://akatsuki.pw/b/{beatmap_id}) ({star_rating}★) {mods}" \
                         .format(i=i, song_name=beatmap["title"], beatmap_id=score["beatmap_id"],
                             star_rating=beatmap["difficultyrating"],
                             mods=readableMods(int(score["enabled_mods"])))
 
-                    field_value = "Score: {score}\nPP: {pp}\nCombo: x{combo_achieved}/{max_combo} - [{count300}/{count100}/{count50}/{countmiss}]\nDate achieved: {date}" \
+                    field_value = "Score: {score}\nPP: {pp}\nCombo: {combo_achieved}/{max_combo}x - [{count300}/{count100}/{count50}/{countmiss}]\nDate achieved: {date}" \
                         .format(score=score["score"], pp=score["pp"], combo_achieved=score["maxcombo"],
                             max_combo=beatmap["max_combo"], count300=score["count300"], count100=score["count100"],
                             count50=score["count50"], countmiss=score["countmiss"], date=score["date"])
+                    """
 
                     # Add the map to the embed.
-                    embed.add_field(name=field_name, value=field_value)
+                    # This is slowly becoming insanity
+                    embed.add_field(
+                        name="{i}. [{song_name}](https://akatsuki.pw/b/{beatmap_id}) ({star_rating}★) {mods}" \
+                        .format(i=i, song_name=beatmap["title"],
+                            beatmap_id=score["beatmap_id"],
+                            star_rating=beatmap["difficultyrating"],
+                            mods=readableMods(int(score["enabled_mods"]))),
+
+                        value="Score: {score}\nPP: {pp}\nCombo: {combo_achieved}/{max_combo}x - [{count300}/{count100}/{count50}/{countmiss}]\nDate achieved: {date}" \
+                        .format(score=score["score"],
+                            pp=score["pp"],
+                            combo_achieved=score["maxcombo"],
+                            max_combo=beatmap["max_combo"],
+                            count300=score["count300"],
+                            count100=score["count100"],
+                            count50=score["count50"], countmiss=score["countmiss"], date=score["date"]))
 
                     i += 1
 
