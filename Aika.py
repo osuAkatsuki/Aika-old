@@ -641,7 +641,7 @@ async def on_message(message):
                     field_name = "{i}. [{song_name}](https://akatsuki.pw/b/{beatmap_id}) ({star_rating}★) {mods}" \
                         .format(i=i, song_name=beatmap["title"], beatmap_id=score["beatmap_id"],
                             star_rating=beatmap["difficultyrating"],
-                            mods=readableMods(score["enabled_mods"]))
+                            mods=readableMods(int(score["enabled_mods"])))
 
                     field_value = "Score: {score}\nPP: {pp}\nCombo: x{combo_achieved}/{max_combo} - [{count300}/{count100}/{count50}/{countmiss}]\nDate achieved: {date}" \
                         .format(score=score["score"], pp=score["pp"], combo_achieved=score["maxcombo"],
