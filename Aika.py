@@ -617,7 +617,7 @@ async def on_message(message):
                 # Let's keep the format similar to our $stats/$user
                 # command for some extra spicy consistency.
                 embed = discord.Embed(title="Recent Plays for {flag} {username} | {gm}".format(flag=":flag_{}:"
-                    .format(userInfo["country"].lower()), username=userInfo["username"],
+                    .format(user["country"].lower()), username=user["username"],
                             gm=gamemode_string), description='** **', color=0x00ff00)
 
                 # The thumbnail for the embed should be Akatsuki's logo.
@@ -635,7 +635,7 @@ async def on_message(message):
                     #time_score = humanize.naturaltime(time.time() - score["date"])
 
                     field_name = "{i}. [{song_name}](https://akatsuki.pw/b/{beatmap_id}) ({star_rating}★) {mods}" \
-                        .format(i=i, song_name=beatmap["title"], beatmap_id=beatmap_id,
+                        .format(i=i, song_name=beatmap["title"], beatmap_id=score["beatmap_id"],
                             star_rating=beatmap["difficultyrating"],
                             mods=readableMods(score[enabled_mods]))
 
