@@ -498,8 +498,8 @@ async def on_message(message):
                             mode = 'mania'
                             modeNice = 'osu!mania'
 
-                        embed = discord.Embed(title="{flag} {username} | {gm} {rx}".format(flag=":flag_{}:"
-                            .format(userInfo["country"].lower()), username=userInfo["username"],
+                        embed = discord.Embed(title="{flag} [{username}](https://akatsuki.pw/u/{userid}) | {gm} {rx}".format(flag=":flag_{}:"
+                            .format(userInfo["country"].lower()), username=userInfo["username"], userid=userID,
                                     rx='(Relax)' if relax == '-rx' else '(Vanilla)',
                                     gm=modeNice), description='** **', color=0x00ff00)
 
@@ -602,7 +602,7 @@ async def on_message(message):
                 _user = requests.get('https://akatsuki.pw/api/v1/get_user?u={}'.format(username)).text
                 user = json.loads(_user)[0]
 
-                userID = int(user[0]["user_id"])
+                userID = user["user_id"]
 
                 # Perform the request using the username provided and minify
                 # it into the "resp" variable. Temp: "_resp".
@@ -617,8 +617,8 @@ async def on_message(message):
                 # Create our discord embed.
                 # Let's keep the format similar to our $stats/$user
                 # command for some extra spicy consistency.
-                embed = discord.Embed(title="Recent Plays for {flag} {username} | {gm}".format(flag=":flag_{}:"
-                    .format(user["country"].lower()), username=user["username"],
+                embed = discord.Embed(title="Recent Plays for {flag} [{username}](https://akatsuki.pw/u/{userid}) | {gm}".format(flag=":flag_{}:"
+                    .format(user["country"].lower()), username=user["username"], userid=userID
                             gm=gamemode_string), description='** **', color=0x00ff00)
 
                 # The thumbnail for the embed should be Akatsuki's logo.
