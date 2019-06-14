@@ -639,10 +639,10 @@ async def on_message(message):
                             star_rating=beatmap["difficultyrating"],
                             mods=readableMods(score[enabled_mods]))
 
-                    field_value = "Score: {score}\nPP: {pp}\nCombo: x{combo_achieved}/{max_combo} - [{300}/{100}/{50}/{miss}]\nDate achieved: {date}" \
+                    field_value = "Score: {score}\nPP: {pp}\nCombo: x{combo_achieved}/{max_combo} - [{count300}/{count100}/{count50}/{countmiss}]\nDate achieved: {date}" \
                         .format(score=score["score"], pp=score["pp"], combo_achieved=score["maxcombo"],
-                            max_combo=beatmap["max_combo"], 300=score["count300"], 100=score["count100"],
-                            50=score["count50"], miss=score["countmiss"], date=score["date"])
+                            max_combo=beatmap["max_combo"], count300=score["count300"], count100=score["count100"],
+                            count50=score["count50"], countmiss=score["countmiss"], date=score["date"])
 
                     # Add the map to the embed.
                     embed.add_field(name=field_name, value=field_value)
