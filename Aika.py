@@ -624,7 +624,7 @@ async def on_message(message):
                 # The thumbnail for the embed should be Akatsuki's logo.
                 embed.set_thumbnail(url=akatsuki_logo)
 
-                for score in resp[0]:
+                for score in resp:
                     i = 1
 
                     debug_print(score)
