@@ -653,6 +653,9 @@ async def on_message(message):
 
                     i += 1
 
+                # Finally, send the embed to the channel.
+                await client.send_message(message.channel, embed=embed)
+
             # Multipurpose akatsuki info command.
             # Syntax: $akatsuki <callback>
             # TODO: Unhardcode the responses; database.
