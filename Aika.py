@@ -639,7 +639,7 @@ async def on_message(message):
                             star_rating=beatmap["difficultyrating"],
                             mods=readableMods(score[enabled_mods]))
 
-                    field_value = "Score: {score}\nPP: {pp}\nCombo: x{combo_achieved}/{max_combo} - [{300}/{100}/{50}/{miss}]\nDate achieved: {date}"
+                    field_value = "Score: {score}\nPP: {pp}\nCombo: x{combo_achieved}/{max_combo} - [{300}/{100}/{50}/{miss}]\nDate achieved: {date}" \
                         .format(score=score["score"], pp=score["pp"], combo_achieved=score["maxcombo"],
                             max_combo=beatmap["max_combo"], 300=score["count300"], 100=score["count100"],
                             50=score["count50"], miss=score["countmiss"], date=score["date"])
