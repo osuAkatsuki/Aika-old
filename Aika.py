@@ -208,9 +208,10 @@ async def on_ready():
     if int(config['default']['announce_online']) == 1:
         announceOnline = discord.Embed(
             title       = "Aika v{} Online".format(version),
-            description = "Ready for commands <3\n\n Source code can be found at https://github.com/osuAkatsuki/Aika.",
+            description = "Ready for commands <3",
             color       = 0x00ff00)
 
+        announceOnline.set_footer(icon_url=akatsuki_logo, text="Source code can be found at https://github.com/osuAkatsuki/Aika.")
         announceOnline.set_thumbnail(url='http://akatsuki.pw/static/characters/quaver.png')
         await client.send_message(client.get_channel(config['akatsuki']['general']), embed=announceOnline)
 
