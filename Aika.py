@@ -330,7 +330,7 @@ async def on_message(message):
             print("{} [{} ({})] {}: {}".format(message.timestamp, message.server, message.channel, message.author, message.content))
 
         # Handle user verification before the command section. This should speed things up a bit!
-        if message.content.split(' ')[0][1:] in ('$verify', '!verify') and message.channel.id == config['akatsuki']['verify']: # Verify command.
+        if message.content.split(' ')[0][1:] == "verify" and message.channel.id == config['akatsuki']['verify']: # Verify command.
             if message.author.id != config['discord']['owner_id']: # Dont for cmyui, he's probably pinging @everyone to verify.
                 verified = discord.utils.get(message.server.roles, name="Members")
                 await client.add_roles(message.author, verified)
@@ -445,7 +445,7 @@ async def on_message(message):
             # TODO: Change to one request by username (&type=username&name={}).
             if command in ("user", "stats"):
                 username = messagecontent[1]
-                if len(messagecontent) > 1:
+                if len(messagecontent) > 2:
                     relax = messagecontent[2]
                 else:
                     relax = None
