@@ -359,6 +359,7 @@ async def on_message(message):
                     else:
                         await send_message_formatted("error", message, "Please specify a game name")
                     await client.delete_message(message)
+                    return
 
                 elif command == "hs":
                     userID = re.findall('\d+', messagecontent[1])[0]
@@ -391,6 +392,7 @@ async def on_message(message):
                         await client.send_message(message.channel, embed=embed)
                     else:
                         await send_message_formatted("error", message, "No logs found on the specified user")
+                    return
 
                 elif command == "r":
                     execute = ' '.join(messagecontent[1:]).strip()
@@ -403,12 +405,14 @@ async def on_message(message):
                     await send_message_formatted("success", message, "Successfully executed: `{}` on Akatsuki".format(execute))
 
                     await client.delete_message(processingMessage)
+                    return
 
                 elif command == "d":
                     config.set('default', 'debug', '{}'.format('1' if config['default']['debug'] == '0' else 0))
 
                     await send_message_formatted("✨", message, "Debug: {}"
                         .format('Disabled' if config['default']['debug'] == '0' else 'Enabled'))
+                    return
 
                 # Command to remind my dumbass which parts of embeds can be links.
                 elif command == "cmyuiisretarded":
@@ -416,6 +420,7 @@ async def on_message(message):
                     embed.add_field(name="[cmyui](https://akatsuki.pw/u/1001)", value="[cmyui](https://akatsuki.pw/u/1001)")
                     embed.set_footer(icon_url=akatsuki_logo, text="[cmyui](https://akatsuki.pw/u/1001)")
                     await client.send_message(message.channel, embed=embed)
+                    return
                     
 
             """
@@ -551,6 +556,7 @@ async def on_message(message):
                             inline = True)
 
                     await client.send_message(message.channel, embed=embed)
+                return
             
             # Command which grabs most recent (regular) plays from the Akatsuki API.
             # Syntax: $recent <username>
@@ -637,6 +643,7 @@ async def on_message(message):
                     i += 1
 
                 await client.send_message(message.channel, embed=embed)
+                return
 
             # Multipurpose akatsuki info command.
             # Syntax: $akatsuki <callback>
@@ -648,36 +655,26 @@ async def on_message(message):
                     topic = None
 
                 if topic in (None, "help"):
-                    await send_message_formatted("✨", message, "please enter a topic.", ["There are quite a few, so they will not be listed"])
+                    await send_message_formatted("✨", message, "please enter a topic.", ["There are quite a few, so they will not be listed."])
                     return
-
                 elif topic == 'discord':
                     resp = 'https://discord.gg/5cBtMPW/'
-
                 elif topic == 'twitch':
                     resp = 'https://www.twitch.tv/akatsuki_pw/'
-
                 elif topic == 'youtube' or topic == 'yt':
                     resp = 'https://www.youtube.com/channel/UCjf8Fx_BlUr-htEy6hficcQ/'
-
                 elif topic == 'rlb' or topic == 'relaxleaderboard':
                     resp = 'https://akatsuki.pw/leaderboard?mode=0&p=1&rx=1/'
-
                 elif topic == 'lb' or topic == 'leaderboard':
                     resp = 'https://akatsuki.pw/leaderboard?mode=0&p=1&rx=0/'
-
                 elif topic == 'admin':
                     resp = 'https://old.akatsuki.pw/index.php?p=100/'
-
                 elif topic == 'log' or topic == 'adminlog' or topic == 'raplog':
                     resp = 'https://old.akatsuki.pw/index.php?p=116'
-
                 elif topic == 'datadog' or topic == 'status':
                     resp = 'https://p.datadoghq.com/sb/71577ef74-a079587e79/'
-
                 elif topic == 'vote':
                     resp = 'https://topg.org/osu-private-servers/in-509809'
-
                 else:
                     await send_message_formatted("error", message,
                         "I couldn't find a topic by that name")
@@ -685,6 +682,7 @@ async def on_message(message):
                 
                 
                 await send_message_formatted("success", message, resp)
+                return
 
             # Multipurpose staff application commands.
             # Syntax: $apply <callback>
@@ -800,6 +798,7 @@ async def on_message(message):
                     return
 
                 await send_message_formatted(emoticon, message, resp, resp_array)
+                return
 
             # cmyui command; multipurpose information command on the guy.
             # Syntax: $cmyui <callback>
@@ -868,6 +867,7 @@ async def on_message(message):
 
                 # TODO: send this to author rather than channel..
                 await send_message_formatted("✨", message, resp, resp_array)
+                return
 
             # FAQ Command. Frequently asked questions!
             # Syntax: $faq <callback>
@@ -907,6 +907,7 @@ async def on_message(message):
                             .format(
                                 topic=' ' + callback if len(callback) > 0 else '',
                                 faqlist=faq_list)])
+                return
 
             # Info command. General information such as rules, etc.
             # Syntax: $info <callback>
@@ -946,12 +947,14 @@ async def on_message(message):
 
                     await send_message_formatted("error", message,"I couldn't find a FAQ topic by that name",
                         ["```{infolist}```".format(topic=' ' + callback if len(callback) > 0 else '',infolist=info_list)])
+                return
 
-            elif messagecontent[0].lower() in ('$verify', '!verify') and message.channel.id == config['akatsuki']['verify']: # Verify command.
+            elif command in ('$verify', '!verify') and message.channel.id == config['akatsuki']['verify']: # Verify command.
                 if message.author.id != config['discord']['owner_id']: # Dont for cmyui, he's probably pinging @everyone to verify.
                     verified = discord.utils.get(message.server.roles, name="Members")
                     await client.add_roles(message.author, verified)
                     await client.delete_message(message)
+                return
 
             elif command == "botinfo": # Bot info command.
                 embed = discord.Embed(title="Why hello! I'm Aika.", description='** **', color=0x00ff00)
@@ -970,6 +973,7 @@ async def on_message(message):
 
                 embed.set_footer(icon_url="", text='Good vibes <3')
                 await client.send_message(message.channel, embed=embed)
+                return
 
             # Prune command. Prune x messages from the current channel.
             # Syntax: $prune <count>
@@ -987,6 +991,7 @@ async def on_message(message):
                         .format(messages=message_count, plural='s' if message_count > 1 else ''))
                 else:
                     await send_message_formatted("error", message, 'It seems you used the command syntax improperly', ['Correct syntax: `$prune <messagecount (limit: 1000)>`.'])
+                return
 
             # Command for linking osu! account to discord
             # Syntax: $linkosu
@@ -1012,6 +1017,7 @@ async def on_message(message):
                          "or in a DM with 'Aika' ingame.",
                          "(in-game in the osu! client).",
                          ">> `!linkdiscord {}`".format(message.author.id)])
+                return
 
 print(Fore.CYAN + "\nLogging in with credentials: {}".format('*' * len(config['discord']['token'])))
 client.run(str(config['discord']['token']))
