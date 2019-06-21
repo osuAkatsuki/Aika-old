@@ -217,13 +217,14 @@ async def on_ready():
 # On exceptions, don't make the whole thing die :).
 @client.event
 async def on_error(event, *args):
-    print(Fore.RED + "\n\nAn exception has occurred.\n\nError: {}\nargs: {}\n\nTraceback: {}\n"
-        .format(event, *args, logging.warning(traceback.format_exc())))
+    print(Fore.RED + "\n\nAn exception has occurred.\n\nError: {}\nargs: {}\n\nTraceback: {}\n".format(event, *args, logging.warning(traceback.format_exc())))
 
 # On message event.
 @client.event
 async def on_message(message):
     client.wait_until_ready()
+
+    command_prefix = "$"
 
     # Message sent in #player-reporting, move to #reports.
     if message.channel.id == config['akatsuki']['player_reporting']: 
@@ -328,7 +329,15 @@ async def on_message(message):
         else: # Regular message.
             print("{} [{} ({})] {}: {}".format(message.timestamp, message.server, message.channel, message.author, message.content))
 
-        if message.content.startswith('$') or message.content.startswith('!verify'): # The message is a command.
+        # Handle user verification before the command section. This should speed things up a bit!
+        if message.content.split(' ')[0][1:] in ('$verify', '!verify') and message.channel.id == config['akatsuki']['verify']: # Verify command.
+            if message.author.id != config['discord']['owner_id']: # Dont for cmyui, he's probably pinging @everyone to verify.
+                verified = discord.utils.get(message.server.roles, name="Members")
+                await client.add_roles(message.author, verified)
+                await client.delete_message(message)
+            return
+
+        if message.content.startswith(command_prefix):
 
             # First of all, make a simpler way to deal with message content so u don't develop stage 4 cancer.
             messagecontent = message.content.split(' ')
@@ -358,6 +367,8 @@ async def on_message(message):
                         await send_message_formatted("success", message, "Game successfully changed to: {}".format(game))
                     else:
                         await send_message_formatted("error", message, "Please specify a game name")
+                        return
+
                     await client.delete_message(message)
                     return
 
@@ -402,16 +413,16 @@ async def on_message(message):
                     params = urlencode({"k": config["akatsuki"]["apikey"], "to": "#admin", "msg": execute})
                     requests.get("http://{}:5001/api/v1/fokabotMessage?{}".format(config["akatsuki"]["ip"], params))
 
-                    await send_message_formatted("success", message, "Successfully executed: `{}` on Akatsuki".format(execute))
+                    await send_message_formatted("success", message, "Successfully executed on Akatsuki.", ["`{}`".format(execute)])
 
                     await client.delete_message(processingMessage)
                     return
 
                 elif command == "d":
-                    config.set('default', 'debug', '{}'.format('1' if config['default']['debug'] == '0' else 0))
+                    config.set('default', 'debug', '{}'.format("1" if config['default']['debug'] == "0" else 0))
 
                     await send_message_formatted("✨", message, "Debug: {}"
-                        .format('Disabled' if config['default']['debug'] == '0' else 'Enabled'))
+                        .format('Disabled' if config['default']['debug'] == "0" else 'Enabled'))
                     return
 
                 # Command to remind my dumbass which parts of embeds can be links.
@@ -434,18 +445,20 @@ async def on_message(message):
             # TODO: Change to one request by username (&type=username&name={}).
             if command in ("user", "stats"):
                 username = messagecontent[1]
-                if (len(messagecontent) - 1) > 1:
+                if len(messagecontent) > 1:
                     relax = messagecontent[2]
                 else:
                     relax = None
                     
                 if relax not in (None, "-rx"): # They probably used a username with a space since relax var is something else. Or typo
-                    if "rx" in relax: # no fucking idea why this works. actually not a single fucking idea. literally what the fuck is it a compiler bug or is my brain just actually that retarded right now wht the fuck ? 
+                    if "rx" not in relax:
                         await send_message_formatted("error", message,
                             "Please use underscores in your username rather than spaces")
+                        return
                     else:
                         await send_message_formatted("error", message,
                             "Incorrect syntax. Please use the syntax `> ${} <username_with_underscores> <-rx (Optional)>".format(command))
+                        return
                 else:
                     CorsairTMK95GamingKeyboard = requests.get('https://akatsuki.pw/api/v1/get_user?u={}'.format(username)).text
 
@@ -649,10 +662,12 @@ async def on_message(message):
             # Syntax: $akatsuki <callback>
             # TODO: Unhardcode the responses; database.
             elif command == "akatsuki":
-                if (len(messagecontent) - 1) > 1:
+                if len(messagecontent) > 1:
                     topic = messagecontent[1].lower()
                 else:
                     topic = None
+
+                print(messagecontent, topic)
 
                 if topic in (None, "help"):
                     await send_message_formatted("✨", message, "please enter a topic.", ["There are quite a few, so they will not be listed."])
@@ -688,7 +703,7 @@ async def on_message(message):
             # Syntax: $apply <callback>
             # TODO: Unhardcode the responses; database.
             elif command == "apply":
-                if (len(messagecontent) - 1) > 1:
+                if len(messagecontent) > 1:
                     position = messagecontent[1].lower()
                 else:
                     position = None
@@ -804,7 +819,7 @@ async def on_message(message):
             # Syntax: $cmyui <callback>
             # TODO: Unhardcode yet again!
             elif command == "cmyui":
-                if (len(messagecontent) - 1) > 1:
+                if len(messagecontent) > 1:
                     topic = messagecontent[1].lower()
                 else:
                     topic = None
@@ -872,7 +887,7 @@ async def on_message(message):
             # FAQ Command. Frequently asked questions!
             # Syntax: $faq <callback>
             elif command == "faq":
-                if (len(messagecontent) - 1) > 1:
+                if len(messagecontent) > 1:
                     callback = messagecontent[1].lower()
                 else:
                     callback = None
@@ -912,7 +927,7 @@ async def on_message(message):
             # Info command. General information such as rules, etc.
             # Syntax: $info <callback>
             elif command == "info":
-                if (len(messagecontent) - 1) > 1:
+                if len(messagecontent) > 1:
                     callback = messagecontent[1].lower()
                 else:
                     callback = None
@@ -949,13 +964,6 @@ async def on_message(message):
                         ["```{infolist}```".format(topic=' ' + callback if len(callback) > 0 else '',infolist=info_list)])
                 return
 
-            elif command in ('$verify', '!verify') and message.channel.id == config['akatsuki']['verify']: # Verify command.
-                if message.author.id != config['discord']['owner_id']: # Dont for cmyui, he's probably pinging @everyone to verify.
-                    verified = discord.utils.get(message.server.roles, name="Members")
-                    await client.add_roles(message.author, verified)
-                    await client.delete_message(message)
-                return
-
             elif command == "botinfo": # Bot info command.
                 embed = discord.Embed(title="Why hello! I'm Aika.", description='** **', color=0x00ff00)
                 embed.set_thumbnail(url=aika_pfp)
@@ -979,7 +987,7 @@ async def on_message(message):
             # Syntax: $prune <count>
             # TODO: More functionality, maybe prune by a specific user, etc.
             elif command == "prune" and message.author.server_permissions.manage_messages:
-                if (len(messagecontent) - 1) > 1:
+                if len(messagecontent) > 1:
                     amtMessages = messagecontent[1]
                 else:
                     amtMessages = 100
