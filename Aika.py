@@ -433,9 +433,9 @@ async def on_message(message):
                     relax = messagecontent[2]
                 else:
                     relax = None
-
+                    
                 if relax not in (None, "-rx"): # They probably used a username with a space since relax var is something else. Or typo
-                    if "rx" not in relax:
+                    if "rx" in relax: # no fucking idea why this works. actually not a single fucking idea. literally what the fuck is it a compiler bug or is my brain just actually that retarded right now wht the fuck ? 
                         await send_message_formatted("error", message,
                             "Please use underscores in your username rather than spaces")
                     else:
@@ -444,7 +444,7 @@ async def on_message(message):
                 else:
                     gamer = requests.get('https://akatsuki.pw/api/v1/get_user?u={}'.format(username)).text
 
-                    if not len(gamer): # Unsure if this is how this works?
+                    if len(gamer) == 2:
                         await send_message_formatted("error", message,
                                         "either that user does not exist, or your syntax was incorrect",
                                         ["Syntax: `$stats username_spaced_like_this (-rx)`"])
