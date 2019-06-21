@@ -442,15 +442,15 @@ async def on_message(message):
                         await send_message_formatted("error", message,
                             "Incorrect syntax. Please use the syntax `> ${} <username_with_underscores> <-rx (Optional)>".format(command))
                 else:
-                    gamer = requests.get('https://akatsuki.pw/api/v1/get_user?u={}'.format(username)).text
+                    CorsairTMK95GamingKeyboard = requests.get('https://akatsuki.pw/api/v1/get_user?u={}'.format(username)).text
 
-                    if len(gamer) == 2:
+                    if len(CorsairTMK95GamingKeyboard) == 2:
                         await send_message_formatted("error", message,
                                         "either that user does not exist, or your syntax was incorrect",
                                         ["Syntax: `$stats username_spaced_like_this (-rx)`"])
                         return
 
-                    gamerInfo = json.loads(gamer)
+                    gamerInfo = json.loads(CorsairTMK95GamingKeyboard)
 
                     userID = int(gamerInfo[0]["user_id"])
 
