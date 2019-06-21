@@ -445,9 +445,8 @@ async def on_message(message):
                     CorsairTMK95GamingKeyboard = requests.get('https://akatsuki.pw/api/v1/get_user?u={}'.format(username)).text
 
                     if len(CorsairTMK95GamingKeyboard) == 2:
-                        await send_message_formatted("error", message,
-                                        "either that user does not exist, or your syntax was incorrect",
-                                        ["Syntax: `$stats username_spaced_like_this (-rx)`"])
+                        await send_message_formatted("error", message, "either that user does not exist, or your syntax was incorrect",
+                            ["Syntax: `$stats username_spaced_like_this (-rx)`"])
                         return
 
                     gamerInfo = json.loads(CorsairTMK95GamingKeyboard)
@@ -558,25 +557,21 @@ async def on_message(message):
             # TODO: Add relax support.
             elif command == "recent":
                 username = messagecontent[1]
-                gamemode = messagecontent[2]
+                gamemode = messagecontent[2].lower()
 
                 # Change gamemode from user input string 
                 # to gamemodeint and beautified gamemode.
                 # TODO: any()
-                if 's' in gamemode.lower() \
-                or ('o' in gamemode.lower() \
-                and not 'm' in gamemode.lower() \
-                and not 'c' in gamemode.lower() \
-                and not 't' in gamemode.lower()):
+                if 's' in gamemode or ('o' in gamemode and not 'm' in gamemode and not 'c' in gamemode and not 't' in gamemode):
                     gamemode = 0
                     gamemode_string = "osu!"
-                elif 't' in gamemode.lower():
+                elif 't' in gamemode:
                     gamemode = 1
                     gamemode_string = "osu!taiko"
-                elif 'c' in gamemode.lower():
+                elif 'c' in gamemode:
                     gamemode = 2
                     gamemode_string = "osu!catch"
-                elif 'm' in gamemode.lower():
+                elif 'm' in gamemode:
                     gamemode = 3
                     gamemode_string = "osu!mania"
                 else:
