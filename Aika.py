@@ -187,7 +187,7 @@ async def send_message_formatted(type, message, first_line, string_array=[]):
     resp =  "{emoticon} **{author_name}**, {first_line}.\n".format(
         emoticon    = emoticon,
         author_name = message.author.name,
-        first_line  = first_line)
+        first_line  = first_line.lower()) # Lowercase because im probably retarded
 
     for line in string_array:
         resp += "        {string}\n".format(string=line)
@@ -648,9 +648,7 @@ async def on_message(message):
                     topic = None
 
                 if topic in (None, "help"):
-                    await send_message_formatted("✨", message,
-                        "please enter a topic."
-                        "There are quite a few, so they will not be listed")
+                    await send_message_formatted("✨", message, "please enter a topic.", ["There are quite a few, so they will not be listed"])
                     return
 
                 elif topic == 'discord':
