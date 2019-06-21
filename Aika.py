@@ -1,3 +1,35 @@
+"""
+    Aika - osu!Akatsuki's discord bot
+
+    Yo. This is coded by cmyui, a person who is in.. let's call it "coding middle school".
+
+    Expect my coding style to change roughly every week, for things to change at all times, and for code to be inconsistent.
+    Did you get that? Very inconsistent. This is because I am in the process of learning (not only python), but also a hell
+    of a lot of other languages (such as c++, where my style and formatting is very different!).
+
+    These things influence my coding style a lot, and so do friends of mine.
+
+    This code is basically open source for the sake of transparency, with a spice of being able to keep track
+    of where I am in my learning.
+
+    I can't really see any time when you'd want to use this code for your own project, but who knows, Atoka did apparently!
+
+    Enjoy the shitshow,
+    cm/yui
+"""
+
+# Big list of TODO for when I run out of ideas
+"""
+    1: Move vars such as debug to DB
+    2. Find a better way to do quality of helplog reports
+    3. Process commands based on discord perms rather than just owner/user commands with some scuffed shit.
+    4. Make userstats command use username thing in API like the $recent command does.
+    5. Add relax support to both here and Akatsuki's API for the $recent command to work. HaHa it Matchd THe Line ABove it when i Typed $recent command HAHa.!
+    6. Unhardcode the responses for a hell of a lot of commands. Or just remove the commands. WHo cares!
+    7. use any() where applicable
+    8. cool shit for $linkosu and $prune. More functionality More functionality More functionality More functionality More functionality More functionality More functionality More functionality More functionality More functionality More functionality 
+"""
+
 # Library imports.
 import discord
 import asyncio
@@ -48,7 +80,7 @@ db.ping(True)
 """ Constants """
 
 # The version number of Aika!
-version = 2.26
+version = 2.40
 
 # A list of filters.
 # These are to be used to wipe messages that are deemed inappropriate,
@@ -116,6 +148,7 @@ def readableMods(m):
 		r += "RX"
 	return r
 
+
 def debug_print(string):
     """
     Print a debug message to the console.
@@ -125,7 +158,7 @@ def debug_print(string):
     :param string:       The message to be printed to the console.
     """
 
-    if config['default']['debug'] != '0':
+    if config['default']['debug'] != "0": # int string XDDDDDDDDDD
         print(Fore.MAGENTA + "\nDEBUG: {}\n".format(string))
 
 
@@ -152,9 +185,9 @@ async def send_message_formatted(type, message, first_line, string_array=[]):
 
     # Build the response string.
     resp =  "{emoticon} **{author_name}**, {first_line}.\n".format(
-        emoticon=emoticon,
-        author_name=message.author.name,
-        first_line=first_line)
+        emoticon    = emoticon,
+        author_name = message.author.name,
+        first_line  = first_line)
 
     for line in string_array:
         resp += "        {string}\n".format(string=line)
@@ -245,8 +278,7 @@ async def on_message(message):
             debug_print("Quality of message {}: {}".format(message.id, quality))
 
             cursor = db.cursor()
-            cursor.execute("INSERT INTO help_logs(id, user, content, datetime, quality) VALUES (NULL, %s, %s, %s, %s);",
-                            [message.author.id, message.content, int(time.time()), quality])
+            cursor.execute("INSERT INTO help_logs (id, user, content, datetime, quality) VALUES (NULL, %s, %s, %s, %s)", [message.author.id, message.content, int(time.time()), quality])
 
         # Checks for things in message.
         if any(x in message.content.lower() for x in email_checks) and message.server.id == config['akatsuki']['server_id']:
@@ -270,20 +302,19 @@ async def on_message(message):
         elif any(x in message.content.lower() for x in filters) \
         and not message.author.server_permissions.manage_messages:
             cursor = db.cursor()
-            cursor.execute("INSERT INTO profanity_filter(user, message, time) VALUES (%s, %s, %s);", [message.author.id, message.content, int(time.time())])
+            cursor.execute("INSERT INTO profanity_filter (user, message, time) VALUES (%s, %s, %s)", [message.author.id, message.content, int(time.time())])
 
             await client.delete_message(message)
             await client.send_message(message.author,
-                                    "Hello,\n\nYour message in osu!Akatsuki "
-                                    "has been removed as it has been deemed "
-                                    "unsuitable.\n\nIf this makes no sense, "
-                                    "please report it to <@285190493703503872>. "
-                                    "\n**Do not try to evade this filter as it is "
-                                    "considered fair ground for a ban**.\n\n```{}```"
-                                    .format(message.content))
+                "Hello,\n\nYour message in osu!Akatsuki "
+                "has been removed as it has been deemed "
+                "unsuitable.\n\nIf this makes no sense, "
+                "please report it to <@285190493703503872>. "
+                "\n**Do not try to evade this filter as it is "
+                "considered fair ground for a ban**.\n\n```{}```"
+                .format(message.content))
 
-            print(Fore.MAGENTA + "Filtered message | '{}: {}'"
-                .format(message.author, message.content))
+            print(Fore.MAGENTA + "Filtered message | '{}: {}'".format(message.author, message.content))
 
         # Private messages.
         if message.server is None:
@@ -301,6 +332,7 @@ async def on_message(message):
 
             # First of all, make a simpler way to deal with message content so u don't develop stage 4 cancer.
             messagecontent = message.content.split(' ')
+            command = messagecontent[0][1:].lower()
 
             # TODO: Process commands based on discord perms.
             if message.author.id == config['discord']['owner_id']: # Process owner commands.
@@ -310,7 +342,7 @@ async def on_message(message):
                 Only the config['discord']['owner_id'] has access to these.
                 """
 
-                if messagecontent[0].lower() == '$game':
+                if command == "game":                    
                     # Change your discord users status / game.
                     game = ' '.join(messagecontent[1:]).strip() # Get the game.
                     if game: # Game also changed.
@@ -323,24 +355,22 @@ async def on_message(message):
 
                         await client.change_presence(game=discord.Game(name=game, url='https://akatsuki.pw/', type=0))
 
-                        await send_message_formatted("success", message,
-                            "Game successfully changed to: {}".format(game))
+                        await send_message_formatted("success", message, "Game successfully changed to: {}".format(game))
                     else:
-                        await send_message_formatted("error", message,
-                            "Please specify a game name")
+                        await send_message_formatted("error", message, "Please specify a game name")
                     await client.delete_message(message)
 
-                elif messagecontent[0].lower() == '$hs':
+                elif command == "hs":
                     userID = re.findall('\d+', messagecontent[1])[0]
 
                     cursor = db.cursor()
-                    cursor.execute("SELECT quality FROM help_logs WHERE user = %s;", [userID])
+                    cursor.execute("SELECT quality FROM help_logs WHERE user = %s", [userID])
 
                     logs = cursor.fetchall()
 
                     debug_print(logs)
 
-                    positive, neutral, negative, i = 0, 0, 0, 0
+                    positive, neutral, negative, i = 0, 0, 0, 0 # Uh huh
 
                     if logs is not None:
                         for x in logs:
@@ -360,38 +390,28 @@ async def on_message(message):
                         embed.add_field(name="Negative", value=negative, inline=True)
                         await client.send_message(message.channel, embed=embed)
                     else:
-                        await send_message_formatted("error", message,
-                            "No logs found on the specified user")
+                        await send_message_formatted("error", message, "No logs found on the specified user")
 
-                elif messagecontent[0].lower() == '$r':
-                    annmsg = ' '.join(messagecontent[1:]).strip()
+                elif command == "r":
+                    execute = ' '.join(messagecontent[1:]).strip()
 
                     processingMessage = await client.send_message(message.channel, "Processing request..")
 
-                    try:
-                        params = urlencode({"k": config["akatsuki"]["apikey"], "to": "#admin", "msg": annmsg})
-                        requests.get("http://{}:5001/api/v1/fokabotMessage?{}".format(config["akatsuki"]["ip"], params))
-                    except:
-                        await send_message_formatted("error", message,
-                            "Something went wrong during the request")
+                    params = urlencode({"k": config["akatsuki"]["apikey"], "to": "#admin", "msg": execute})
+                    requests.get("http://{}:5001/api/v1/fokabotMessage?{}".format(config["akatsuki"]["ip"], params))
 
-                        return
-
-                    await send_message_formatted("success", message,
-                        "Successfully executed: `{}` on Akatsuki"
-                        .format(annmsg))
+                    await send_message_formatted("success", message, "Successfully executed: `{}` on Akatsuki".format(execute))
 
                     await client.delete_message(processingMessage)
 
-                elif messagecontent[0].lower() == '$d':
+                elif command == "d":
                     config.set('default', 'debug', '{}'.format('1' if config['default']['debug'] == '0' else 0))
 
-                    await send_message_formatted("✨", message,
-                        "Debug: {}"
+                    await send_message_formatted("✨", message, "Debug: {}"
                         .format('Disabled' if config['default']['debug'] == '0' else 'Enabled'))
 
                 # Command to remind my dumbass which parts of embeds can be links.
-                elif messagecontent[0].lower() == '$cmyuiisretarded':
+                elif command == "cmyuiisretarded":
                     embed = discord.Embed(title="[cmyui](https://akatsuki.pw/u/1001)", description='** **', color=0x00ff00)
                     embed.add_field(name="[cmyui](https://akatsuki.pw/u/1001)", value="[cmyui](https://akatsuki.pw/u/1001)")
                     embed.set_footer(icon_url=akatsuki_logo, text="[cmyui](https://akatsuki.pw/u/1001)")
@@ -407,140 +427,142 @@ async def on_message(message):
             # Command which grabs the user's info for relax or regular from the Akatsuki API.
             # Syntax: $user/$stats <username> <-rx>
             # TODO: Change to one request by username (&type=username&name={}).
-            if messagecontent[0].lower() == '$user' \
-            or messagecontent[0].lower() == '$stats':
+            if command in ("user", "stats"):
                 username = messagecontent[1]
-                try:
+                if (len(messagecontent) - 1) > 1:
                     relax = messagecontent[2]
-                except:
-                    relax = ''
-
-                if relax != '' and relax != '-rx':
-                    await send_message_formatted("error", message,
-                        "Please use underscores in your username rather than spaces")
                 else:
-                    try:
-                        gamer = requests.get('https://akatsuki.pw/api/v1/get_user?u={}'.format(username)).text
+                    relax = None
 
-                        gamerInfo = json.loads(gamer)
+                if relax not in (None, "-rx"): # They probably used a username with a space since relax var is something else. Or typo
+                    if "rx" not in relax:
+                        await send_message_formatted("error", message,
+                            "Please use underscores in your username rather than spaces")
+                    else:
+                        await send_message_formatted("error", message,
+                            "Incorrect syntax. Please use the syntax `> ${} <username_with_underscores> <-rx (Optional)>".format(command))
+                else:
+                    gamer = requests.get('https://akatsuki.pw/api/v1/get_user?u={}'.format(username)).text
 
-                        userID = int(gamerInfo[0]["user_id"])
-
-                        resp = requests.get('https://akatsuki.pw/api/v1/users/{rx}full?id={userID}'
-                            .format(rx="rx" if relax == '-rx' else '', userID=userID), timeout=3).text
-
-                        userInfo = json.loads(resp)
-
-                        debug_print("Raw JSON:\n{}\n\nMinified:\n{}".format(resp, userInfo))
-
-                        if userInfo["favourite_mode"] == 0: # osu!
-                            mode = 'std'
-                            modeNice = 'osu!'
-                        elif userInfo["favourite_mode"] == 1: # osu!taiko
-                            mode = 'taiko'
-                            modeNice = 'osu!taiko'
-                        elif userInfo["favourite_mode"] == 2: # osu!catch
-                            mode = 'ctb'
-                            modeNice = 'osu!catch'
-                        elif userInfo["favourite_mode"] == 3: # osu!mania
-                            mode = 'mania'
-                            modeNice = 'osu!mania'
-
-                        embed = discord.Embed(
-                            title           = ":flag_{flag}: {username} | {gm} {rx}".format(
-                                flag        = userInfo["country"].lower(),
-                                username    = userInfo["username"],
-                                rx          = '(Relax)' if relax == '-rx' else '(Vanilla)',
-                                gm          = modeNice),
-                            description     = '** **',
-                            color           = 0x00ff00)
-
-                        embed.set_thumbnail(url=akatsuki_logo)
-
-                        if userInfo["{}".format(mode)]["global_leaderboard_rank"] is not None:
-                            embed.add_field(
-                                name   = "Global Rank",
-                                value  = "#{:,}".format(userInfo["{}".format(mode)]["global_leaderboard_rank"]),
-                                inline = True)
-
-                        if userInfo["{}".format(mode)]["country_leaderboard_rank"] is not None:
-                            embed.add_field(
-                                name   = "Country Rank",
-                                value  = "#{:,}".format(userInfo["{}".format(mode)]["country_leaderboard_rank"]),
-                                inline = True)
-
-                        if userInfo["{}".format(mode)]["pp"] is not None:
-                            embed.add_field(
-                                name   = "PP",
-                                value  = "{:,}pp".format(userInfo["{}".format(mode)]["pp"]),
-                                inline = True)
-
-                        if userInfo["{}".format(mode)]["ranked_score"] is not None:
-                            embed.add_field(
-                                name   = "Ranked Score",
-                                value  = "{:,}".format(userInfo["{}".format(mode)]["ranked_score"]),
-                                inline = True)
-
-                        if userInfo["{}".format(mode)]["total_score"] is not None:
-                            embed.add_field(
-                                name   = "Total Score",
-                                value  = "{:,}".format(userInfo["{}".format(mode)]["total_score"]),
-                                inline = True)
-
-                        if userInfo["{}".format(mode)]["level"] is not None:
-                            embed.add_field(
-                                name   = "Level",
-                                value  = "{}".format(round(userInfo["{}".format(mode)]["level"], 2)),
-                                inline = True)
-
-                        if userInfo["{}".format(mode)]["accuracy"] is not None:
-                            embed.add_field(
-                                name   = "Accuracy",
-                                value  = "{}%".format(round(userInfo["{}".format(mode)]["accuracy"], 2)),
-                                inline = True)
-
-                        if userInfo["{}".format(mode)]["playcount"] is not None:
-                            embed.add_field(
-                                name   = "Playcount",
-                                value  = "{:,}".format(userInfo["{}".format(mode)]["playcount"]),
-                                inline = True)
-
-                        if userInfo["{}".format(mode)]["playtime"] is not None:
-                            embed.add_field(
-                                name   = "Playtime",
-                                value  = "{:,} hours".format(round(int(userInfo["{}".format(mode)]["playtime"]) / 3600, 2)),
-                                inline = True)
-
-                        if userInfo["{}".format(mode)]["replays_watched"] is not None:
-                            embed.add_field(
-                                name   = "Replays Watched",
-                                value  = "{:,}".format(userInfo["{}".format(mode)]["replays_watched"]),
-                                inline = True)
-
-                        if userInfo["followers"] is not None:
-                            embed.add_field(
-                                name   = "Followers",
-                                value  = "{}".format(userInfo["followers"]),
-                                inline = True)
-
-                        await client.send_message(message.channel, embed=embed)
-                    except:
+                    if not len(gamer): # Unsure if this is how this works?
                         await send_message_formatted("error", message,
                                         "either that user does not exist, or your syntax was incorrect",
                                         ["Syntax: `$stats username_spaced_like_this (-rx)`"])
+                        return
+
+                    gamerInfo = json.loads(gamer)
+
+                    userID = int(gamerInfo[0]["user_id"])
+
+                    resp = requests.get('https://akatsuki.pw/api/v1/users/{rx}full?id={userID}'
+                        .format(rx="rx" if relax == '-rx' else '', userID=userID), timeout=3).text
+
+                    userInfo = json.loads(resp)
+
+                    debug_print("Raw JSON:\n{}\n\nMinified:\n{}".format(resp, userInfo))
+
+                    if userInfo["favourite_mode"] == 0: # osu!
+                        mode = 'std'
+                        modeNice = 'osu!'
+                    elif userInfo["favourite_mode"] == 1: # osu!taiko
+                        mode = 'taiko'
+                        modeNice = 'osu!taiko'
+                    elif userInfo["favourite_mode"] == 2: # osu!catch
+                        mode = 'ctb'
+                        modeNice = 'osu!catch'
+                    elif userInfo["favourite_mode"] == 3: # osu!mania
+                        mode = 'mania'
+                        modeNice = 'osu!mania'
+
+                    embed = discord.Embed(
+                        title           = ":flag_{flag}: {username} | {gm} {rx}".format(
+                            flag        = userInfo["country"].lower(),
+                            username    = userInfo["username"],
+                            rx          = '(Relax)' if relax == '-rx' else '(Vanilla)',
+                            gm          = modeNice),
+                        description     = '** **',
+                        color           = 0x00ff00)
+
+                    embed.set_thumbnail(url=akatsuki_logo)
+
+                    if userInfo["{}".format(mode)]["global_leaderboard_rank"] is not None:
+                        embed.add_field(
+                            name   = "Global Rank",
+                            value  = "#{:,}".format(userInfo["{}".format(mode)]["global_leaderboard_rank"]),
+                            inline = True)
+
+                    if userInfo["{}".format(mode)]["country_leaderboard_rank"] is not None:
+                        embed.add_field(
+                            name   = "Country Rank",
+                            value  = "#{:,}".format(userInfo["{}".format(mode)]["country_leaderboard_rank"]),
+                            inline = True)
+
+                    if userInfo["{}".format(mode)]["pp"] is not None:
+                        embed.add_field(
+                            name   = "PP",
+                            value  = "{:,}pp".format(userInfo["{}".format(mode)]["pp"]),
+                            inline = True)
+
+                    if userInfo["{}".format(mode)]["ranked_score"] is not None:
+                        embed.add_field(
+                            name   = "Ranked Score",
+                            value  = "{:,}".format(userInfo["{}".format(mode)]["ranked_score"]),
+                            inline = True)
+
+                    if userInfo["{}".format(mode)]["total_score"] is not None:
+                        embed.add_field(
+                            name   = "Total Score",
+                            value  = "{:,}".format(userInfo["{}".format(mode)]["total_score"]),
+                            inline = True)
+
+                    if userInfo["{}".format(mode)]["level"] is not None:
+                        embed.add_field(
+                            name   = "Level",
+                            value  = "{}".format(round(userInfo["{}".format(mode)]["level"], 2)),
+                            inline = True)
+
+                    if userInfo["{}".format(mode)]["accuracy"] is not None:
+                        embed.add_field(
+                            name   = "Accuracy",
+                            value  = "{}%".format(round(userInfo["{}".format(mode)]["accuracy"], 2)),
+                            inline = True)
+
+                    if userInfo["{}".format(mode)]["playcount"] is not None:
+                        embed.add_field(
+                            name   = "Playcount",
+                            value  = "{:,}".format(userInfo["{}".format(mode)]["playcount"]),
+                            inline = True)
+
+                    if userInfo["{}".format(mode)]["playtime"] is not None:
+                        embed.add_field(
+                            name   = "Playtime",
+                            value  = "{:,} hours".format(round(int(userInfo["{}".format(mode)]["playtime"]) / 3600, 2)),
+                            inline = True)
+
+                    if userInfo["{}".format(mode)]["replays_watched"] is not None:
+                        embed.add_field(
+                            name   = "Replays Watched",
+                            value  = "{:,}".format(userInfo["{}".format(mode)]["replays_watched"]),
+                            inline = True)
+
+                    if userInfo["followers"] is not None:
+                        embed.add_field(
+                            name   = "Followers",
+                            value  = "{}".format(userInfo["followers"]),
+                            inline = True)
+
+                    await client.send_message(message.channel, embed=embed)
             
             # Command which grabs most recent (regular) plays from the Akatsuki API.
             # Syntax: $recent <username>
             # TODO: Add relax support.
-            elif messagecontent[0].lower() == '$recent':
-                # User input section!
-                # username - The user's username to be used for the command.
+            elif command == "recent":
                 username = messagecontent[1]
-                # gamemode - The user's gamemode to be used for the command.
                 gamemode = messagecontent[2]
 
                 # Change gamemode from user input string 
                 # to gamemodeint and beautified gamemode.
+                # TODO: any()
                 if 's' in gamemode.lower() \
                 or ('o' in gamemode.lower() \
                 and not 'm' in gamemode.lower() \
@@ -561,25 +583,16 @@ async def on_message(message):
                     await send_message_formatted("error", message, "please enter a valid gamemode.", ["Options: std, ctb, taiko, mania."])
                     return
 
-                # Perform a request to fetch basic user data and minify
-                # it into the "user" variable. Temp: "_user".
                 _user = requests.get('https://akatsuki.pw/api/v1/get_user?u={}'.format(username)).text
                 user = json.loads(_user)[0]
 
                 userID = user["user_id"]
 
-                # Perform the request using the username provided and minify
-                # it into the "resp" variable. Temp: "_resp".
                 _resp = requests.get("http://akatsuki.pw/api/get_user_recent?u={user}&limit=5&type=string&m={mode}".format(user=username, mode=gamemode)).text
                 resp = json.loads(_resp)
 
-                # Debug print the data recieved from the Akatsuki API
-                # in both raw and minified formats for debugging purposes.
                 debug_print("Raw JSON:\n{}\n\nMinified:\n{}".format(_resp, resp))
 
-                # Create our discord embed.
-                # Let's keep the format similar to our $stats/$user
-                # command for some extra spicy consistency.
                 embed = discord.Embed(
                     title            = "Recent Plays for :flag_{flag}: {username} | {gm}"
                         .format(
@@ -600,16 +613,9 @@ async def on_message(message):
 
                     debug_print(score)
 
-                    # Get some basic beatmapdata for the map.
-                    # Used: title, difficultyrating.
                     _beatmap = requests.get("https://akatsuki.pw/api/get_beatmaps?b={beatmap_id}".format(beatmap_id=score["beatmap_id"])).text
                     beatmap = json.loads(_beatmap)[0]
 
-                    # This some shit right here..
-                    #time_score = humanize.naturaltime(time.time() - score["date"])
-
-                    # Add the map to the embed.
-                    # This is slowly becoming insanity
                     embed.add_field(
                         name="** **", # :crab:
                         value="**{i}. `{rank_achieved}` [{artist} - {song_name} \[{diff_name}\]](https://akatsuki.pw/b/{beatmap_id}) ({star_rating}★) {mods_readable}**\n**Score**: {score}\n**PP**: {pp}\n**Combo**: {combo_achieved}/{max_combo}x - [{count300}/{count100}/{count50}/{countmiss}]\n**Date achieved**: {date}" \
@@ -635,19 +641,18 @@ async def on_message(message):
 
                     i += 1
 
-                # Finally, send the embed to the channel.
                 await client.send_message(message.channel, embed=embed)
 
             # Multipurpose akatsuki info command.
             # Syntax: $akatsuki <callback>
             # TODO: Unhardcode the responses; database.
-            elif messagecontent[0].lower() == '$akatsuki':
-                try:
+            elif command == "akatsuki":
+                if (len(messagecontent) - 1) > 1:
                     topic = messagecontent[1].lower()
-                except:
-                    topic = ''
+                else:
+                    topic = None
 
-                if topic == '' or topic == 'help':
+                if topic in (None, "help"):
                     await send_message_formatted("✨", message,
                         "please enter a topic."
                         "There are quite a few, so they will not be listed")
@@ -691,16 +696,16 @@ async def on_message(message):
             # Multipurpose staff application commands.
             # Syntax: $apply <callback>
             # TODO: Unhardcode the responses; database.
-            elif messagecontent[0].lower() == '$apply':
-                try:
+            elif command == "apply":
+                if (len(messagecontent) - 1) > 1:
                     position = messagecontent[1].lower()
-                except:
-                    position = ''
+                else:
+                    position = None
 
                 resp_array = []
                 emoticon = "success"
 
-                if position == '' or position == 'help':
+                if position in (None, "help"):
                     resp = \
                         "Please use a role name as an arguement"
 
@@ -806,15 +811,15 @@ async def on_message(message):
             # cmyui command; multipurpose information command on the guy.
             # Syntax: $cmyui <callback>
             # TODO: Unhardcode yet again!
-            elif messagecontent[0].lower() == '$cmyui':
-                try:
+            elif command == "cmyui":
+                if (len(messagecontent) - 1) > 1:
                     topic = messagecontent[1].lower()
-                except:
-                    topic = ''
+                else:
+                    topic = None
 
                 resp_array = []
 
-                if topic == '' or topic == 'help':
+                if topic in (None, "help"):
                     resp = \
                     "The $cmyui command is just a dictionary of stuff cmyui has saved in it"
 
@@ -873,14 +878,14 @@ async def on_message(message):
 
             # FAQ Command. Frequently asked questions!
             # Syntax: $faq <callback>
-            elif messagecontent[0].lower() == '$faq':
-                try:
+            elif command == "faq":
+                if (len(messagecontent) - 1) > 1:
                     callback = messagecontent[1].lower()
-                except:
-                    callback = ''
+                else:
+                    callback = None
 
                 cursor = db.cursor()
-                cursor.execute("SELECT * FROM discord_faq WHERE {type} = %s AND type = 1;".format(type='id' if callback.isdigit() else 'topic'), [callback])
+                cursor.execute("SELECT * FROM discord_faq WHERE {type} = %s AND type = 1".format(type='id' if callback.isdigit() else 'topic'), [callback])
 
                 result = cursor.fetchone()
 
@@ -892,7 +897,7 @@ async def on_message(message):
                         embed.set_footer(icon_url='', text=result[4])
                     await client.send_message(message.channel, embed=embed)
                 else:
-                    cursor.execute("SELECT id, topic, title FROM discord_faq WHERE type = 1;")
+                    cursor.execute("SELECT id, topic, title FROM discord_faq WHERE type = 1")
                     faq_db = cursor.fetchall()
                     faq_list = ''
                     i = 0
@@ -912,14 +917,14 @@ async def on_message(message):
 
             # Info command. General information such as rules, etc.
             # Syntax: $info <callback>
-            elif messagecontent[0].lower() == '$info':
-                try:
+            elif command == "info":
+                if (len(messagecontent) - 1) > 1:
                     callback = messagecontent[1].lower()
-                except:
-                    callback = ''
+                else:
+                    callback = None
 
                 cursor = db.cursor()
-                cursor.execute("SELECT * FROM discord_faq WHERE {type} = %s AND type = 0;".format(type='id' if callback.isdigit() else 'topic'), [callback])
+                cursor.execute("SELECT * FROM discord_faq WHERE {type} = %s AND type = 0".format(type='id' if callback.isdigit() else 'topic'), [callback])
   
                 result = cursor.fetchone()
 
@@ -927,11 +932,12 @@ async def on_message(message):
                     embed = discord.Embed(title=result[2], description='** **', color=0x00ff00)
                     embed.set_thumbnail(url=akatsuki_logo)
                     embed.add_field(name="** **", value=result[3], inline=result[5])
+
                     if result[4] is not None:
                         embed.set_footer(icon_url='', text=result[4])
                     await client.send_message(message.channel, embed=embed)
                 else:
-                    cursor.execute("SELECT id, topic, title FROM discord_faq WHERE type = 0;")
+                    cursor.execute("SELECT id, topic, title FROM discord_faq WHERE type = 0")
 
                     info_db = cursor.fetchall()
 
@@ -945,11 +951,8 @@ async def on_message(message):
                         info_list += '{}. {}{}|| {}\n'.format(i + 1, info_db[i][1], spaces, info_db[i][2])
                         i += 1
 
-                    await send_message_formatted("error", message,
-                        "I couldn't find a FAQ topic by that name", ["```{infolist}```"
-                            .format(
-                                topic=' ' + callback if len(callback) > 0 else '',
-                                infolist=info_list)])
+                    await send_message_formatted("error", message,"I couldn't find a FAQ topic by that name",
+                        ["```{infolist}```".format(topic=' ' + callback if len(callback) > 0 else '',infolist=info_list)])
 
             elif messagecontent[0].lower() in ('$verify', '!verify') and message.channel.id == config['akatsuki']['verify']: # Verify command.
                 if message.author.id != config['discord']['owner_id']: # Dont for cmyui, he's probably pinging @everyone to verify.
@@ -957,46 +960,45 @@ async def on_message(message):
                     await client.add_roles(message.author, verified)
                     await client.delete_message(message)
 
-            elif messagecontent[0].lower() == '$botinfo': # Bot info command.
+            elif command == "botinfo": # Bot info command.
                 embed = discord.Embed(title="Why hello! I'm Aika.", description='** **', color=0x00ff00)
                 embed.set_thumbnail(url=aika_pfp)
                 embed.add_field(
-                    name="** **", value="I\'m Akatsuki\'s (and cmyui\'s) bot. "
-                                        "I provide the server with things such as "
-                                        "commands to track ingame stats, help out "
-                                        "members in need, and provide overall fun "
-                                        "(and lots of useless) commands!\n\nSource "
-                                        "code: https://github.com/osuAkatsuki/Aika."
-                                        "\nIngame: https://akatsuki.pw/u/999\nCreator: "
-                                        "https://akatsuki.pw/u/1001", inline=False)
+                    name  = "** **",
+                    value = "I\'m Akatsuki\'s (and cmyui\'s) bot. "
+                            "I provide the server with things such as "
+                            "commands to track ingame stats, help out "
+                            "members in need, and provide overall fun "
+                            "(and lots of useless) commands!\n\nSource "
+                            "code: https://github.com/osuAkatsuki/Aika."
+                            "\nIngame: https://akatsuki.pw/u/999\nCreator: "
+                            "https://akatsuki.pw/u/1001",
+                    inline=False)
 
-                embed.set_footer(icon_url='', text='Good vibes <3')
+                embed.set_footer(icon_url="", text='Good vibes <3')
                 await client.send_message(message.channel, embed=embed)
 
             # Prune command. Prune x messages from the current channel.
             # Syntax: $prune <count>
             # TODO: More functionality, maybe prune by a specific user, etc.
-            elif messagecontent[0].lower() == '$prune' and message.author.server_permissions.manage_messages:
-                #await send_message_formatted("error", message,
-                #    "This command has been depreciated", ["Please use Tatsumaki's ;;prune command instead, as it is **much** more versatile."])
-
-                # TODO: unspaghetti
-                try:
+            elif command == "prune" and message.author.server_permissions.manage_messages:
+                if (len(messagecontent) - 1) > 1:
                     amtMessages = messagecontent[1]
-                except:
+                else:
                     amtMessages = 100
 
                 if str(amtMessages).isdigit() and int(amtMessages) <= 1000:
                     deleted = await client.purge_from(message.channel, limit=int(amtMessages) + 1)
                     message_count = len(deleted) - 1
-                    await send_message_formatted("success", message, 'Successfully pruned {messages} message{plural}'.format(messages=message_count, plural='s' if message_count > 1 else ''))
+                    await send_message_formatted("success", message, 'Successfully pruned {messages} message{plural}'
+                        .format(messages=message_count, plural='s' if message_count > 1 else ''))
                 else:
                     await send_message_formatted("error", message, 'It seems you used the command syntax improperly', ['Correct syntax: `$prune <messagecount (limit: 1000)>`.'])
 
             # Command for linking osu! account to discord
             # Syntax: $linkosu
             # TODO: More functionality, maybe not for only donors?
-            elif messagecontent[0].lower() == '$linkosu':
+            elif command == "linkosu":
                 cursor = db.cursor()
                 cursor.execute("SELECT * FROM discord_roles WHERE discordid = %s", [message.author.id])
 
@@ -1007,16 +1009,12 @@ async def on_message(message):
                         await client.add_roles(message.author, role)
                         cursor.execute("UPDATE discord_roles SET verified = 1 WHERE discordid = %s", [message.author.id])
 
-                        await send_message_formatted("success", message,
-                            "Your Discord has been sucessfully linked to your Akatsuki account.",
-                            ["Your roles should now be synced."])
+                        await send_message_formatted("success", message, "Your Discord has been sucessfully linked to your Akatsuki account.", ["Your roles should now be synced."])
                     else:
-                        await send_message_formatted("error", message,
-                            "You already have an account linked")
+                        await send_message_formatted("error", message, "You already have an account linked")
                 else:
 
-                    await send_message_formatted("✨", message,
-                        "Linking process initiated",
+                    await send_message_formatted("✨", message, "Linking process initiated",
                         ["Next, please use the following command in #osu, "
                          "or in a DM with 'Aika' ingame.",
                          "(in-game in the osu! client).",
