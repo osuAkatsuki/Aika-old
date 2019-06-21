@@ -4,7 +4,7 @@
     Yo. This is coded by cmyui, a person who is in.. let's call it "coding middle school".
 
     Expect my coding style to change roughly every week, for things to change at all times, and for code to be inconsistent.
-    Did you get that? Very inconsistent. This is because I am in the process of learning (not only python), but also a hell
+    Did you get that? Very inconsistent. This is because I am in the process of learning not only python, but also a hell
     of a lot of other languages (such as c++, where my style and formatting is very different!).
 
     These things influence my coding style a lot, and so do friends of mine.
