@@ -87,30 +87,51 @@ version = 2.50
 # or break rules. For the most part, these are of other private servers,
 # as required by rule #2 of the Akatsuki Discord & Chat Rules
 # (https://akatsuki.pw/doc/rules).
-filters       = ["pp.me", "paypal.me", "yozo", "y0zo", "yoz0", "y0z0",
-                 "ainu", "okamura", "kotorikku", "kurikku", "kawata",
-                 "ryusei", "ryu-sei", "enjuu", "verge", "katori",
-                 "osu-thailand", "discord.gg/", "gatari", "hidesu",
-                 "hiragi", "asuki", "mikoto", "homaru", "awasu",
-                 "lsd", "dmt", "shrooms"]
+filters       = [
+                # Paypal
+                "pp.me", "paypal.me",
+                
+                # osu! private servers
+                "yozo", "y0zo", "yoz0", "y0z0",
+                "ainu", "okamura", "kotorikku", "kurikku", "kawata",
+                "ryusei", "ryu-sei", "enjuu", "verge", "katori",
+                "osu-thailand", "gatari", "hidesu", "hiragi",
+                "asuki", "mikoto", "homaru", "awasu",
+
+                # Discord links
+                "discord.gg/", "discordapp.com/channels",
+
+                # Bad boy substances
+                "lsd", "dmt", "shrooms"
+                ]
 
 # A list of message (sub)strings that we will use to deem
 # a quantifiable value for the "quality" of a message.
-profanity     = ["nigg", "n1gg", "retard", "idiot",
-                 "fuck off", "shut the fuck up", "??"]
+profanity     = [
+                "nigg", "n1gg", "retard", "idiot",
+                "fuck off", "shut the fuck up", "??"
+                ]
 
-high_quality  = ["$faq", "welcome", "have a good",
-                 "enjoy", "no problem", "of course",
-                 "can help", "i can", "how can i help you"]
+high_quality  = [
+                "$faq", "welcome", "have a good",
+                "enjoy", "no problem", "of course",
+                "can help", "i can", "how can i help you"
+                ]
 
 # A list of message (sub)strings used to determine when a user
 # is asking about email verification (which does not exist on Akatsuki).
-email_checks  = ["verify e", "verification", "on email", "verify m", "verify a", "email t", "w verify", "i verify"]
+email_checks  = [
+                "verify e", "verification", "on email",
+                "verify m", "verify a", "email t",
+                "w verify", "i verify"
+                ]
 
 # Akatsuki's logo.
 # To be used mostly for embed thumbnails.
 akatsuki_logo = "https://akatsuki.pw/static/logos/logo.png"
-aika_pfp      = "https://akatsuki.pw/static/characters/quaver.png"
+#aika_pfp     = "https://akatsuki.pw/static/characters/quaver.png"
+aika_pfp      = "https://nanahira.life/a70CRNhGGPp2NgnyEku9X5fgYLBrqIGY.png"
+crab          = "https://cdn.discordapp.com/attachments/365406576548511745/591470256497754112/1f980.png"
 
 
 """ Functions """
@@ -208,11 +229,14 @@ async def on_ready():
     if int(config['default']['announce_online']) == 1:
         announceOnline = discord.Embed(
             title       = "Aika v{} Online".format(version),
-            description = "Ready for commands <3\n\n[Source Code](https://github.com/osuAkatsuki/Aika)\n[Akatsuki](https://akatsuki.pw)\n[Support Akatsuki](https://akatsuki.pw/support)",
+            description = "Ready for commands <3\n\nAika is osu!Akatsuki's "
+                          "[open source](https://github.com/osuAkatsuki/Aika) "
+                          "discord bot.\n\n[Akatsuki](https://akatsuki.pw)\n"
+                          "[Support Akatsuki](https://akatsuki.pw/support)",
             color       = 0x00ff00)
 
-        announceOnline.set_footer(icon_url=akatsuki_logo, text="Thank you for playing!")
-        announceOnline.set_thumbnail(url='http://akatsuki.pw/static/characters/quaver.png')
+        announceOnline.set_footer(icon_url=crab, text="Thank you for playing!")
+        announceOnline.set_thumbnail(url=akatsuki_logo)
         await client.send_message(client.get_channel(config['akatsuki']['general']), embed=announceOnline)
 
 # On exceptions, don't make the whole thing die :).
@@ -433,8 +457,21 @@ async def on_message(message):
                     embed.set_footer(icon_url=akatsuki_logo, text="[cmyui](https://akatsuki.pw/u/1001)")
                     await client.send_message(message.channel, embed=embed)
                     return
-                    
 
+                elif command == "time":
+                    await client.send_message(message.channel, "Current UNIX timestamp: `{}`".format(int(time.time())))
+                    return
+                elif command == "round":
+                    if not len(messagecontent) > 1:
+                        await send_message_formatted("error", message, "i'll need something to work with")
+                        return
+                    if re.match("^\d+?\.\d+?$", messagecontent[1]) is None:
+                        await send_message_formatted("error", message, "Why are your trying to round that.")
+                        return
+
+                    if len(messagecontent[1].split(".")[1]) < int(messagecontent[2]):
+                        messagecontent[2] = len(messagecontent[1].split(".")[1])
+                    await client.send_message(message.channel, "Rounded value (decimal places: {}): `{}`".format(messagecontent[2], round(float(messagecontent[1]), int(messagecontent[2]))))
             """
             Process regular user command.
 
