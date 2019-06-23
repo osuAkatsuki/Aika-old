@@ -80,7 +80,7 @@ db.ping(True)
 """ Constants """
 
 # The version number of Aika!
-version = 2.50
+version = 2.65
 
 # A list of filters.
 # These are to be used to wipe messages that are deemed inappropriate,
@@ -196,20 +196,23 @@ async def send_message_formatted(type, message, first_line, string_array=[]):
     :param string_array: The array of strings to follow. Optional.
     """
 
-    # Choose what kind of emoticon to open the response with.
+    # Choose what kind of status to open the response with.
+    # TODO: emojis
     if type == "error":
-        emoticon = "🔴"
+        status = "🔴"
     elif type == "success":
-        emoticon = "🔵"
+        status = "🔵"
     else: # neutral
-        emoticon = type
+        status = type
 
     # Build the response string.
-    resp =  "{emoticon} **{author_name}**, {first_line}.\n".format(
-        emoticon    = emoticon,
+    resp =  "{status} **{author_name}**, {first_line}{punctuation}\n".format(
+        status      = status,
         author_name = message.author.name,
-        first_line  = first_line.lower()) # Lowercase because im probably retarded
+        first_line  = (first_line[0].lower() if (first_line[0] != "I" and first_line[0:8] != "Akatsuki") else first_line[0]) + first_line[1:],
+        punctuation = "." if first_line[len(first_line) - 1] not in ("?", "!") else "")
 
+    # Add lines to the response.
     for line in string_array:
         resp += "        {string}\n".format(string=line)
 
@@ -239,17 +242,24 @@ async def on_ready():
         announceOnline.set_thumbnail(url=akatsuki_logo)
         await client.send_message(client.get_channel(config['akatsuki']['general']), embed=announceOnline)
 
+
 # On exceptions, don't make the whole thing die :).
 @client.event
 async def on_error(event, *args):
-    print(Fore.RED + "\n\nAn exception has occurred.\n\nError: {}\nargs: {}\n\nTraceback: {}\n".format(event, *args, logging.warning(traceback.format_exc())))
+    for arg in args:
+        print(Fore.RED + "\n\nAn exception has occurred.\n\n" + Fore.LIGHTRED_EX + "Exception: {exception}\nMessage content: {content}\n\n{traceback}\n\n".format(
+            exception = Fore.LIGHTBLUE_EX + event + Fore.LIGHTRED_EX,
+            content   = Fore.LIGHTBLUE_EX + arg.content + Fore.LIGHTRED_EX,
+            traceback = Fore.LIGHTBLUE_EX + "-------------------------------------------\n" + \
+                        Fore.LIGHTRED_EX + traceback.format_exc() + Fore.LIGHTBLUE_EX + \
+                        "-------------------------------------------" + Fore.LIGHTRED_EX))
 
-# On message event.
+
 @client.event
 async def on_message(message):
     client.wait_until_ready()
 
-    command_prefix = "$"
+    command_prefix = "!"
 
     # Message sent in #player-reporting, move to #reports.
     if message.channel.id == config['akatsuki']['player_reporting']: 
@@ -310,14 +320,14 @@ async def on_message(message):
         if any(x in message.content.lower() for x in email_checks) and message.server.id == config['akatsuki']['server_id']:
             if "badge" not in message.content.lower():
                 await client.send_message(message.author,
-                                        "Right, this is an automated message as it "
-                                        "was assumed you needed assitance in Akatsuki "
-                                        "with: Email Verification\n\nAs the verification "
-                                        "page says, Akatsuki does not use verification "
-                                        "emails. To verify your account, simply install "
-                                        "the switcher, install the certificate, click the "
-                                        "server you'd like to play on, and click On/Off, "
-                                        "then login to osu! to complete the verification process.")
+                    "Right, this is an automated message as it "
+                    "was assumed you needed assitance in Akatsuki "
+                    "with: Email Verification\n\nAs the verification "
+                    "page says, Akatsuki does not use verification "
+                    "emails. To verify your account, simply install "
+                    "the switcher, install the certificate, click the "
+                    "server you'd like to play on, and click On/Off, "
+                    "then login to osu! to complete the verification process.")
 
                 await client.delete_message(message)
 
@@ -325,8 +335,7 @@ async def on_message(message):
             else:
                 debug_print("Aborted Trigger: Email Verification Support, due to \"badge\" contents of the message.\nUser: {}".format(message.author))
 
-        elif any(x in message.content.lower() for x in filters) \
-        and not message.author.server_permissions.manage_messages:
+        elif any(x in message.content.lower() for x in filters) and not message.author.server_permissions.manage_messages:
             cursor = db.cursor()
             cursor.execute("INSERT INTO profanity_filter (user, message, time) VALUES (%s, %s, %s)", [message.author.id, message.content, int(time.time())])
 
@@ -389,9 +398,9 @@ async def on_message(message):
 
                         await client.change_presence(game=discord.Game(name=game, url='https://akatsuki.pw/', type=0))
 
-                        await send_message_formatted("success", message, "Game successfully changed to: {}".format(game))
+                        await send_message_formatted("success", message, "game successfully changed to: {}".format(game))
                     else:
-                        await send_message_formatted("error", message, "Please specify a game name")
+                        await send_message_formatted("error", message, "please specify a game name")
                         return
 
                     await client.delete_message(message)
@@ -410,14 +419,13 @@ async def on_message(message):
                     positive, neutral, negative, i = 0, 0, 0, 0 # Uh huh
 
                     if logs is not None:
-                        for x in logs:
-                            if logs[i][0] == 0:
+                        for log in logs:
+                            if log[0] == 0:
                                 negative += 1
-                            elif logs[i][0] == 1:
+                            elif log[0] == 1:
                                 neutral += 1
                             else:
                                 positive += 1
-                            i = i + 1
 
                         embed = discord.Embed(title="Helplogs report | {}".format(userID), description='** **', color=0x00ff00)
                         embed.set_thumbnail(url=akatsuki_logo)
@@ -427,20 +435,7 @@ async def on_message(message):
                         embed.add_field(name="Negative", value=negative, inline=True)
                         await client.send_message(message.channel, embed=embed)
                     else:
-                        await send_message_formatted("error", message, "No logs found on the specified user")
-                    return
-
-                elif command == "r":
-                    execute = ' '.join(messagecontent[1:]).strip()
-
-                    processingMessage = await client.send_message(message.channel, "Processing request..")
-
-                    params = urlencode({"k": config["akatsuki"]["apikey"], "to": "#admin", "msg": execute})
-                    requests.get("http://{}:5001/api/v1/fokabotMessage?{}".format(config["akatsuki"]["ip"], params))
-
-                    await send_message_formatted("success", message, "Successfully executed on Akatsuki.", ["`{}`".format(execute)])
-
-                    await client.delete_message(processingMessage)
+                        await send_message_formatted("error", message, "no logs could be found on the specified user")
                     return
 
                 elif command == "d":
@@ -458,20 +453,12 @@ async def on_message(message):
                     await client.send_message(message.channel, embed=embed)
                     return
 
-                elif command == "time":
-                    await client.send_message(message.channel, "Current UNIX timestamp: `{}`".format(int(time.time())))
-                    return
-                elif command == "round":
-                    if not len(messagecontent) > 1:
-                        await send_message_formatted("error", message, "i'll need something to work with")
-                        return
-                    if re.match("^\d+?\.\d+?$", messagecontent[1]) is None:
-                        await send_message_formatted("error", message, "Why are your trying to round that.")
-                        return
+                # Error on purpose. This is used to test our error handler!
+                elif command == "e":
+                    await client.delete_message(message)
+                    None.isdigit()
 
-                    if len(messagecontent[1].split(".")[1]) < int(messagecontent[2]):
-                        messagecontent[2] = len(messagecontent[1].split(".")[1])
-                    await client.send_message(message.channel, "Rounded value (decimal places: {}): `{}`".format(messagecontent[2], round(float(messagecontent[1]), int(messagecontent[2]))))
+
             """
             Process regular user command.
 
@@ -509,8 +496,7 @@ async def on_message(message):
 
                     userID = int(gamerInfo[0]["user_id"])
 
-                    resp = requests.get('https://akatsuki.pw/api/v1/users/{rx}full?id={userID}'
-                        .format(rx="rx" if relax == '-rx' else '', userID=userID), timeout=3).text
+                    resp = requests.get('https://akatsuki.pw/api/v1/users/{rx}full?id={userID}'.format(rx="rx" if relax == '-rx' else '', userID=userID), timeout=3).text
 
                     userInfo = json.loads(resp)
 
@@ -518,25 +504,25 @@ async def on_message(message):
 
                     if userInfo["favourite_mode"] == 0: # osu!
                         mode = 'std'
-                        modeNice = 'osu!'
+                        mode_nice = 'osu!'
                     elif userInfo["favourite_mode"] == 1: # osu!taiko
                         mode = 'taiko'
-                        modeNice = 'osu!taiko'
+                        mode_nice = 'osu!taiko'
                     elif userInfo["favourite_mode"] == 2: # osu!catch
                         mode = 'ctb'
-                        modeNice = 'osu!catch'
+                        mode_nice = 'osu!catch'
                     elif userInfo["favourite_mode"] == 3: # osu!mania
                         mode = 'mania'
-                        modeNice = 'osu!mania'
+                        mode_nice = 'osu!mania'
 
                     embed = discord.Embed(
-                        title           = ":flag_{flag}: {username} | {gm} {rx}".format(
-                            flag        = userInfo["country"].lower(),
-                            username    = userInfo["username"],
-                            rx          = '(Relax)' if relax == '-rx' else '(Vanilla)',
-                            gm          = modeNice),
-                        description     = '** **',
-                        color           = 0x00ff00)
+                        title        = ":flag_{flag}: {username} | {gm} {rx}".format(
+                            flag     = userInfo["country"].lower(),
+                            username = userInfo["username"],
+                            rx       = '(Relax)' if relax == '-rx' else '(Vanilla)',
+                            gm       = mode_nice),
+                        description  = '** **',
+                        color        = 0x00ff00)
 
                     embed.set_thumbnail(url=akatsuki_logo)
 
@@ -608,6 +594,43 @@ async def on_message(message):
 
                     await client.send_message(message.channel, embed=embed)
                 return
+
+            # Run a command on the Akatsuki server
+            # TODO: compare against their ingame perms? this could be a good mini project i guess
+            elif command == "r" and message.author.server_permissions.manage_roles: # server_permissions does not take channel perms into account
+                execute = ' '.join(messagecontent[1:]).strip()
+
+                if not len(execute.strip()) > 4 or messagecontent[1][0] != "!":
+                    await send_message_formatted("error", message, "what exactly are you trying to send..?")
+                    return
+
+                processingMessage = await client.send_message(message.channel, "Processing request..")
+
+                params = urlencode({"k": config["akatsuki"]["apikey"], "to": "#admin", "msg": execute})
+                requests.get("http://{}:5001/api/v1/fokabotMessage?{}".format(config["akatsuki"]["ip"], params))
+
+                await send_message_formatted("success", message, "your command has been successfully executed on Akatsuki", ["`{}`".format(execute)])
+
+                await client.delete_message(processingMessage)
+                return
+
+            # Return current UNIX timestamp
+            elif command == "time":
+                await client.send_message(message.channel, "Current UNIX timestamp: `{}`".format(int(time.time())))
+                return
+
+            # Round arg0 to arg1 decimals
+            elif command == "round": # TODO: server time adjustment
+                if not len(messagecontent) > 1:
+                    await send_message_formatted("error", message, "i'll need something to work with")
+                    return
+                if re.match("^\d+?\.\d+?$", messagecontent[1]) is None:
+                    await send_message_formatted("error", message, "Why are your trying to round that.")
+                    return
+
+                if len(messagecontent[1].split(".")[1]) < int(messagecontent[2]):
+                    messagecontent[2] = len(messagecontent[1].split(".")[1])
+                await client.send_message(message.channel, "Rounded value (decimal places: {}): `{}`".format(messagecontent[2], round(float(messagecontent[1]), int(messagecontent[2]))))
             
             # Command which grabs most recent (regular) plays from the Akatsuki API.
             # Syntax: $recent <username>
@@ -928,7 +951,7 @@ async def on_message(message):
                 if len(messagecontent) > 1:
                     callback = messagecontent[1].lower()
                 else:
-                    callback = None
+                    callback = "" # not nonetype so we can support digit stuff without a copy paste exception fucking python no goto fuck
 
                 cursor = db.cursor()
                 cursor.execute("SELECT * FROM discord_faq WHERE {type} = %s AND type = 1".format(type='id' if callback.isdigit() else 'topic'), [callback])
@@ -945,21 +968,19 @@ async def on_message(message):
                 else:
                     cursor.execute("SELECT id, topic, title FROM discord_faq WHERE type = 1")
                     faq_db = cursor.fetchall()
-                    faq_list = ''
-                    i = 0
-                    for x in faq_db:
-                        add_len = 12 - len(faq_db[i][1])
-                        spaces = ''
-                        spaces += ' ' * add_len
+                    faq_list = ""
+                    i = 1
+                    for faq in faq_db:
+                        add_len = 12 - len(faq[1])
+                        spaces = ""
+                        spaces += " " * add_len
 
-                        faq_list += '{}. {}{}|| {}\n'.format(i + 1, faq_db[i][1], spaces, faq_db[i][2])
+                        faq_list += "{}. {}{}|| {}\n".format(i, faq[1], spaces, faq[2])
                         i += 1
 
-                    await send_message_formatted("error", message,
-                        "I couldn't find a FAQ topic by that name", ["```{faqlist}```"
-                            .format(
-                                topic=' ' + callback if len(callback) > 0 else '',
-                                faqlist=faq_list)])
+                    await send_message_formatted("error", message, "I couldn't find a FAQ topic by that name", ["```{faqlist}```".format(
+                        topic   = " " + callback if len(callback) > 0 else "",
+                        faqlist = faq_list.replace("`", ""))])
                 return
 
             # Info command. General information such as rules, etc.
@@ -968,7 +989,7 @@ async def on_message(message):
                 if len(messagecontent) > 1:
                     callback = messagecontent[1].lower()
                 else:
-                    callback = None
+                    callback = "" # not nonetype so we can support digit stuff without a copy paste exception fucking python no goto fuck
 
                 cursor = db.cursor()
                 cursor.execute("SELECT * FROM discord_faq WHERE {type} = %s AND type = 0".format(type='id' if callback.isdigit() else 'topic'), [callback])
@@ -988,18 +1009,19 @@ async def on_message(message):
 
                     info_db = cursor.fetchall()
 
-                    info_list = ''
-                    i = 0
-                    for x in info_db:
-                        add_len = 12 - len(info_db[i][1])
-                        spaces = ''
-                        spaces += ' ' * add_len
+                    info_list = ""
+                    i = 1
+                    for info in info_db:
+                        add_len = 12 - len(info[1])
+                        spaces = ""
+                        spaces += " " * add_len
 
-                        info_list += '{}. {}{}|| {}\n'.format(i + 1, info_db[i][1], spaces, info_db[i][2])
+                        info_list += "{}. {}{}|| {}\n".format(i, info[1], spaces, info[2])
                         i += 1
 
-                    await send_message_formatted("error", message,"I couldn't find a FAQ topic by that name",
-                        ["```{infolist}```".format(topic=' ' + callback if len(callback) > 0 else '',infolist=info_list)])
+                    await send_message_formatted("error", message,"I couldn't find a FAQ topic by that name", ["```{infolist}```".format(
+                        topic    = " " + callback if len(callback) > 0 else "",
+                        infolist = info_list.replace("`", ""))])
                 return
 
             elif command == "botinfo": # Bot info command.
