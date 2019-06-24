@@ -78,7 +78,7 @@ except mysql.connector.Error as err:
     else:
         print(err)
 else:
-    cursor = cnx.cursor()
+    SQL = cnx.cursor()
 
 
 """ Constants """
@@ -141,8 +141,8 @@ aika_pfp      = "https://nanahira.life/a70CRNhGGPp2NgnyEku9X5fgYLBrqIGY.png"
 crab          = "https://cdn.discordapp.com/attachments/365406576548511745/591470256497754112/1f980.png"
 
 # Debug value
-cursor.execute("SELECT value_int FROM aika_settings WHERE name = 'debug'")
-debug = cursor.fetchone()[0]
+SQL.execute("SELECT value_int FROM aika_settings WHERE name = 'debug'")
+debug = SQL.fetchone()[0]
 
 
 """ Functions """
@@ -192,8 +192,8 @@ def debug_print(string):
     """
 
     # Debug value
-    cursor.execute("SELECT value_int FROM aika_settings WHERE name = 'debug'")
-    debug = cursor.fetchone()[0]
+    SQL.execute("SELECT value_int FROM aika_settings WHERE name = 'debug'")
+    debug = SQL.fetchone()[0]
 
     if debug:
         print(Fore.MAGENTA + "\nDEBUG: {}\n".format(string))
@@ -327,7 +327,7 @@ async def on_message(message):
 
             debug_print("Quality of message {}: {}".format(message.id, quality))
 
-            cursor.execute("INSERT INTO help_logs (id, user, content, datetime, quality) VALUES (NULL, %s, %s, %s, %s)", [message.author.id, message.content, int(time.time()), quality])
+            SQL.execute("INSERT INTO help_logs (id, user, content, datetime, quality) VALUES (NULL, %s, %s, %s, %s)", [message.author.id, message.content, int(time.time()), quality])
 
         # Checks for things in message.
         if any(x in message.content.lower() for x in email_checks) and message.server.id == config['akatsuki']['server_id']:
@@ -349,7 +349,7 @@ async def on_message(message):
                 debug_print("Aborted Trigger: Email Verification Support, due to \"badge\" contents of the message.\nUser: {}".format(message.author))
 
         elif any(x in message.content.lower() for x in filters) and not message.author.server_permissions.manage_messages:
-            cursor.execute("INSERT INTO profanity_filter (user, message, time) VALUES (%s, %s, %s)", [message.author.id, message.content, int(time.time())])
+            SQL.execute("INSERT INTO profanity_filter (user, message, time) VALUES (%s, %s, %s)", [message.author.id, message.content, int(time.time())])
 
             await client.delete_message(message)
             await client.send_message(message.author,
@@ -429,9 +429,9 @@ async def on_message(message):
 
                 userID = re.findall('\d+', messagecontent[1])[0]
 
-                cursor.execute("SELECT quality FROM help_logs WHERE user = %s", [userID])
+                SQL.execute("SELECT quality FROM help_logs WHERE user = %s", [userID])
 
-                logs = cursor.fetchall()
+                logs = SQL.fetchall()
 
                 debug_print(logs)
 
@@ -463,7 +463,7 @@ async def on_message(message):
                     await send_message_formatted("error", message, "You lack sufficient privileges to use this command")
                     return
 
-                cursor.execute("UPDATE aika_settings SET value_int = 1 - value_int WHERE name = 'debug'")
+                SQL.execute("UPDATE aika_settings SET value_int = 1 - value_int WHERE name = 'debug'")
                 debug_print("Debug enabled.")
                 await client.delete_message(message)
                 return
@@ -978,9 +978,9 @@ async def on_message(message):
                 else:
                     callback = "" # not nonetype so we can support digit stuff without a copy paste exception fucking python no goto fuck
 
-                cursor.execute("SELECT * FROM discord_faq WHERE {type} = %s AND type = 1".format(type='id' if callback.isdigit() else 'topic'), [callback])
+                SQL.execute("SELECT * FROM discord_faq WHERE {type} = %s AND type = 1".format(type='id' if callback.isdigit() else 'topic'), [callback])
 
-                result = cursor.fetchone()
+                result = SQL.fetchone()
 
                 if result is not None:
                     embed = discord.Embed(title=result[2], description='** **', color=0x00ff00)
@@ -990,8 +990,8 @@ async def on_message(message):
                         embed.set_footer(icon_url='', text=result[4])
                     await client.send_message(message.channel, embed=embed)
                 else:
-                    cursor.execute("SELECT id, topic, title FROM discord_faq WHERE type = 1")
-                    faq_db = cursor.fetchall()
+                    SQL.execute("SELECT id, topic, title FROM discord_faq WHERE type = 1")
+                    faq_db = SQL.fetchall()
                     faq_list = ""
                     i = 1
                     for faq in faq_db:
@@ -1015,9 +1015,9 @@ async def on_message(message):
                 else:
                     callback = "" # not nonetype so we can support digit stuff without a copy paste exception fucking python no goto fuck
 
-                cursor.execute("SELECT * FROM discord_faq WHERE {type} = %s AND type = 0".format(type='id' if callback.isdigit() else 'topic'), [callback])
+                SQL.execute("SELECT * FROM discord_faq WHERE {type} = %s AND type = 0".format(type='id' if callback.isdigit() else 'topic'), [callback])
   
-                result = cursor.fetchone()
+                result = SQL.fetchone()
 
                 if result is not None:
                     embed = discord.Embed(title=result[2], description='** **', color=0x00ff00)
@@ -1028,9 +1028,9 @@ async def on_message(message):
                         embed.set_footer(icon_url='', text=result[4])
                     await client.send_message(message.channel, embed=embed)
                 else:
-                    cursor.execute("SELECT id, topic, title FROM discord_faq WHERE type = 0")
+                    SQL.execute("SELECT id, topic, title FROM discord_faq WHERE type = 0")
 
-                    info_db = cursor.fetchall()
+                    info_db = SQL.fetchall()
 
                     info_list = ""
                     i = 1
@@ -1089,13 +1089,13 @@ async def on_message(message):
             # Syntax: $linkosu
             # TODO: More functionality, maybe not for only donors?
             elif command == "linkosu":
-                cursor.execute("SELECT * FROM discord_roles WHERE discordid = %s", [message.author.id])
-                result = cursor.fetchone()
+                SQL.execute("SELECT * FROM discord_roles WHERE discordid = %s", [message.author.id])
+                result = SQL.fetchone()
 
                 if result is not None:
                     if result[4] == 0:
                         await client.add_roles(message.author, discord.utils.get(message.server.roles, id=result[3]))
-                        cursor.execute("UPDATE discord_roles SET verified = 1 WHERE discordid = %s", [message.author.id])
+                        SQL.execute("UPDATE discord_roles SET verified = 1 WHERE discordid = %s", [message.author.id])
 
                         await send_message_formatted("success", message, "Your Discord has been sucessfully linked to your Akatsuki account.", ["Your roles should now be synced."])
                     else:
@@ -1110,5 +1110,7 @@ print(Fore.CYAN + "\nLogging into Discord with token..")
 client.run(str(config['discord']['token']))
 
 # Clean up
-cursor.close()
+print(Fore.MAGENTA + "\nCleaning up MySQL variables..")
+SQL.close()
 cnx.close()
+print(Fore.GREEN + "Cleaning complete.")
