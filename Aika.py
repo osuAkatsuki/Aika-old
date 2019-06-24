@@ -22,19 +22,18 @@
 """
     1: Move vars such as debug to DB
     2. Find a better way to do quality of helplog reports
-    3. Process commands based on discord perms rather than just owner/user commands with some scuffed shit.
-    4. Make userstats command use username thing in API like the $recent command does.
-    5. Add relax support to both here and Akatsuki's API for the $recent command to work. HaHa it Matchd THe Line ABove it when i Typed $recent command HAHa.!
-    6. Unhardcode the responses for a hell of a lot of commands. Or just remove the commands. WHo cares!
-    7. use any() where applicable
-    8. cool shit for $linkosu and $prune. More functionality More functionality More functionality More functionality More functionality More functionality More functionality More functionality More functionality More functionality More functionality 
+    3. Make userstats command use username thing in API like the $recent command does.
+    4. Add relax support to both here and Akatsuki's API for the $recent command to work. HaHa it Matchd THe Line ABove it when i Typed $recent command HAHa.!
+    5. Unhardcode the responses for a hell of a lot of commands. Or just remove the commands. WHo cares!
+    6. use any() where applicable
+    7. cool shit for $linkosu and $prune. More functionality More functionality More functionality More functionality More functionality More functionality More functionality More functionality More functionality More functionality More functionality 
+    8. time command adjust for server time.
 """
 
 # Library imports.
 import discord
 import asyncio
 import configparser
-import re
 import logging
 import traceback
 import requests
@@ -43,11 +42,11 @@ import random
 from colorama import init
 from colorama import Fore, Back, Style
 from urllib.parse import urlencode
-import MySQLdb
-import redis
+import mysql.connector
+from mysql.connector import errorcode
+import re
 import time
 from datetime import datetime
-#import humanize
 
 # Our imports.
 from constants import mods
@@ -63,24 +62,32 @@ config = configparser.ConfigParser()
 config.sections()
 config.read('config.ini')
 
-# Connect to redis.
-r = redis.Redis(host='localhost', port=6379, db=0)
-
 # MySQL
-db = MySQLdb.connect(
-    host=str(config['mysql']['host']),
-    user=str(config['mysql']['user']),
-    passwd=str(config['mysql']['passwd']),
-    db=str(config['mysql']['db'])
-    )
-db.autocommit(True)
-db.ping(True)
+try:
+    cnx = mysql.connector.connect(
+        user       = str(config['mysql']['user']),
+        password   = str(config['mysql']['passwd']),
+        host       = str(config['mysql']['host']),
+        database   = str(config['mysql']['db']),
+        autocommit = True)
+except mysql.connector.Error as err:
+    if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+        print("Something is wrong with your username or password.")
+    elif err.errno == errorcode.ER_BAD_DB_ERROR:
+        print("Database does not exist.")
+    else:
+        print(err)
+else:
+    cursor = cnx.cursor()
 
 
 """ Constants """
 
 # The version number of Aika!
 version = 2.65
+
+# Length of the bars for error handler (https://nanahira.life/1uRp27N5TCipZ3Hs12o5PQLEOTyHHYUE.png)
+ERROR_BAR_LEN = 100
 
 # A list of filters.
 # These are to be used to wipe messages that are deemed inappropriate,
@@ -113,7 +120,7 @@ profanity     = [
                 ]
 
 high_quality  = [
-                "$faq", "welcome", "have a good",
+                "!faq", "!help", "welcome", "have a good",
                 "enjoy", "no problem", "of course",
                 "can help", "i can", "how can i help you"
                 ]
@@ -133,17 +140,22 @@ akatsuki_logo = "https://akatsuki.pw/static/logos/logo.png"
 aika_pfp      = "https://nanahira.life/a70CRNhGGPp2NgnyEku9X5fgYLBrqIGY.png"
 crab          = "https://cdn.discordapp.com/attachments/365406576548511745/591470256497754112/1f980.png"
 
+# Debug value
+cursor.execute("SELECT value_int FROM aika_settings WHERE name = 'debug'")
+debug = cursor.fetchone()[0]
+
 
 """ Functions """
 
 
-def readableMods(m):
+def readableMods(m): # From: Ripple source
 	"""
 	Return a string with readable std mods.
 
 	:param m: mods bitwise number
-	:return: readable mods string, eg HDDT
+	:return:  readable mods string, eg HDDT
 	"""
+
 	r = "+"
 	if m == 0:
 		return ""
@@ -179,7 +191,11 @@ def debug_print(string):
     :param string:       The message to be printed to the console.
     """
 
-    if config['default']['debug'] != "0": # int string XDDDDDDDDDD
+    # Debug value
+    cursor.execute("SELECT value_int FROM aika_settings WHERE name = 'debug'")
+    debug = cursor.fetchone()[0]
+
+    if debug:
         print(Fore.MAGENTA + "\nDEBUG: {}\n".format(string))
 
 
@@ -209,7 +225,7 @@ async def send_message_formatted(type, message, first_line, string_array=[]):
     resp =  "{status} **{author_name}**, {first_line}{punctuation}\n".format(
         status      = status,
         author_name = message.author.name,
-        first_line  = (first_line[0].lower() if (first_line[0] != "I" and first_line[0:8] != "Akatsuki") else first_line[0]) + first_line[1:],
+        first_line  = (first_line[0].lower() if first_line[0] != "I" and first_line[0:8] != "Akatsuki" else first_line[0]) + first_line[1:],
         punctuation = "." if first_line[len(first_line) - 1] not in ("?", "!") else "")
 
     # Add lines to the response.
@@ -226,7 +242,7 @@ async def on_ready():
     print(Fore.GREEN + 'Authentication Successful.\n{} | {}\n--------------------------\n'
         .format(client.user.name, client.user.id))
 
-    debug_print("Debug enabled.")
+    debug_print("Debug: {}.".format(bool(debug)))
 
     # Send an announcement that the bots been started in Akatsuki's #general (if debug).
     if int(config['default']['announce_online']) == 1:
@@ -250,9 +266,7 @@ async def on_error(event, *args):
         print(Fore.RED + "\n\nAn exception has occurred.\n\n" + Fore.LIGHTRED_EX + "Exception: {exception}\nMessage content: {content}\n\n{traceback}\n\n".format(
             exception = Fore.LIGHTBLUE_EX + event + Fore.LIGHTRED_EX,
             content   = Fore.LIGHTBLUE_EX + arg.content + Fore.LIGHTRED_EX,
-            traceback = Fore.LIGHTBLUE_EX + "-------------------------------------------\n" + \
-                        Fore.LIGHTRED_EX + traceback.format_exc() + Fore.LIGHTBLUE_EX + \
-                        "-------------------------------------------" + Fore.LIGHTRED_EX))
+            traceback = Fore.LIGHTBLUE_EX + ("-" * ERROR_BAR_LEN) + "\n" + Fore.LIGHTRED_EX + traceback.format_exc() + Fore.LIGHTBLUE_EX + ("-" * ERROR_BAR_LEN) + Fore.LIGHTRED_EX))
 
 
 @client.event
@@ -313,7 +327,6 @@ async def on_message(message):
 
             debug_print("Quality of message {}: {}".format(message.id, quality))
 
-            cursor = db.cursor()
             cursor.execute("INSERT INTO help_logs (id, user, content, datetime, quality) VALUES (NULL, %s, %s, %s, %s)", [message.author.id, message.content, int(time.time()), quality])
 
         # Checks for things in message.
@@ -336,7 +349,6 @@ async def on_message(message):
                 debug_print("Aborted Trigger: Email Verification Support, due to \"badge\" contents of the message.\nUser: {}".format(message.author))
 
         elif any(x in message.content.lower() for x in filters) and not message.author.server_permissions.manage_messages:
-            cursor = db.cursor()
             cursor.execute("INSERT INTO profanity_filter (user, message, time) VALUES (%s, %s, %s)", [message.author.id, message.content, int(time.time())])
 
             await client.delete_message(message)
@@ -377,98 +389,112 @@ async def on_message(message):
             messagecontent = message.content.split(' ')
             command = messagecontent[0][1:].lower()
 
-            # TODO: Process commands based on discord perms.
-            if message.author.id == config['discord']['owner_id']: # Process owner commands.
-                """
-                Process owner commands.
+            #if message.author.id == config['discord']['owner_id']: # Process owner commands.
 
-                Only the config['discord']['owner_id'] has access to these.
-                """
-
-                if command == "game":                    
-                    # Change your discord users status / game.
-                    game = ' '.join(messagecontent[1:]).strip() # Get the game.
-                    if game: # Game also changed.
-                        """
-                        game Variables:
-                        name = name of the game
-                        url = link for the game (usually for streaming probably)
-                        type = boolean to show whether streaming or not
-                        """
-
-                        await client.change_presence(game=discord.Game(name=game, url='https://akatsuki.pw/', type=0))
-
-                        await send_message_formatted("success", message, "game successfully changed to: {}".format(game))
-                    else:
-                        await send_message_formatted("error", message, "please specify a game name")
-                        return
-
-                    await client.delete_message(message)
+            # Change the bot's displayed game.
+            if command == "game":
+                if not message.author.server_permissions.manage_webhooks: # Webhook since it's a bot thing
+                    await send_message_formatted("error", message, "You lack sufficient privileges to use this command")
                     return
 
-                elif command == "hs":
-                    userID = re.findall('\d+', messagecontent[1])[0]
+                # Change your discord users status / game.
+                game = ' '.join(messagecontent[1:]).strip() # Get the game.
+                if game: # Game also changed.
+                    """
+                    game Variables:
+                    name = name of the game
+                    url = link for the game (usually for streaming probably)
+                    type = boolean to show whether streaming or not
+                    """
 
-                    cursor = db.cursor()
-                    cursor.execute("SELECT quality FROM help_logs WHERE user = %s", [userID])
+                    await client.change_presence(game=discord.Game(name=game, url='https://akatsuki.pw/', type=0))
 
-                    logs = cursor.fetchall()
-
-                    debug_print(logs)
-
-                    positive, neutral, negative, i = 0, 0, 0, 0 # Uh huh
-
-                    if logs is not None:
-                        for log in logs:
-                            if log[0] == 0:
-                                negative += 1
-                            elif log[0] == 1:
-                                neutral += 1
-                            else:
-                                positive += 1
-
-                        embed = discord.Embed(title="Helplogs report | {}".format(userID), description='** **', color=0x00ff00)
-                        embed.set_thumbnail(url=akatsuki_logo)
-                        embed.add_field(name="Total", value=positive + neutral + negative, inline=True)
-                        embed.add_field(name="Positive", value=positive, inline=True)
-                        embed.add_field(name="Neutral", value=neutral, inline=True)
-                        embed.add_field(name="Negative", value=negative, inline=True)
-                        await client.send_message(message.channel, embed=embed)
-                    else:
-                        await send_message_formatted("error", message, "no logs could be found on the specified user")
+                    await send_message_formatted("success", message, "game successfully changed to: {}".format(game))
+                else:
+                    await send_message_formatted("error", message, "please specify a game name")
                     return
 
-                elif command == "d":
-                    config.set('default', 'debug', '{}'.format("1" if config['default']['debug'] == "0" else 0))
+                await client.delete_message(message)
+                return
 
-                    await send_message_formatted("✨", message, "Debug: {}"
-                        .format('Disabled' if config['default']['debug'] == "0" else 'Enabled'))
+            elif command in ("hs", "helplogs"):
+                if not message.author.server_permissions.manage_roles:
+                    await send_message_formatted("error", message, "You lack sufficient privileges to use this command")
                     return
 
-                # Command to remind my dumbass which parts of embeds can be links.
-                elif command == "cmyuiisretarded":
-                    embed = discord.Embed(title="[cmyui](https://akatsuki.pw/u/1001)", description='** **', color=0x00ff00)
-                    embed.add_field(name="[cmyui](https://akatsuki.pw/u/1001)", value="[cmyui](https://akatsuki.pw/u/1001)")
-                    embed.set_footer(icon_url=akatsuki_logo, text="[cmyui](https://akatsuki.pw/u/1001)")
+                if not len(messagecontent) > 1:
+                    await send_message_formatted("error", message, "this command requires an argument")
+                    return
+
+
+                userID = re.findall('\d+', messagecontent[1])[0]
+
+                cursor.execute("SELECT quality FROM help_logs WHERE user = %s", [userID])
+
+                logs = cursor.fetchall()
+
+                debug_print(logs)
+
+                positive, neutral, negative, i = 0, 0, 0, 0 # Uh huh
+
+                if logs is not None:
+                    for log in logs:
+                        if log[0] == 0:
+                            negative += 1
+                        elif log[0] == 1:
+                            neutral += 1
+                        else:
+                            positive += 1
+
+                    embed = discord.Embed(title="Report | {}".format(userID), description='** **', color=0x00ff00)
+                    embed.set_thumbnail(url=akatsuki_logo)
+                    embed.add_field(name="Total", value=positive + neutral + negative, inline=True)
+                    embed.add_field(name="Positive", value=positive, inline=True)
+                    embed.add_field(name="Neutral", value=neutral, inline=True)
+                    embed.add_field(name="Negative", value=negative, inline=True)
                     await client.send_message(message.channel, embed=embed)
+                else:
+                    await send_message_formatted("error", message, "no logs could be found on the specified user")
+                return
+
+            # Flip debug 1/0 in db.
+            elif command in ("d", "debug"):
+                if not message.author.server_permissions.manage_webhooks:
+                    await send_message_formatted("error", message, "You lack sufficient privileges to use this command")
                     return
 
-                # Error on purpose. This is used to test our error handler!
-                elif command == "e":
-                    await client.delete_message(message)
-                    None.isdigit()
+                cursor.execute("UPDATE aika_settings SET value_int = 1 - value_int WHERE name = 'debug'")
+                debug_print("Debug enabled.")
+                await client.delete_message(message)
+                return
 
+            # Command to remind my dumbass which parts of embeds can be links.
+            elif command == "cmyuiisretarded":
+                if not message.author.server_permissions.manage_webhooks:
+                    await send_message_formatted("error", message, "You lack sufficient privileges to use this command")
+                    return
 
-            """
-            Process regular user command.
+                embed = discord.Embed(title="[cmyui](https://akatsuki.pw/u/1001)", description='** **', color=0x00ff00)
+                embed.add_field(name="[cmyui](https://akatsuki.pw/u/1001)", value="[cmyui](https://akatsuki.pw/u/1001)")
+                embed.set_footer(icon_url=akatsuki_logo, text="[cmyui](https://akatsuki.pw/u/1001)")
+                await client.send_message(message.channel, embed=embed)
+                return
 
-            All users can access these commands.
-            """
+            # Error on purpose. This is used to test our error handler!
+            elif command in ("e", "error"):
+                if not message.author.server_permissions.manage_webhooks:
+                    await send_message_formatted("error", message, "You lack sufficient privileges to use this command")
+                    return
+
+                await client.delete_message(message)
+                None.isdigit()
+
+            # Regular user commands for the most part below
 
             # Command which grabs the user's info for relax or regular from the Akatsuki API.
             # Syntax: $user/$stats <username> <-rx>
             # TODO: Change to one request by username (&type=username&name={}).
-            if command in ("user", "stats"):
+            elif command in ("user", "stats"):
                 username = messagecontent[1]
                 if len(messagecontent) > 2:
                     relax = messagecontent[2]
@@ -485,40 +511,40 @@ async def on_message(message):
                             "Incorrect syntax. Please use the syntax `> ${} <username_with_underscores> <-rx (Optional)>".format(command))
                         return
                 else:
-                    CorsairTMK95GamingKeyboard = requests.get('https://akatsuki.pw/api/v1/get_user?u={}'.format(username)).text
+                    __user = requests.get('https://akatsuki.pw/api/v1/get_user?u={}'.format(username)).text
 
-                    if len(CorsairTMK95GamingKeyboard) == 2:
+                    if len(__user) == 2:
                         await send_message_formatted("error", message, "either that user does not exist, or your syntax was incorrect",
                             ["Syntax: `$stats username_spaced_like_this (-rx)`"])
                         return
 
-                    gamerInfo = json.loads(CorsairTMK95GamingKeyboard)
+                    _user = json.loads(__user)
 
-                    userID = int(gamerInfo[0]["user_id"])
+                    userID = int(_user[0]["user_id"])
 
                     resp = requests.get('https://akatsuki.pw/api/v1/users/{rx}full?id={userID}'.format(rx="rx" if relax == '-rx' else '', userID=userID), timeout=3).text
 
-                    userInfo = json.loads(resp)
+                    user = json.loads(resp)
 
-                    debug_print("Raw JSON:\n{}\n\nMinified:\n{}".format(resp, userInfo))
+                    debug_print("Raw JSON:\n{}\n\nMinified:\n{}".format(resp, user))
 
-                    if userInfo["favourite_mode"] == 0: # osu!
+                    if user["favourite_mode"] == 0: # osu!
                         mode = 'std'
                         mode_nice = 'osu!'
-                    elif userInfo["favourite_mode"] == 1: # osu!taiko
+                    elif user["favourite_mode"] == 1: # osu!taiko
                         mode = 'taiko'
                         mode_nice = 'osu!taiko'
-                    elif userInfo["favourite_mode"] == 2: # osu!catch
+                    elif user["favourite_mode"] == 2: # osu!catch
                         mode = 'ctb'
                         mode_nice = 'osu!catch'
-                    elif userInfo["favourite_mode"] == 3: # osu!mania
+                    elif user["favourite_mode"] == 3: # osu!mania
                         mode = 'mania'
                         mode_nice = 'osu!mania'
 
                     embed = discord.Embed(
                         title        = ":flag_{flag}: {username} | {gm} {rx}".format(
-                            flag     = userInfo["country"].lower(),
-                            username = userInfo["username"],
+                            flag     = user["country"].lower(),
+                            username = user["username"],
                             rx       = '(Relax)' if relax == '-rx' else '(Vanilla)',
                             gm       = mode_nice),
                         description  = '** **',
@@ -526,70 +552,70 @@ async def on_message(message):
 
                     embed.set_thumbnail(url=akatsuki_logo)
 
-                    if userInfo["{}".format(mode)]["global_leaderboard_rank"] is not None:
+                    if user["{}".format(mode)]["global_leaderboard_rank"] is not None:
                         embed.add_field(
                             name   = "Global Rank",
-                            value  = "#{:,}".format(userInfo["{}".format(mode)]["global_leaderboard_rank"]),
+                            value  = "#{:,}".format(user["{}".format(mode)]["global_leaderboard_rank"]),
                             inline = True)
 
-                    if userInfo["{}".format(mode)]["country_leaderboard_rank"] is not None:
+                    if user["{}".format(mode)]["country_leaderboard_rank"] is not None:
                         embed.add_field(
                             name   = "Country Rank",
-                            value  = "#{:,}".format(userInfo["{}".format(mode)]["country_leaderboard_rank"]),
+                            value  = "#{:,}".format(user["{}".format(mode)]["country_leaderboard_rank"]),
                             inline = True)
 
-                    if userInfo["{}".format(mode)]["pp"] is not None:
+                    if user["{}".format(mode)]["pp"] is not None:
                         embed.add_field(
                             name   = "PP",
-                            value  = "{:,}pp".format(userInfo["{}".format(mode)]["pp"]),
+                            value  = "{:,}pp".format(user["{}".format(mode)]["pp"]),
                             inline = True)
 
-                    if userInfo["{}".format(mode)]["ranked_score"] is not None:
+                    if user["{}".format(mode)]["ranked_score"] is not None:
                         embed.add_field(
                             name   = "Ranked Score",
-                            value  = "{:,}".format(userInfo["{}".format(mode)]["ranked_score"]),
+                            value  = "{:,}".format(user["{}".format(mode)]["ranked_score"]),
                             inline = True)
 
-                    if userInfo["{}".format(mode)]["total_score"] is not None:
+                    if user["{}".format(mode)]["total_score"] is not None:
                         embed.add_field(
                             name   = "Total Score",
-                            value  = "{:,}".format(userInfo["{}".format(mode)]["total_score"]),
+                            value  = "{:,}".format(user["{}".format(mode)]["total_score"]),
                             inline = True)
 
-                    if userInfo["{}".format(mode)]["level"] is not None:
+                    if user["{}".format(mode)]["level"] is not None:
                         embed.add_field(
                             name   = "Level",
-                            value  = "{}".format(round(userInfo["{}".format(mode)]["level"], 2)),
+                            value  = "{}".format(round(user["{}".format(mode)]["level"], 2)),
                             inline = True)
 
-                    if userInfo["{}".format(mode)]["accuracy"] is not None:
+                    if user["{}".format(mode)]["accuracy"] is not None:
                         embed.add_field(
                             name   = "Accuracy",
-                            value  = "{}%".format(round(userInfo["{}".format(mode)]["accuracy"], 2)),
+                            value  = "{}%".format(round(user["{}".format(mode)]["accuracy"], 2)),
                             inline = True)
 
-                    if userInfo["{}".format(mode)]["playcount"] is not None:
+                    if user["{}".format(mode)]["playcount"] is not None:
                         embed.add_field(
                             name   = "Playcount",
-                            value  = "{:,}".format(userInfo["{}".format(mode)]["playcount"]),
+                            value  = "{:,}".format(user["{}".format(mode)]["playcount"]),
                             inline = True)
 
-                    if userInfo["{}".format(mode)]["playtime"] is not None:
+                    if user["{}".format(mode)]["playtime"] is not None:
                         embed.add_field(
                             name   = "Playtime",
-                            value  = "{:,} hours".format(round(int(userInfo["{}".format(mode)]["playtime"]) / 3600, 2)),
+                            value  = "{:,} hours".format(round(int(user["{}".format(mode)]["playtime"]) / 3600, 2)),
                             inline = True)
 
-                    if userInfo["{}".format(mode)]["replays_watched"] is not None:
+                    if user["{}".format(mode)]["replays_watched"] is not None:
                         embed.add_field(
                             name   = "Replays Watched",
-                            value  = "{:,}".format(userInfo["{}".format(mode)]["replays_watched"]),
+                            value  = "{:,}".format(user["{}".format(mode)]["replays_watched"]),
                             inline = True)
 
-                    if userInfo["followers"] is not None:
+                    if user["followers"] is not None:
                         embed.add_field(
                             name   = "Followers",
-                            value  = "{}".format(userInfo["followers"]),
+                            value  = "{}".format(user["followers"]),
                             inline = True)
 
                     await client.send_message(message.channel, embed=embed)
@@ -615,7 +641,7 @@ async def on_message(message):
                 return
 
             # Return current UNIX timestamp
-            elif command == "time":
+            elif command in ("time", "unix", "unixtime"):
                 await client.send_message(message.channel, "Current UNIX timestamp: `{}`".format(int(time.time())))
                 return
 
@@ -625,7 +651,7 @@ async def on_message(message):
                     await send_message_formatted("error", message, "i'll need something to work with")
                     return
                 if re.match("^\d+?\.\d+?$", messagecontent[1]) is None:
-                    await send_message_formatted("error", message, "Why are your trying to round that.")
+                    await send_message_formatted("error", message, "Why are your trying to round that?")
                     return
 
                 if len(messagecontent[1].split(".")[1]) < int(messagecontent[2]):
@@ -655,7 +681,7 @@ async def on_message(message):
                     gamemode = 3
                     gamemode_string = "osu!mania"
                 else:
-                    await send_message_formatted("error", message, "please enter a valid gamemode.", ["Options: std, ctb, taiko, mania."])
+                    await send_message_formatted("error", message, "please enter a valid gamemode", ["Options: std, ctb, taiko, mania."])
                     return
 
                 _user = requests.get('https://akatsuki.pw/api/v1/get_user?u={}'.format(username)).text
@@ -731,7 +757,7 @@ async def on_message(message):
                 print(messagecontent, topic)
 
                 if topic in (None, "help"):
-                    await send_message_formatted("✨", message, "please enter a topic.", ["There are quite a few, so they will not be listed."])
+                    await send_message_formatted("✨", message, "please enter a topic", ["There are quite a few, so they will not be listed."])
                     return
                 elif topic == 'discord':
                     resp = 'https://discord.gg/5cBtMPW/'
@@ -752,8 +778,7 @@ async def on_message(message):
                 elif topic == 'vote':
                     resp = 'https://topg.org/osu-private-servers/in-509809'
                 else:
-                    await send_message_formatted("error", message,
-                        "I couldn't find a topic by that name")
+                    await send_message_formatted("error", message, "I couldn't find a topic by that name")
                     return
                 
                 
@@ -947,13 +972,12 @@ async def on_message(message):
 
             # FAQ Command. Frequently asked questions!
             # Syntax: $faq <callback>
-            elif command == "faq":
+            elif command in ("faq", "help"):
                 if len(messagecontent) > 1:
                     callback = messagecontent[1].lower()
                 else:
                     callback = "" # not nonetype so we can support digit stuff without a copy paste exception fucking python no goto fuck
 
-                cursor = db.cursor()
                 cursor.execute("SELECT * FROM discord_faq WHERE {type} = %s AND type = 1".format(type='id' if callback.isdigit() else 'topic'), [callback])
 
                 result = cursor.fetchone()
@@ -978,20 +1002,19 @@ async def on_message(message):
                         faq_list += "{}. {}{}|| {}\n".format(i, faq[1], spaces, faq[2])
                         i += 1
 
-                    await send_message_formatted("error", message, "I couldn't find a FAQ topic by that name", ["```{faqlist}```".format(
+                    await send_message_formatted("error", message, "I couldn't find a FAQ topic by that {}".format("id" if callback.isdigit() else "name"), ["```{faqlist}```".format(
                         topic   = " " + callback if len(callback) > 0 else "",
                         faqlist = faq_list.replace("`", ""))])
                 return
 
             # Info command. General information such as rules, etc.
             # Syntax: $info <callback>
-            elif command == "info":
+            elif command == ("info", "information"):
                 if len(messagecontent) > 1:
                     callback = messagecontent[1].lower()
                 else:
                     callback = "" # not nonetype so we can support digit stuff without a copy paste exception fucking python no goto fuck
 
-                cursor = db.cursor()
                 cursor.execute("SELECT * FROM discord_faq WHERE {type} = %s AND type = 0".format(type='id' if callback.isdigit() else 'topic'), [callback])
   
                 result = cursor.fetchone()
@@ -1019,73 +1042,71 @@ async def on_message(message):
                         info_list += "{}. {}{}|| {}\n".format(i, info[1], spaces, info[2])
                         i += 1
 
-                    await send_message_formatted("error", message,"I couldn't find a FAQ topic by that name", ["```{infolist}```".format(
+                    await send_message_formatted("error", message,"I couldn't find a FAQ topic by that {}".format("id" if callback.isdigit() else "name"), ["```{infolist}```".format(
                         topic    = " " + callback if len(callback) > 0 else "",
                         infolist = info_list.replace("`", ""))])
                 return
 
-            elif command == "botinfo": # Bot info command.
+            elif command in ("aika", "botinfo"): # Bot info command.
                 embed = discord.Embed(title="Why hello! I'm Aika.", description='** **', color=0x00ff00)
                 embed.set_thumbnail(url=aika_pfp)
                 embed.add_field(
-                    name  = "** **",
-                    value = "I\'m Akatsuki\'s (and cmyui\'s) bot. "
-                            "I provide the server with things such as "
-                            "commands to track ingame stats, help out "
-                            "members in need, and provide overall fun "
-                            "(and lots of useless) commands!\n\nSource "
-                            "code: https://github.com/osuAkatsuki/Aika."
-                            "\nIngame: https://akatsuki.pw/u/999\nCreator: "
-                            "https://akatsuki.pw/u/1001",
-                    inline=False)
+                    name   = "** **",
+                    value  = "I\'m Akatsuki\'s (and cmyui\'s) bot. "
+                             "I provide the server with things such as "
+                             "commands to track ingame stats, help out "
+                             "members in need, and provide overall fun "
+                             "(and lots of useless) commands!\n\nSource "
+                             "code: https://github.com/osuAkatsuki/Aika."
+                             "\nIngame: https://akatsuki.pw/u/999\nCreator: "
+                             "https://akatsuki.pw/u/1001",
+                    inline = False)
 
-                embed.set_footer(icon_url="", text='Good vibes <3')
+                embed.set_footer(icon_url="", text="Good vibes <3")
                 await client.send_message(message.channel, embed=embed)
                 return
 
             # Prune command. Prune x messages from the current channel.
             # Syntax: $prune <count>
             # TODO: More functionality, maybe prune by a specific user, etc.
-            elif command == "prune" and message.author.server_permissions.manage_messages:
+            elif command in ("p", "prune") and message.author.server_permissions.manage_messages:
                 if len(messagecontent) > 1:
-                    amtMessages = messagecontent[1]
+                    count = messagecontent[1]
                 else:
-                    amtMessages = 100
+                    count = ""
 
-                if str(amtMessages).isdigit() and int(amtMessages) <= 1000:
-                    deleted = await client.purge_from(message.channel, limit=int(amtMessages) + 1)
-                    message_count = len(deleted) - 1
-                    await send_message_formatted("success", message, 'Successfully pruned {messages} message{plural}'
-                        .format(messages=message_count, plural='s' if message_count > 1 else ''))
+                if str(count).isdigit() and int(count) <= 1000:
+                    pruned = await client.purge_from(message.channel, limit=int(count) + 1 if count != "1000" else int(count))
+                    await send_message_formatted("success", message, 'Successfully pruned {messages} message{plural}'.format(
+                        messages = len(pruned) - 1,
+                        plural   = "s" if len(pruned) - 1 > 1 else ""))
                 else:
-                    await send_message_formatted("error", message, 'It seems you used the command syntax improperly', ['Correct syntax: `$prune <messagecount (limit: 1000)>`.'])
+                    await send_message_formatted("error", message, "It seems you used the command syntax improperly",
+                        ["Correct syntax: `$prune <messagecount>`.", "The limit for deleted messagecount is 1000."])
                 return
 
             # Command for linking osu! account to discord
             # Syntax: $linkosu
             # TODO: More functionality, maybe not for only donors?
             elif command == "linkosu":
-                cursor = db.cursor()
                 cursor.execute("SELECT * FROM discord_roles WHERE discordid = %s", [message.author.id])
-
                 result = cursor.fetchone()
+
                 if result is not None:
                     if result[4] == 0:
-                        role = discord.utils.get(message.server.roles, id=result[3])
-                        await client.add_roles(message.author, role)
+                        await client.add_roles(message.author, discord.utils.get(message.server.roles, id=result[3]))
                         cursor.execute("UPDATE discord_roles SET verified = 1 WHERE discordid = %s", [message.author.id])
 
                         await send_message_formatted("success", message, "Your Discord has been sucessfully linked to your Akatsuki account.", ["Your roles should now be synced."])
                     else:
                         await send_message_formatted("error", message, "You already have an account linked")
                 else:
-
                     await send_message_formatted("✨", message, "Linking process initiated",
-                        ["Next, please use the following command in #osu, "
-                         "or in a DM with 'Aika' ingame.",
-                         "(in-game in the osu! client).",
-                         ">> `!linkdiscord {}`".format(message.author.id)])
+                        ["Next, please use the following command in #osu, or in a DM with 'Aika' ingame.",
+                         "(in-game in the osu! client).", ">> `!linkdiscord {}`".format(message.author.id)])
                 return
 
-print(Fore.CYAN + "\nLogging in with credentials: {}".format('*' * len(config['discord']['token'])))
+print(Fore.CYAN + "\nLogging into Discord with token..")
 client.run(str(config['discord']['token']))
+
+print("test")
