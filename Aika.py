@@ -1109,4 +1109,6 @@ async def on_message(message):
 print(Fore.CYAN + "\nLogging into Discord with token..")
 client.run(str(config['discord']['token']))
 
-print("test")
+# Clean up
+cursor.close()
+cnx.close()
