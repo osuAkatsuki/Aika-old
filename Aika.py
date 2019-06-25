@@ -386,7 +386,7 @@ async def on_message(message):
         if message.content.startswith(command_prefix):
 
             # First of all, make a simpler way to deal with message content so u don't develop stage 4 cancer.
-            messagecontent = message.content.split(' ')
+            messagecontent = message.content.split(" ")
             command = messagecontent[0][1:].lower()
 
             #if message.author.id == config['discord']['owner_id']: # Process owner commands.
@@ -394,7 +394,7 @@ async def on_message(message):
             # Change the bot's displayed game.
             if command == "game":
                 if not message.author.server_permissions.manage_webhooks: # Webhook since it's a bot thing
-                    await send_message_formatted("error", message, "You lack sufficient privileges to use this command")
+                    await send_message_formatted("error", message, "you lack sufficient privileges to use this command")
                     return
 
                 # Change your discord users status / game.
@@ -419,7 +419,7 @@ async def on_message(message):
 
             elif command in ("hs", "helplogs"):
                 if not message.author.server_permissions.manage_roles:
-                    await send_message_formatted("error", message, "You lack sufficient privileges to use this command")
+                    await send_message_formatted("error", message, "you lack sufficient privileges to use this command")
                     return
 
                 if not len(messagecontent) > 1:
@@ -435,7 +435,7 @@ async def on_message(message):
 
                 debug_print(logs)
 
-                positive, neutral, negative, i = 0, 0, 0, 0 # Uh huh
+                positive, neutral, negative = 0, 0, 0 # Uh huh
 
                 if logs is not None:
                     for log in logs:
@@ -460,7 +460,7 @@ async def on_message(message):
             # Flip debug 1/0 in db.
             elif command in ("d", "debug"):
                 if not message.author.server_permissions.manage_webhooks:
-                    await send_message_formatted("error", message, "You lack sufficient privileges to use this command")
+                    await send_message_formatted("error", message, "you lack sufficient privileges to use this command")
                     return
 
                 SQL.execute("UPDATE aika_settings SET value_int = 1 - value_int WHERE name = 'debug'")
@@ -471,7 +471,7 @@ async def on_message(message):
             # Command to remind my dumbass which parts of embeds can be links.
             elif command == "cmyuiisretarded":
                 if not message.author.server_permissions.manage_webhooks:
-                    await send_message_formatted("error", message, "You lack sufficient privileges to use this command")
+                    await send_message_formatted("error", message, "you lack sufficient privileges to use this command")
                     return
 
                 embed = discord.Embed(title="[cmyui](https://akatsuki.pw/u/1001)", description='** **', color=0x00ff00)
@@ -483,7 +483,7 @@ async def on_message(message):
             # Error on purpose. This is used to test our error handler!
             elif command in ("e", "error"):
                 if not message.author.server_permissions.manage_webhooks:
-                    await send_message_formatted("error", message, "You lack sufficient privileges to use this command")
+                    await send_message_formatted("error", message, "you lack sufficient privileges to use this command")
                     return
 
                 await client.delete_message(message)
@@ -503,12 +503,11 @@ async def on_message(message):
                     
                 if relax not in (None, "-rx"): # They probably used a username with a space since relax var is something else. Or typo
                     if "rx" not in relax:
-                        await send_message_formatted("error", message,
-                            "Please use underscores in your username rather than spaces")
+                        await send_message_formatted("error", message, "please use underscores in your username rather than spaces")
                         return
                     else:
-                        await send_message_formatted("error", message,
-                            "Incorrect syntax. Please use the syntax `> ${} <username_with_underscores> <-rx (Optional)>".format(command))
+                        await send_message_formatted("error", message, "incorrect syntax.",
+                            ["Please use the syntax `> ${} <username_with_underscores> <-rx (Optional)>".format(command)])
                         return
                 else:
                     __user = requests.get('https://akatsuki.pw/api/v1/get_user?u={}'.format(username)).text
@@ -642,7 +641,7 @@ async def on_message(message):
 
             # Return current UNIX timestamp
             elif command in ("time", "unix", "unixtime"):
-                await client.send_message(message.channel, "Current UNIX timestamp: `{}`".format(int(time.time())))
+                await send_message_formatted("success", message, "current UNIX timestamp: `{}`".format(int(time.time())))
                 return
 
             # Round arg0 to arg1 decimals
@@ -651,13 +650,14 @@ async def on_message(message):
                     await send_message_formatted("error", message, "i'll need something to work with")
                     return
                 if re.match("^\d+?\.\d+?$", messagecontent[1]) is None:
-                    await send_message_formatted("error", message, "Why are your trying to round that?")
+                    await send_message_formatted("error", message, "why are your trying to round that?")
                     return
 
                 if len(messagecontent[1].split(".")[1]) < int(messagecontent[2]):
                     messagecontent[2] = len(messagecontent[1].split(".")[1])
-                await client.send_message(message.channel, "Rounded value (decimal places: {}): `{}`".format(messagecontent[2], round(float(messagecontent[1]), int(messagecontent[2]))))
-            
+                await send_message_formatted("success", message, "rounded value (decimal places: {}): `{}`".format(messagecontent[2], round(float(messagecontent[1]), int(messagecontent[2]))))
+                return
+
             # Command which grabs most recent (regular) plays from the Akatsuki API.
             # Syntax: $recent <username>
             # TODO: Add relax support.
@@ -993,14 +993,12 @@ async def on_message(message):
                     SQL.execute("SELECT id, topic, title FROM discord_faq WHERE type = 1")
                     faq_db = SQL.fetchall()
                     faq_list = ""
-                    i = 1
                     for faq in faq_db:
                         add_len = 12 - len(faq[1])
                         spaces = ""
                         spaces += " " * add_len
 
-                        faq_list += "{}. {}{}|| {}\n".format(i, faq[1], spaces, faq[2])
-                        i += 1
+                        faq_list += "{}. {}{}|| {}\n".format(faq[0], faq[1], spaces, faq[2])
 
                     await send_message_formatted("error", message, "I couldn't find a FAQ topic by that {}".format("id" if callback.isdigit() else "name"), ["```{faqlist}```".format(
                         topic   = " " + callback if len(callback) > 0 else "",
@@ -1033,14 +1031,12 @@ async def on_message(message):
                     info_db = SQL.fetchall()
 
                     info_list = ""
-                    i = 1
                     for info in info_db:
                         add_len = 12 - len(info[1])
                         spaces = ""
                         spaces += " " * add_len
 
-                        info_list += "{}. {}{}|| {}\n".format(i, info[1], spaces, info[2])
-                        i += 1
+                        info_list += "{}. {}{}|| {}\n".format(info[0], info[1], spaces, info[2])
 
                     await send_message_formatted("error", message,"I couldn't find a FAQ topic by that {}".format("id" if callback.isdigit() else "name"), ["```{infolist}```".format(
                         topic    = " " + callback if len(callback) > 0 else "",
