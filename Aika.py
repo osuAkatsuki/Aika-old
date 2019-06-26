@@ -84,10 +84,9 @@ else:
 """ Constants """
 
 # The version number of Aika!
-version = 2.65
+AIKA_VERSION                 = 3.00               # Aika's version number.
 
-# Length of the bars for error handler (https://nanahira.life/1uRp27N5TCipZ3Hs12o5PQLEOTyHHYUE.png)
-ERROR_BAR_LEN = 100
+ERROR_BAR_LEN                = 100                # Length of the bars for error handler (https://nanahira.life/1uRp27N5TCipZ3Hs12o5PQLEOTyHHYUE.png).
 
 # Akatsuki settings
 AKATSUKI_SERVER_ID           = 365406575893938177 # Guild ID.
@@ -98,6 +97,8 @@ AKATSUKI_PLAYER_REPORTING_ID = 367068661837725706 # ID for #player_reporting.
 AKATSUKI_REPORTS_ID          = 367080772076568596 # ID for #reports.
 AKATSUKI_RANK_REQUESTS_ID    = 557095943602831371 # ID for #rank_requests.
 #AKATSUKI_IP_ADDRESS          = "51.79.17.191"     # Akatsuki's osu! server IP.
+
+COMMAND_PREFIX               = "!"                # The bot's command prefix.
 
 
 # A list of filters.
@@ -250,15 +251,14 @@ async def send_message_formatted(type, message, first_line, string_array=[]):
 # Startup, after login action.
 @client.event
 async def on_ready():
-    print(Fore.GREEN + 'Authentication Successful.\n{} | {}\n--------------------------\n'
-        .format(client.user.name, client.user.id))
+    print(Fore.GREEN + "\nAuthentication Successful.\n{} | {}\n--------------------------\n".format(client.user.name, client.user.id))
 
-    debug_print("Debug: {}.".format(bool(debug)))
+    debug_print("\nDebug: {}\n".format(bool(debug)))
 
     # Send an announcement that the bots been started in Akatsuki's #general (if debug).
     if int(config['default']['announce_online']) == 1:
         announceOnline = discord.Embed(
-            title       = "Aika v{} Online".format(version),
+            title       = "Aika v{} Online".format(AIKA_VERSION),
             description = "Ready for commands <3\n\nAika is osu!Akatsuki's "
                           "[open source](https://github.com/osuAkatsuki/Aika) "
                           "discord bot.\n\n[Akatsuki](https://akatsuki.pw)\n"
@@ -267,7 +267,7 @@ async def on_ready():
 
         announceOnline.set_footer(icon_url=crab, text="Thank you for playing!")
         announceOnline.set_thumbnail(url=akatsuki_logo)
-        await client.send_message(client.get_channel(AKATSUKI_GENERAL_ID), embed=announceOnline)
+        await client.get_channel(AKATSUKI_GENERAL_ID).send(embed=announceOnline)
 
 
 # On exceptions, don't make the whole thing die :).
@@ -283,8 +283,6 @@ async def on_error(event, *args):
 @client.event
 async def on_message(message):
     await client.wait_until_ready()
-
-    command_prefix = "!"
 
     # Message sent in #player-reporting, move to #reports.
     if message.channel.id == AKATSUKI_PLAYER_REPORTING_ID:
@@ -306,8 +304,8 @@ async def on_message(message):
         embedPrivate.set_thumbnail(url=akatsuki_logo)
 
         if not message.content.startswith('$'): # Do not pm or link to #reports if it is a command.
-            await client.send_message(message.author, embed=embedPrivate)
-            await client.send_message(client.get_channel(AKATSUKI_REPORTS_ID), embed=embed)
+            await message.author.send(embed=embedPrivate)
+            await client.get_channel(AKATSUKI_REPORTS_ID).send(embed=embed)
 
             # Print result to console.
             print(Fore.CYAN + "Report recieved. It has been moved to #reports.")
@@ -315,8 +313,8 @@ async def on_message(message):
     # Request sent in rank_requests.
     elif message.channel.id == AKATSUKI_RANK_REQUESTS_ID:
         # Add base thumbs to all requests.
-        await client.add_reaction(message, "👍")
-        await client.add_reaction(message, "👎")
+        await message.add_reaction("👍")
+        await message.add_reaction("👎")
         return
 
     elif message.author != client.user:
@@ -343,7 +341,7 @@ async def on_message(message):
         # Checks for things in message.
         if any(x in message.content.lower() for x in email_checks) and message.guild.id == AKATSUKI_SERVER_ID:
             if "badge" not in message.content.lower():
-                await client.send_message(message.author,
+                await message.author.send(
                     "Right, this is an automated message as it "
                     "was assumed you needed assitance in Akatsuki "
                     "with: Email Verification\n\nAs the verification "
@@ -359,18 +357,18 @@ async def on_message(message):
             else:
                 debug_print("Aborted Trigger: Email Verification Support, due to \"badge\" contents of the message.\nUser: {}".format(message.author))
 
-        elif any(x in message.content.lower() for x in filters) and not message.author.server_permissions.manage_messages:
+        elif any(x in message.content.lower() for x in filters) and not message.author.guild_permissions.manage_messages:
             SQL.execute("INSERT INTO profanity_filter (user, message, time) VALUES (%s, %s, %s)", [message.author.id, message.content, int(time.time())])
 
             await message.delete()
-            await client.send_message(message.author,
+            await message.author.send(
                 "Hello,\n\nYour message in osu!Akatsuki "
                 "has been removed as it has been deemed "
                 "unsuitable.\n\nIf this makes no sense, "
                 "please report it to <@285190493703503872>. "
                 "\n**Do not try to evade this filter as it is "
                 "considered fair ground for a ban**.\n\n```{}```"
-                .format(message.content))
+                .format(message.content.replace("`", "")))
 
             print(Fore.MAGENTA + "Filtered message | '{}: {}'".format(message.author, message.content))
 
@@ -391,7 +389,7 @@ async def on_message(message):
                 await message.delete()
             return
 
-        if message.content.startswith(command_prefix):
+        if message.content.startswith(COMMAND_PREFIX):
 
             # First of all, make a simpler way to deal with message content so u don't develop stage 4 cancer.
             messagecontent = message.content.split(" ")
@@ -401,7 +399,7 @@ async def on_message(message):
 
             # Change the bot's displayed game.
             if command == "game":
-                if not message.author.server_permissions.manage_webhooks: # Webhook since it's a bot thing
+                if not message.author.guild_permissions.manage_webhooks: # Webhook since it's a bot thing
                     await send_message_formatted("error", message, "you lack sufficient privileges to use this command")
                     return
 
@@ -427,7 +425,7 @@ async def on_message(message):
 
             elif command in ("hs", "helplogs"):
                 with message.channel.typing():
-                    if not message.author.server_permissions.manage_roles:
+                    if not message.author.guild_permissions.manage_roles:
                         await send_message_formatted("error", message, "you lack sufficient privileges to use this command")
                         return
 
@@ -468,7 +466,7 @@ async def on_message(message):
 
             # Flip debug 1/0 in db.
             elif command in ("d", "debug"):
-                if not message.author.server_permissions.manage_webhooks:
+                if not message.author.guild_permissions.manage_webhooks:
                     await send_message_formatted("error", message, "you lack sufficient privileges to use this command")
                     return
 
@@ -479,7 +477,7 @@ async def on_message(message):
 
             # Command to remind my dumbass which parts of embeds can be links.
             elif command == "cmyuiisretarded":
-                if not message.author.server_permissions.manage_webhooks:
+                if not message.author.guild_permissions.manage_webhooks:
                     await send_message_formatted("error", message, "you lack sufficient privileges to use this command")
                     return
 
@@ -491,12 +489,12 @@ async def on_message(message):
 
             # Error on purpose. This is used to test our error handler!
             elif command in ("e", "error"):
-                if not message.author.server_permissions.manage_webhooks:
+                if not message.author.guild_permissions.manage_webhooks:
                     await send_message_formatted("error", message, "you lack sufficient privileges to use this command")
                     return
 
                 await message.delete()
-                None.isdigit()
+                None.isdigit() # Error, no need to return
 
             # Regular user commands for the most part below
 
@@ -510,7 +508,7 @@ async def on_message(message):
                         relax = messagecontent[2]
                     else:
                         relax = None
-                        
+
                     if relax not in (None, "-rx"): # They probably used a username with a space since relax var is something else. Or typo
                         if "rx" not in relax:
                             await send_message_formatted("error", message, "please use underscores in your username rather than spaces")
@@ -632,7 +630,11 @@ async def on_message(message):
 
             # Run a command on the Akatsuki server
             # TODO: compare against their ingame perms? this could be a good mini project i guess
-            elif command == "r" and message.author.server_permissions.manage_roles: # server_permissions does not take channel perms into account
+            elif command == "r" and message.author.guild_permissions.manage_roles: # guild_permissions does not take channel perms into account
+
+                if not message.author.is_on_mobile(): # Only allow !r to be used from mobile.
+                    return
+
                 with message.channel.typing():
                     execute = ' '.join(messagecontent[1:]).strip()
 
@@ -1077,17 +1079,24 @@ async def on_message(message):
             # Prune command. Prune x messages from the current channel.
             # Syntax: $prune <count>
             # TODO: More functionality, maybe prune by a specific user, etc.
-            elif command in ("p", "prune") and message.author.server_permissions.manage_messages:
+            elif command in ("p", "prune") and message.author.guild_permissions.manage_messages:
                 if len(messagecontent) > 1:
                     count = messagecontent[1]
                 else:
                     count = ""
 
-                if str(count).isdigit() and int(count) <= 1000:
-                    pruned = await client.purge_from(message.channel, limit=int(count) + 1 if count != "1000" else int(count))
+                if not count.isdigit():
+                    await send_message_formatted("error", message, "it seems you didn't specify a correct integer",
+                        ["Correct syntax: `$prune <messagecount>`.", "The limit for deleted messagecount is 1000."])
+                    return
+                else:
+                    count = int(count)
+
+                if count <= 1000:
+                    deleted = await message.channel.purge(limit=count + 1 if count != 1000 else count)
                     await send_message_formatted("success", message, 'Successfully pruned {messages} message{plural}'.format(
-                        messages = len(pruned) - 1,
-                        plural   = "s" if len(pruned) - 1 > 1 else ""))
+                        messages = len(deleted) - 1,
+                        plural   = "s" if len(deleted) - 1 > 1 else ""))
                 else:
                     await send_message_formatted("error", message, "It seems you used the command syntax improperly",
                         ["Correct syntax: `$prune <messagecount>`.", "The limit for deleted messagecount is 1000."])
