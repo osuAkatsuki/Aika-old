@@ -98,7 +98,7 @@ AKATSUKI_REPORTS_ID          = 367080772076568596 # ID for #reports.
 AKATSUKI_RANK_REQUESTS_ID    = 557095943602831371 # ID for #rank_requests.
 #AKATSUKI_IP_ADDRESS          = "51.79.17.191"     # Akatsuki's osu! server IP.
 
-COMMAND_PREFIX               = "!"                # The bot's command prefix.
+COMMAND_PREFIX               = "!"                 # The bot's command prefix.
 
 
 # A list of filters.
