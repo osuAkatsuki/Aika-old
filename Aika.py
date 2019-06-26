@@ -238,7 +238,7 @@ async def send_message_formatted(type, message, first_line, string_array=[]):
         status      = status,
         author_name = message.author.name,
         first_line  = (first_line[0].lower() if first_line[0] != "I" and first_line[0:8] != "Akatsuki" else first_line[0]) + first_line[1:],
-        punctuation = "." if first_line[len(first_line) - 1] not in ("?", "!") else "")
+        punctuation = "." if first_line[len(first_line) - 1] not in ("?", "!", ".") else "")
 
     # Add lines to the response.
     for line in string_array:
@@ -502,6 +502,10 @@ async def on_message(message):
             # Syntax: $user/$stats <username> <-rx>
             # TODO: Change to one request by username (&type=username&name={}).
             elif command in ("user", "stats"):
+                if not len(messagecontent) > 1:
+                    await send_message_formatted("error", message, "this command requires atleast one argument (username)")
+                    return
+
                 with message.channel.typing():
                     username = messagecontent[1]
                     if len(messagecontent) > 2:
