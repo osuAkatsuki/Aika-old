@@ -89,6 +89,17 @@ version = 2.65
 # Length of the bars for error handler (https://nanahira.life/1uRp27N5TCipZ3Hs12o5PQLEOTyHHYUE.png)
 ERROR_BAR_LEN = 100
 
+# Akatsuki settings
+AKATSUKI_SERVER_ID           = 365406575893938177 # Guild ID.
+AKATSUKI_GENERAL_ID          = 592490140497084436 # ID for #general.
+AKATSUKI_HELP_ID             = 365413867167285249 # ID for #help.
+AKATSUKI_VERIFY_ID           = 459856640049676299 # ID for #verify.
+AKATSUKI_PLAYER_REPORTING_ID = 367068661837725706 # ID for #player_reporting.
+AKATSUKI_REPORTS_ID          = 367080772076568596 # ID for #reports.
+AKATSUKI_RANK_REQUESTS_ID    = 557095943602831371 # ID for #rank_requests.
+#AKATSUKI_IP_ADDRESS          = "51.79.17.191"     # Akatsuki's osu! server IP.
+
+
 # A list of filters.
 # These are to be used to wipe messages that are deemed inappropriate,
 # or break rules. For the most part, these are of other private servers,
@@ -233,7 +244,7 @@ async def send_message_formatted(type, message, first_line, string_array=[]):
         resp += "        {string}\n".format(string=line)
 
     # Send the response off to discord.
-    await client.send_message(message.channel, resp)
+    await message.channel.send(resp)
 
 
 # Startup, after login action.
@@ -256,7 +267,7 @@ async def on_ready():
 
         announceOnline.set_footer(icon_url=crab, text="Thank you for playing!")
         announceOnline.set_thumbnail(url=akatsuki_logo)
-        await client.send_message(client.get_channel(config['akatsuki']['general']), embed=announceOnline)
+        await client.send_message(client.get_channel(AKATSUKI_GENERAL_ID), embed=announceOnline)
 
 
 # On exceptions, don't make the whole thing die :).
@@ -271,13 +282,13 @@ async def on_error(event, *args):
 
 @client.event
 async def on_message(message):
-    client.wait_until_ready()
+    await client.wait_until_ready()
 
     command_prefix = "!"
 
     # Message sent in #player-reporting, move to #reports.
-    if message.channel.id == config['akatsuki']['player_reporting']: 
-        await client.delete_message(message) # Delete the message from #player-reporting.
+    if message.channel.id == AKATSUKI_PLAYER_REPORTING_ID:
+        await message.delete() # Delete the message from #player-reporting.
 
         # Prepare, and send the report in #reports.
         embed = discord.Embed(title="New report recieved.", description='** **', color=0x00ff00)
@@ -296,13 +307,13 @@ async def on_message(message):
 
         if not message.content.startswith('$'): # Do not pm or link to #reports if it is a command.
             await client.send_message(message.author, embed=embedPrivate)
-            await client.send_message(client.get_channel(config['akatsuki']['reports']), embed=embed)
+            await client.send_message(client.get_channel(AKATSUKI_REPORTS_ID), embed=embed)
 
             # Print result to console.
             print(Fore.CYAN + "Report recieved. It has been moved to #reports.")
 
     # Request sent in rank_requests.
-    elif message.channel.id == config['akatsuki']['rank_requests']:
+    elif message.channel.id == AKATSUKI_RANK_REQUESTS_ID:
         # Add base thumbs to all requests.
         await client.add_reaction(message, "👍")
         await client.add_reaction(message, "👎")
@@ -317,7 +328,7 @@ async def on_message(message):
             properly_formatted = message.content[0].isupper() and message.content[messagelen - 1] in (".", "?", "!")
 
         # Message sent in #help, log to db.
-        if message.channel.id == config['akatsuki']['help']:
+        if message.channel.id == AKATSUKI_HELP_ID:
             if any(x in message.content.lower() for x in profanity): # Ew what the actual fukc TODO
                 quality = 0
             elif any(x in message.content.lower() for x in high_quality) or properly_formatted:
@@ -330,7 +341,7 @@ async def on_message(message):
             SQL.execute("INSERT INTO help_logs (id, user, content, datetime, quality) VALUES (NULL, %s, %s, %s, %s)", [message.author.id, message.content, int(time.time()), quality])
 
         # Checks for things in message.
-        if any(x in message.content.lower() for x in email_checks) and message.server.id == config['akatsuki']['server_id']:
+        if any(x in message.content.lower() for x in email_checks) and message.guild.id == AKATSUKI_SERVER_ID:
             if "badge" not in message.content.lower():
                 await client.send_message(message.author,
                     "Right, this is an automated message as it "
@@ -342,7 +353,7 @@ async def on_message(message):
                     "server you'd like to play on, and click On/Off, "
                     "then login to osu! to complete the verification process.")
 
-                await client.delete_message(message)
+                await message.delete()
 
                 debug_print("Triggered: Verification Email Support\nUser: {}".format(message.author))
             else:
@@ -351,7 +362,7 @@ async def on_message(message):
         elif any(x in message.content.lower() for x in filters) and not message.author.server_permissions.manage_messages:
             SQL.execute("INSERT INTO profanity_filter (user, message, time) VALUES (%s, %s, %s)", [message.author.id, message.content, int(time.time())])
 
-            await client.delete_message(message)
+            await message.delete()
             await client.send_message(message.author,
                 "Hello,\n\nYour message in osu!Akatsuki "
                 "has been removed as it has been deemed "
@@ -364,23 +375,20 @@ async def on_message(message):
             print(Fore.MAGENTA + "Filtered message | '{}: {}'".format(message.author, message.content))
 
         # Private messages.
-        if message.server is None:
-                print(Fore.YELLOW + Style.BRIGHT + "{} [{}] {}: {}".format(message.timestamp, message.channel, message.author, message.content))
-        elif config['discord']['owner_id'] in message.content: # When you are pinged.
-                print(Fore.CYAN + Style.BRIGHT + "{} [{} ({})] {}: {}".format(message.timestamp, message.server, message.channel, message.author, message.content))
-        elif (config['discord']['username'] in message.content.lower() and len(config['discord']['username']) > 1): # When your username is mentioned (either actual one, or custom set in configuration).
-                print(Fore.GREEN + Style.BRIGHT + "{} [{} ({})] {}: {}".format(message.timestamp, message.server, message.channel, message.author, message.content))
-        elif message.server.id == config['akatsuki']['server_id']: # The server is akatsuki.
-            print(Fore.BLUE + Style.BRIGHT + "{} [{} ({})] {}: {}".format(message.timestamp, message.server, message.channel, message.author, message.content))
+        if message.guild is None: # Private message
+                print(Fore.YELLOW + Style.BRIGHT + "{} [{}] {}: {}".format(message.created_at, message.channel, message.author, message.content))
+        elif "cmyui" in message.content.lower(): # cmyui mentioned
+                print(Fore.CYAN + Style.BRIGHT + "{} [{} ({})] {}: {}".format(message.created_at, message.guild, message.channel, message.author, message.content))
+        elif message.guild.id == AKATSUKI_SERVER_ID: # The server is akatsuki.
+            print(Fore.BLUE + Style.BRIGHT + "{} [{} ({})] {}: {}".format(message.created_at, message.guild, message.channel, message.author, message.content))
         else: # Regular message.
-            print("{} [{} ({})] {}: {}".format(message.timestamp, message.server, message.channel, message.author, message.content))
+            print("{} [{} ({})] {}: {}".format(message.created_at, message.guild, message.channel, message.author, message.content))
 
         # Handle user verification before the command section. This should speed things up a bit!
-        if message.content.split(' ')[0][1:] == "verify" and message.channel.id == config['akatsuki']['verify']: # Verify command.
+        if message.content.split(' ')[0][1:] == "verify" and message.channel.id == AKATSUKI_VERIFY_ID: # Verify command.
             if message.author.id != config['discord']['owner_id']: # Dont for cmyui, he's probably pinging @everyone to verify.
-                verified = discord.utils.get(message.server.roles, name="Members")
-                await client.add_roles(message.author, verified)
-                await client.delete_message(message)
+                await message.author.add_roles(discord.utils.get(message.guild.roles, name="Members"))
+                await message.delete()
             return
 
         if message.content.startswith(command_prefix):
@@ -414,48 +422,49 @@ async def on_message(message):
                     await send_message_formatted("error", message, "please specify a game name")
                     return
 
-                await client.delete_message(message)
+                await message.delete()
                 return
 
             elif command in ("hs", "helplogs"):
-                if not message.author.server_permissions.manage_roles:
-                    await send_message_formatted("error", message, "you lack sufficient privileges to use this command")
+                with message.channel.typing():
+                    if not message.author.server_permissions.manage_roles:
+                        await send_message_formatted("error", message, "you lack sufficient privileges to use this command")
+                        return
+
+                    if not len(messagecontent) > 1:
+                        await send_message_formatted("error", message, "this command requires an argument")
+                        return
+
+
+                    userID = re.findall('\d+', messagecontent[1])[0]
+
+                    SQL.execute("SELECT quality FROM help_logs WHERE user = %s", [userID])
+
+                    logs = SQL.fetchall()
+
+                    debug_print(logs)
+
+                    positive, neutral, negative = 0, 0, 0 # Uh huh
+
+                    if logs is not None:
+                        for log in logs:
+                            if log[0] == 0:
+                                negative += 1
+                            elif log[0] == 1:
+                                neutral += 1
+                            else:
+                                positive += 1
+
+                        embed = discord.Embed(title="Report | {}".format(userID), description='** **', color=0x00ff00)
+                        embed.set_thumbnail(url=akatsuki_logo)
+                        embed.add_field(name="Total", value=positive + neutral + negative, inline=True)
+                        embed.add_field(name="Positive", value=positive, inline=True)
+                        embed.add_field(name="Neutral", value=neutral, inline=True)
+                        embed.add_field(name="Negative", value=negative, inline=True)
+                        await message.channel.send(embed=embed)
+                    else:
+                        await send_message_formatted("error", message, "no logs could be found on the specified user")
                     return
-
-                if not len(messagecontent) > 1:
-                    await send_message_formatted("error", message, "this command requires an argument")
-                    return
-
-
-                userID = re.findall('\d+', messagecontent[1])[0]
-
-                SQL.execute("SELECT quality FROM help_logs WHERE user = %s", [userID])
-
-                logs = SQL.fetchall()
-
-                debug_print(logs)
-
-                positive, neutral, negative = 0, 0, 0 # Uh huh
-
-                if logs is not None:
-                    for log in logs:
-                        if log[0] == 0:
-                            negative += 1
-                        elif log[0] == 1:
-                            neutral += 1
-                        else:
-                            positive += 1
-
-                    embed = discord.Embed(title="Report | {}".format(userID), description='** **', color=0x00ff00)
-                    embed.set_thumbnail(url=akatsuki_logo)
-                    embed.add_field(name="Total", value=positive + neutral + negative, inline=True)
-                    embed.add_field(name="Positive", value=positive, inline=True)
-                    embed.add_field(name="Neutral", value=neutral, inline=True)
-                    embed.add_field(name="Negative", value=negative, inline=True)
-                    await client.send_message(message.channel, embed=embed)
-                else:
-                    await send_message_formatted("error", message, "no logs could be found on the specified user")
-                return
 
             # Flip debug 1/0 in db.
             elif command in ("d", "debug"):
@@ -465,7 +474,7 @@ async def on_message(message):
 
                 SQL.execute("UPDATE aika_settings SET value_int = 1 - value_int WHERE name = 'debug'")
                 debug_print("Debug enabled.")
-                await client.delete_message(message)
+                await message.delete()
                 return
 
             # Command to remind my dumbass which parts of embeds can be links.
@@ -477,7 +486,7 @@ async def on_message(message):
                 embed = discord.Embed(title="[cmyui](https://akatsuki.pw/u/1001)", description='** **', color=0x00ff00)
                 embed.add_field(name="[cmyui](https://akatsuki.pw/u/1001)", value="[cmyui](https://akatsuki.pw/u/1001)")
                 embed.set_footer(icon_url=akatsuki_logo, text="[cmyui](https://akatsuki.pw/u/1001)")
-                await client.send_message(message.channel, embed=embed)
+                await message.channel.send(embed=embed)
                 return
 
             # Error on purpose. This is used to test our error handler!
@@ -486,7 +495,7 @@ async def on_message(message):
                     await send_message_formatted("error", message, "you lack sufficient privileges to use this command")
                     return
 
-                await client.delete_message(message)
+                await message.delete()
                 None.isdigit()
 
             # Regular user commands for the most part below
@@ -495,149 +504,147 @@ async def on_message(message):
             # Syntax: $user/$stats <username> <-rx>
             # TODO: Change to one request by username (&type=username&name={}).
             elif command in ("user", "stats"):
-                username = messagecontent[1]
-                if len(messagecontent) > 2:
-                    relax = messagecontent[2]
-                else:
-                    relax = None
-                    
-                if relax not in (None, "-rx"): # They probably used a username with a space since relax var is something else. Or typo
-                    if "rx" not in relax:
-                        await send_message_formatted("error", message, "please use underscores in your username rather than spaces")
-                        return
+                with message.channel.typing():
+                    username = messagecontent[1]
+                    if len(messagecontent) > 2:
+                        relax = messagecontent[2]
                     else:
-                        await send_message_formatted("error", message, "incorrect syntax.",
-                            ["Please use the syntax `> ${} <username_with_underscores> <-rx (Optional)>".format(command)])
-                        return
-                else:
-                    __user = requests.get('https://akatsuki.pw/api/v1/get_user?u={}'.format(username)).text
+                        relax = None
+                        
+                    if relax not in (None, "-rx"): # They probably used a username with a space since relax var is something else. Or typo
+                        if "rx" not in relax:
+                            await send_message_formatted("error", message, "please use underscores in your username rather than spaces")
+                            return
+                        else:
+                            await send_message_formatted("error", message, "incorrect syntax.",
+                                ["Please use the syntax `> ${} <username_with_underscores> <-rx (Optional)>".format(command)])
+                            return
+                    else:
+                        __user = requests.get('https://akatsuki.pw/api/v1/get_user?u={}'.format(username)).text
 
-                    if len(__user) == 2:
-                        await send_message_formatted("error", message, "either that user does not exist, or your syntax was incorrect",
-                            ["Syntax: `$stats username_spaced_like_this (-rx)`"])
-                        return
+                        if len(__user) == 2:
+                            await send_message_formatted("error", message, "either that user does not exist, or your syntax was incorrect",
+                                ["Syntax: `$stats username_spaced_like_this (-rx)`"])
+                            return
 
-                    _user = json.loads(__user)
+                        _user = json.loads(__user)
 
-                    userID = int(_user[0]["user_id"])
+                        userID = int(_user[0]["user_id"])
 
-                    resp = requests.get('https://akatsuki.pw/api/v1/users/{rx}full?id={userID}'.format(rx="rx" if relax == '-rx' else '', userID=userID), timeout=3).text
+                        resp = requests.get('https://akatsuki.pw/api/v1/users/{rx}full?id={userID}'.format(rx="rx" if relax == '-rx' else '', userID=userID), timeout=3).text
 
-                    user = json.loads(resp)
+                        user = json.loads(resp)
 
-                    debug_print("Raw JSON:\n{}\n\nMinified:\n{}".format(resp, user))
+                        debug_print("Raw JSON:\n{}\n\nMinified:\n{}".format(resp, user))
 
-                    if user["favourite_mode"] == 0: # osu!
-                        mode = 'std'
-                        mode_nice = 'osu!'
-                    elif user["favourite_mode"] == 1: # osu!taiko
-                        mode = 'taiko'
-                        mode_nice = 'osu!taiko'
-                    elif user["favourite_mode"] == 2: # osu!catch
-                        mode = 'ctb'
-                        mode_nice = 'osu!catch'
-                    elif user["favourite_mode"] == 3: # osu!mania
-                        mode = 'mania'
-                        mode_nice = 'osu!mania'
+                        if user["favourite_mode"] == 0: # osu!
+                            mode = 'std'
+                            mode_nice = 'osu!'
+                        elif user["favourite_mode"] == 1: # osu!taiko
+                            mode = 'taiko'
+                            mode_nice = 'osu!taiko'
+                        elif user["favourite_mode"] == 2: # osu!catch
+                            mode = 'ctb'
+                            mode_nice = 'osu!catch'
+                        elif user["favourite_mode"] == 3: # osu!mania
+                            mode = 'mania'
+                            mode_nice = 'osu!mania'
 
-                    embed = discord.Embed(
-                        title        = ":flag_{flag}: {username} | {gm} {rx}".format(
-                            flag     = user["country"].lower(),
-                            username = user["username"],
-                            rx       = '(Relax)' if relax == '-rx' else '(Vanilla)',
-                            gm       = mode_nice),
-                        description  = '** **',
-                        color        = 0x00ff00)
+                        embed = discord.Embed(
+                            title        = ":flag_{flag}: {username} | {gm} {rx}".format(
+                                flag     = user["country"].lower(),
+                                username = user["username"],
+                                rx       = '(Relax)' if relax == '-rx' else '(Vanilla)',
+                                gm       = mode_nice),
+                            description  = '** **',
+                            color        = 0x00ff00)
 
-                    embed.set_thumbnail(url=akatsuki_logo)
+                        embed.set_thumbnail(url=akatsuki_logo)
 
-                    if user["{}".format(mode)]["global_leaderboard_rank"] is not None:
-                        embed.add_field(
-                            name   = "Global Rank",
-                            value  = "#{:,}".format(user["{}".format(mode)]["global_leaderboard_rank"]),
-                            inline = True)
+                        if user["{}".format(mode)]["global_leaderboard_rank"] is not None:
+                            embed.add_field(
+                                name   = "Global Rank",
+                                value  = "#{:,}".format(user["{}".format(mode)]["global_leaderboard_rank"]),
+                                inline = True)
 
-                    if user["{}".format(mode)]["country_leaderboard_rank"] is not None:
-                        embed.add_field(
-                            name   = "Country Rank",
-                            value  = "#{:,}".format(user["{}".format(mode)]["country_leaderboard_rank"]),
-                            inline = True)
+                        if user["{}".format(mode)]["country_leaderboard_rank"] is not None:
+                            embed.add_field(
+                                name   = "Country Rank",
+                                value  = "#{:,}".format(user["{}".format(mode)]["country_leaderboard_rank"]),
+                                inline = True)
 
-                    if user["{}".format(mode)]["pp"] is not None:
-                        embed.add_field(
-                            name   = "PP",
-                            value  = "{:,}pp".format(user["{}".format(mode)]["pp"]),
-                            inline = True)
+                        if user["{}".format(mode)]["pp"] is not None:
+                            embed.add_field(
+                                name   = "PP",
+                                value  = "{:,}pp".format(user["{}".format(mode)]["pp"]),
+                                inline = True)
 
-                    if user["{}".format(mode)]["ranked_score"] is not None:
-                        embed.add_field(
-                            name   = "Ranked Score",
-                            value  = "{:,}".format(user["{}".format(mode)]["ranked_score"]),
-                            inline = True)
+                        if user["{}".format(mode)]["ranked_score"] is not None:
+                            embed.add_field(
+                                name   = "Ranked Score",
+                                value  = "{:,}".format(user["{}".format(mode)]["ranked_score"]),
+                                inline = True)
 
-                    if user["{}".format(mode)]["total_score"] is not None:
-                        embed.add_field(
-                            name   = "Total Score",
-                            value  = "{:,}".format(user["{}".format(mode)]["total_score"]),
-                            inline = True)
+                        if user["{}".format(mode)]["total_score"] is not None:
+                            embed.add_field(
+                                name   = "Total Score",
+                                value  = "{:,}".format(user["{}".format(mode)]["total_score"]),
+                                inline = True)
 
-                    if user["{}".format(mode)]["level"] is not None:
-                        embed.add_field(
-                            name   = "Level",
-                            value  = "{}".format(round(user["{}".format(mode)]["level"], 2)),
-                            inline = True)
+                        if user["{}".format(mode)]["level"] is not None:
+                            embed.add_field(
+                                name   = "Level",
+                                value  = "{}".format(round(user["{}".format(mode)]["level"], 2)),
+                                inline = True)
 
-                    if user["{}".format(mode)]["accuracy"] is not None:
-                        embed.add_field(
-                            name   = "Accuracy",
-                            value  = "{}%".format(round(user["{}".format(mode)]["accuracy"], 2)),
-                            inline = True)
+                        if user["{}".format(mode)]["accuracy"] is not None:
+                            embed.add_field(
+                                name   = "Accuracy",
+                                value  = "{}%".format(round(user["{}".format(mode)]["accuracy"], 2)),
+                                inline = True)
 
-                    if user["{}".format(mode)]["playcount"] is not None:
-                        embed.add_field(
-                            name   = "Playcount",
-                            value  = "{:,}".format(user["{}".format(mode)]["playcount"]),
-                            inline = True)
+                        if user["{}".format(mode)]["playcount"] is not None:
+                            embed.add_field(
+                                name   = "Playcount",
+                                value  = "{:,}".format(user["{}".format(mode)]["playcount"]),
+                                inline = True)
 
-                    if user["{}".format(mode)]["playtime"] is not None:
-                        embed.add_field(
-                            name   = "Playtime",
-                            value  = "{:,} hours".format(round(int(user["{}".format(mode)]["playtime"]) / 3600, 2)),
-                            inline = True)
+                        if user["{}".format(mode)]["playtime"] is not None:
+                            embed.add_field(
+                                name   = "Playtime",
+                                value  = "{:,} hours".format(round(int(user["{}".format(mode)]["playtime"]) / 3600, 2)),
+                                inline = True)
 
-                    if user["{}".format(mode)]["replays_watched"] is not None:
-                        embed.add_field(
-                            name   = "Replays Watched",
-                            value  = "{:,}".format(user["{}".format(mode)]["replays_watched"]),
-                            inline = True)
+                        if user["{}".format(mode)]["replays_watched"] is not None:
+                            embed.add_field(
+                                name   = "Replays Watched",
+                                value  = "{:,}".format(user["{}".format(mode)]["replays_watched"]),
+                                inline = True)
 
-                    if user["followers"] is not None:
-                        embed.add_field(
-                            name   = "Followers",
-                            value  = "{}".format(user["followers"]),
-                            inline = True)
+                        if user["followers"] is not None:
+                            embed.add_field(
+                                name   = "Followers",
+                                value  = "{}".format(user["followers"]),
+                                inline = True)
 
-                    await client.send_message(message.channel, embed=embed)
-                return
+                        await message.channel.send(embed=embed)
+                    return
 
             # Run a command on the Akatsuki server
             # TODO: compare against their ingame perms? this could be a good mini project i guess
             elif command == "r" and message.author.server_permissions.manage_roles: # server_permissions does not take channel perms into account
-                execute = ' '.join(messagecontent[1:]).strip()
+                with message.channel.typing():
+                    execute = ' '.join(messagecontent[1:]).strip()
 
-                if not len(execute.strip()) > 4 or messagecontent[1][0] != "!":
-                    await send_message_formatted("error", message, "what exactly are you trying to send..?")
+                    if not len(execute.strip()) > 4 or messagecontent[1][0] != "!":
+                        await send_message_formatted("error", message, "what exactly are you trying to send..?")
+                        return
+
+                    params = urlencode({"k": config["akatsuki"]["apikey"], "to": "#admin", "msg": execute})
+                    requests.get("http://{}:5001/api/v1/fokabotMessage?{}".format(config["akatsuki"]["ip"], params))
+
+                    await send_message_formatted("success", message, "your command has been successfully executed on Akatsuki", ["`{}`".format(execute)])
                     return
-
-                processingMessage = await client.send_message(message.channel, "Processing request..")
-
-                params = urlencode({"k": config["akatsuki"]["apikey"], "to": "#admin", "msg": execute})
-                requests.get("http://{}:5001/api/v1/fokabotMessage?{}".format(config["akatsuki"]["ip"], params))
-
-                await send_message_formatted("success", message, "your command has been successfully executed on Akatsuki", ["`{}`".format(execute)])
-
-                await client.delete_message(processingMessage)
-                return
 
             # Return current UNIX timestamp
             elif command in ("time", "unix", "unixtime"):
@@ -646,8 +653,8 @@ async def on_message(message):
 
             # Round arg0 to arg1 decimals
             elif command == "round": # TODO: server time adjustment
-                if not len(messagecontent) > 1:
-                    await send_message_formatted("error", message, "i'll need something to work with")
+                if not len(messagecontent) > 2:
+                    await send_message_formatted("error", message, "missing required parameters (number, decimal places).")
                     return
                 if re.match("^\d+?\.\d+?$", messagecontent[1]) is None:
                     await send_message_formatted("error", message, "why are your trying to round that?")
@@ -662,88 +669,93 @@ async def on_message(message):
             # Syntax: $recent <username>
             # TODO: Add relax support.
             elif command == "recent":
-                username = messagecontent[1]
-                gamemode = messagecontent[2].lower()
+                with message.channel.typing():
+                    if not len(messagecontent) > 2:
+                        await send_message_formatted("error", message, "missing required parameters (username, gamemode).")
+                        return
 
-                # Change gamemode from user input string 
-                # to gamemodeint and beautified gamemode.
-                # TODO: any()
-                if 's' in gamemode or ('o' in gamemode and not 'm' in gamemode and not 'c' in gamemode and not 't' in gamemode):
-                    gamemode = 0
-                    gamemode_string = "osu!"
-                elif 't' in gamemode:
-                    gamemode = 1
-                    gamemode_string = "osu!taiko"
-                elif 'c' in gamemode:
-                    gamemode = 2
-                    gamemode_string = "osu!catch"
-                elif 'm' in gamemode:
-                    gamemode = 3
-                    gamemode_string = "osu!mania"
-                else:
-                    await send_message_formatted("error", message, "please enter a valid gamemode", ["Options: std, ctb, taiko, mania."])
+                    username = messagecontent[1]
+                    gamemode = messagecontent[2].lower()
+
+                    # Change gamemode from user input string
+                    # to gamemodeint and beautified gamemode.
+                    # TODO: any()
+                    if 's' in gamemode or ('o' in gamemode and not 'm' in gamemode and not 'c' in gamemode and not 't' in gamemode):
+                        gamemode = 0
+                        gamemode_string = "osu!"
+                    elif 't' in gamemode:
+                        gamemode = 1
+                        gamemode_string = "osu!taiko"
+                    elif 'c' in gamemode:
+                        gamemode = 2
+                        gamemode_string = "osu!catch"
+                    elif 'm' in gamemode:
+                        gamemode = 3
+                        gamemode_string = "osu!mania"
+                    else:
+                        await send_message_formatted("error", message, "please enter a valid gamemode", ["Options: std, ctb, taiko, mania."])
+                        return
+
+                    _user = requests.get('https://akatsuki.pw/api/v1/get_user?u={}'.format(username)).text
+                    user = json.loads(_user)[0]
+
+                    userID = user["user_id"]
+
+                    _resp = requests.get("http://akatsuki.pw/api/get_user_recent?u={user}&limit=5&type=string&m={mode}".format(user=username, mode=gamemode)).text
+                    resp = json.loads(_resp)
+
+                    debug_print("Raw JSON:\n{}\n\nMinified:\n{}".format(_resp, resp))
+
+                    embed = discord.Embed(
+                        title            = "Recent Plays for :flag_{flag}: {username} | {gm}"
+                            .format(
+                                flag     = user["country"].lower(),
+                                username = user["username"],
+                                gm       = gamemode_string
+                                ),
+                        description      = '** **',
+                        color            = 0x00ff00)
+
+                    # The thumbnail for the embed should be Akatsuki's logo.
+                    embed.set_thumbnail(url=akatsuki_logo)
+
+                    # Score number.
+                    i = 1
+
+                    for score in resp:
+
+                        debug_print(score)
+
+                        _beatmap = requests.get("https://akatsuki.pw/api/get_beatmaps?b={beatmap_id}".format(beatmap_id=score["beatmap_id"])).text
+                        beatmap = json.loads(_beatmap)[0]
+
+                        embed.add_field(
+                            name="** **", # :crab:
+                            value="**{i}. `{rank_achieved}` [{artist} - {song_name} \[{diff_name}\]](https://akatsuki.pw/b/{beatmap_id}) ({star_rating}★) {mods_readable}**\n**Score**: {score}\n**PP**: {pp}\n**Combo**: {combo_achieved}/{max_combo}x - [{count300}/{count100}/{count50}/{countmiss}]\n**Date achieved**: {date}" \
+                            .format(
+                                i              = i,
+                                rank_achieved  = score["rank"], # TODO: This is actually disgusting!
+                                artist         = beatmap["artist"],
+                                song_name      = beatmap["title"],
+                                diff_name      = beatmap["version"],
+                                beatmap_id     = score["beatmap_id"],
+                                star_rating    = round(float(beatmap["difficultyrating"]), 2),
+                                mods_readable  = readableMods(int(score["enabled_mods"])),
+                                score          = score["score"],
+                                pp             = score["pp"],
+                                combo_achieved = score["maxcombo"],
+                                max_combo      = beatmap["max_combo"],
+                                count300       = score["count300"],
+                                count100       = score["count100"],
+                                count50        = score["count50"],
+                                countmiss      = score["countmiss"],
+                                date           = score["date"])
+                                )
+
+                        i += 1
+
+                    await message.channel.send(embed=embed)
                     return
-
-                _user = requests.get('https://akatsuki.pw/api/v1/get_user?u={}'.format(username)).text
-                user = json.loads(_user)[0]
-
-                userID = user["user_id"]
-
-                _resp = requests.get("http://akatsuki.pw/api/get_user_recent?u={user}&limit=5&type=string&m={mode}".format(user=username, mode=gamemode)).text
-                resp = json.loads(_resp)
-
-                debug_print("Raw JSON:\n{}\n\nMinified:\n{}".format(_resp, resp))
-
-                embed = discord.Embed(
-                    title            = "Recent Plays for :flag_{flag}: {username} | {gm}"
-                        .format(
-                            flag     = user["country"].lower(),
-                            username = user["username"],
-                            gm       = gamemode_string
-                            ),
-                    description      = '** **',
-                    color            = 0x00ff00)
-
-                # The thumbnail for the embed should be Akatsuki's logo.
-                embed.set_thumbnail(url=akatsuki_logo)
-
-                # Score number.
-                i = 1
-
-                for score in resp:
-
-                    debug_print(score)
-
-                    _beatmap = requests.get("https://akatsuki.pw/api/get_beatmaps?b={beatmap_id}".format(beatmap_id=score["beatmap_id"])).text
-                    beatmap = json.loads(_beatmap)[0]
-
-                    embed.add_field(
-                        name="** **", # :crab:
-                        value="**{i}. `{rank_achieved}` [{artist} - {song_name} \[{diff_name}\]](https://akatsuki.pw/b/{beatmap_id}) ({star_rating}★) {mods_readable}**\n**Score**: {score}\n**PP**: {pp}\n**Combo**: {combo_achieved}/{max_combo}x - [{count300}/{count100}/{count50}/{countmiss}]\n**Date achieved**: {date}" \
-                        .format(
-                            i              = i,
-                            rank_achieved  = score["rank"], # TODO: This is actually disgusting!
-                            artist         = beatmap["artist"],
-                            song_name      = beatmap["title"],
-                            diff_name      = beatmap["version"],
-                            beatmap_id     = score["beatmap_id"],
-                            star_rating    = round(float(beatmap["difficultyrating"]), 2),
-                            mods_readable  = readableMods(int(score["enabled_mods"])),
-                            score          = score["score"],
-                            pp             = score["pp"],
-                            combo_achieved = score["maxcombo"],
-                            max_combo      = beatmap["max_combo"],
-                            count300       = score["count300"],
-                            count100       = score["count100"],
-                            count50        = score["count50"],
-                            countmiss      = score["countmiss"],
-                            date           = score["date"])
-                            )
-
-                    i += 1
-
-                await client.send_message(message.channel, embed=embed)
-                return
 
             # Multipurpose akatsuki info command.
             # Syntax: $akatsuki <callback>
@@ -988,7 +1000,7 @@ async def on_message(message):
                     embed.add_field(name="** **", value=result[3], inline=result[5])
                     if result[4] is not None:
                         embed.set_footer(icon_url='', text=result[4])
-                    await client.send_message(message.channel, embed=embed)
+                    await message.channel.send(embed=embed)
                 else:
                     SQL.execute("SELECT id, topic, title FROM discord_faq WHERE type = 1")
                     faq_db = SQL.fetchall()
@@ -1024,7 +1036,7 @@ async def on_message(message):
 
                     if result[4] is not None:
                         embed.set_footer(icon_url='', text=result[4])
-                    await client.send_message(message.channel, embed=embed)
+                    await message.channel.send(embed=embed)
                 else:
                     SQL.execute("SELECT id, topic, title FROM discord_faq WHERE type = 0")
 
@@ -1059,7 +1071,7 @@ async def on_message(message):
                     inline = False)
 
                 embed.set_footer(icon_url="", text="Good vibes <3")
-                await client.send_message(message.channel, embed=embed)
+                await message.channel.send(embed=embed)
                 return
 
             # Prune command. Prune x messages from the current channel.
@@ -1090,7 +1102,7 @@ async def on_message(message):
 
                 if result is not None:
                     if result[4] == 0:
-                        await client.add_roles(message.author, discord.utils.get(message.server.roles, id=result[3]))
+                        await client.add_roles(message.author, discord.utils.get(message.guild.roles, id=result[3]))
                         SQL.execute("UPDATE discord_roles SET verified = 1 WHERE discordid = %s", [message.author.id])
 
                         await send_message_formatted("success", message, "Your Discord has been sucessfully linked to your Akatsuki account.", ["Your roles should now be synced."])

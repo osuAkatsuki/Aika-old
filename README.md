@@ -1,12 +1,12 @@
-[![Discord](https://discordapp.com/api/guilds/365406575893938177/widget.png?style=shield)](https://discord.gg/5cBtMPW)
+[![Akatsuki's Discord](https://discordapp.com/api/guilds/365406575893938177/widget.png?style=shield)](https://discord.gg/5cBtMPW)
 
 ## Aika
 
 This is Akatsuki's discord bot's source code.
 
 ## Requirements
-- Python
-- Colorama 0.4.0
+- Python3
+- Requirements from requirements.txt
 
 ## How to set up this thing
 I don't really think you'd ever want to, but heres a thing anyways.
@@ -27,19 +27,7 @@ announce_online = 0/1, whether to announce when the bot is online in whatever sp
 
 [discord]
 owner_id = your personal discord id
-token = token here if tokenAuth = 1
-username = username here (optional)
-
-[akatsuki]
-general = your server's #general id
-server_id = your server's id
-player_reporting = your server's #player-reporting id
-reports = your server's #reports id
-help = your server's #help id
-verify = your server's verify channel
-rank_requests = your server's rank requests channel
-apikey = your banchos apikey
-ip = your server's ip
+token = bot token goes here
 
 [mysql]
 host = mysql access point
@@ -49,7 +37,7 @@ db = mysql db
 ```
 Finish up by installing requirements.txt, and then you're on your way.
 ```
-$ pip3 install requirements.txt
+$ pip3 install -r requirements.txt
 ```
 Done!
 ```
