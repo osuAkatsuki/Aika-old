@@ -96,9 +96,11 @@ AKATSUKI_VERIFY_ID           = 459856640049676299 # ID for #verify.
 AKATSUKI_PLAYER_REPORTING_ID = 367068661837725706 # ID for #player_reporting.
 AKATSUKI_REPORTS_ID          = 367080772076568596 # ID for #reports.
 AKATSUKI_RANK_REQUESTS_ID    = 557095943602831371 # ID for #rank_requests.
-#AKATSUKI_IP_ADDRESS          = "51.79.17.191"     # Akatsuki's osu! server IP.
+AKATSUKI_IP_ADDRESS          = "51.79.17.191"     # Akatsuki's osu! server IP.
 
 COMMAND_PREFIX               = "!"                 # The bot's command prefix.
+
+FAQ_LIST_SPACING             = 12                  # When listing FAQ or INFO, use this many spaces between the divider.
 
 
 # A list of filters.
@@ -169,7 +171,7 @@ def readableMods(m): # From: Ripple source
 	"""
 
 	r = "+"
-	if m == 0:
+	if not m:
 		return ""
 	if m & mods.NOFAIL > 0:
 		r += "NF"
@@ -284,9 +286,15 @@ async def on_error(event, *args):
 async def on_message(message):
     await client.wait_until_ready()
 
+    # Prevent client crashing.. or atleast try a little bit.
+    if not all(ord(char) < 128 for char in message.content) and len(message.content) > 1500:
+        await message.delete()
+        return
+
     # Message sent in #player-reporting, move to #reports.
     if message.channel.id == AKATSUKI_PLAYER_REPORTING_ID:
         await message.delete() # Delete the message from #player-reporting.
+        return
 
         # Prepare, and send the report in #reports.
         embed = discord.Embed(title="New report recieved.", description='** **', color=0x00ff00)
@@ -306,9 +314,7 @@ async def on_message(message):
         if not message.content.startswith('$'): # Do not pm or link to #reports if it is a command.
             await message.author.send(embed=embedPrivate)
             await client.get_channel(AKATSUKI_REPORTS_ID).send(embed=embed)
-
-            # Print result to console.
-            print(Fore.CYAN + "Report recieved. It has been moved to #reports.")
+            return
 
     # Request sent in rank_requests.
     elif message.channel.id == AKATSUKI_RANK_REQUESTS_ID:
@@ -327,12 +333,12 @@ async def on_message(message):
 
         # Message sent in #help, log to db.
         if message.channel.id == AKATSUKI_HELP_ID:
+            quality = 1
+
             if any(x in message.content.lower() for x in profanity): # Ew what the actual fukc TODO
                 quality = 0
             elif any(x in message.content.lower() for x in high_quality) or properly_formatted:
                 quality = 2
-            else:
-                quality = 1
 
             debug_print("Quality of message {}: {}".format(message.id, quality))
 
@@ -357,6 +363,8 @@ async def on_message(message):
             else:
                 debug_print("Aborted Trigger: Email Verification Support, due to \"badge\" contents of the message.\nUser: {}".format(message.author))
 
+            return
+
         elif any(x in message.content.lower() for x in filters) and not message.author.guild_permissions.manage_messages:
             SQL.execute("INSERT INTO profanity_filter (user, message, time) VALUES (%s, %s, %s)", [message.author.id, message.content, int(time.time())])
 
@@ -371,6 +379,7 @@ async def on_message(message):
                 .format(message.content.replace("`", "")))
 
             print(Fore.MAGENTA + "Filtered message | '{}: {}'".format(message.author, message.content))
+            return
 
         # Private messages.
         if message.guild is None: # Private message
@@ -418,7 +427,7 @@ async def on_message(message):
                     await send_message_formatted("success", message, "game successfully changed to: {}".format(game))
                 else:
                     await send_message_formatted("error", message, "please specify a game name")
-                    return
+                    return # dont delete if we fuck up
 
                 await message.delete()
                 return
@@ -446,7 +455,7 @@ async def on_message(message):
 
                     if logs is not None:
                         for log in logs:
-                            if log[0] == 0:
+                            if not log[0]:
                                 negative += 1
                             elif log[0] == 1:
                                 neutral += 1
@@ -539,7 +548,7 @@ async def on_message(message):
 
                         debug_print("Raw JSON:\n{}\n\nMinified:\n{}".format(resp, user))
 
-                        if user["favourite_mode"] == 0: # osu!
+                        if not user["favourite_mode"]: # osu!
                             mode = 'std'
                             mode_nice = 'osu!'
                         elif user["favourite_mode"] == 1: # osu!taiko
@@ -732,8 +741,7 @@ async def on_message(message):
 
                         debug_print(score)
 
-                        _beatmap = requests.get("https://akatsuki.pw/api/get_beatmaps?b={beatmap_id}".format(beatmap_id=score["beatmap_id"])).text
-                        beatmap = json.loads(_beatmap)[0]
+                        beatmap = json.loads(requests.get("https://akatsuki.pw/api/get_beatmaps?b={beatmap_id}".format(beatmap_id=score["beatmap_id"])).text)[0]
 
                         embed.add_field(
                             name="** **", # :crab:
@@ -771,8 +779,6 @@ async def on_message(message):
                     topic = messagecontent[1].lower()
                 else:
                     topic = None
-
-                print(messagecontent, topic)
 
                 if topic in (None, "help"):
                     await send_message_formatted("✨", message, "please enter a topic", ["There are quite a few, so they will not be listed."])
@@ -1003,7 +1009,12 @@ async def on_message(message):
                 if result is not None:
                     embed = discord.Embed(title=result[2], description='** **', color=0x00ff00)
                     embed.set_thumbnail(url=akatsuki_logo)
-                    embed.add_field(name="** **", value=result[3], inline=result[5])
+                    embed.add_field(
+                        name="** **",
+                        value=result[3]
+                            .replace("{AKATSUKI_IP}", AKATSUKI_IP_ADDRESS)
+                            .replace("{COMMAND_PREFIX}", COMMAND_PREFIX),
+                        inline=result[5])
                     if result[4] is not None:
                         embed.set_footer(icon_url='', text=result[4])
                     await message.channel.send(embed=embed)
@@ -1012,7 +1023,7 @@ async def on_message(message):
                     faq_db = SQL.fetchall()
                     faq_list = ""
                     for faq in faq_db:
-                        add_len = 12 - len(faq[1])
+                        add_len = FAQ_LIST_SPACING - len(faq[1])
                         spaces = ""
                         spaces += " " * add_len
 
@@ -1038,7 +1049,12 @@ async def on_message(message):
                 if result is not None:
                     embed = discord.Embed(title=result[2], description='** **', color=0x00ff00)
                     embed.set_thumbnail(url=akatsuki_logo)
-                    embed.add_field(name="** **", value=result[3], inline=result[5])
+                    embed.add_field(
+                        name="** **",
+                        value=result[3]
+                            .replace("{AKATSUKI_IP}", AKATSUKI_IP_ADDRESS)
+                            .replace("{COMMAND_PREFIX}", COMMAND_PREFIX),
+                        inline=result[5])
 
                     if result[4] is not None:
                         embed.set_footer(icon_url='', text=result[4])
@@ -1050,7 +1066,7 @@ async def on_message(message):
 
                     info_list = ""
                     for info in info_db:
-                        add_len = 12 - len(info[1])
+                        add_len = FAQ_LIST_SPACING - len(info[1])
                         spaces = ""
                         spaces += " " * add_len
 
@@ -1114,7 +1130,7 @@ async def on_message(message):
                 result = SQL.fetchone()
 
                 if result is not None:
-                    if result[4] == 0:
+                    if not result[4]:
                         await client.add_roles(message.author, discord.utils.get(message.guild.roles, id=result[3]))
                         SQL.execute("UPDATE discord_roles SET verified = 1 WHERE discordid = %s", [message.author.id])
 
