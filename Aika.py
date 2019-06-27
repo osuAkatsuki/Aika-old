@@ -342,7 +342,7 @@ async def on_message(message):
 
             debug_print("Quality of message {}: {}".format(message.id, quality))
 
-            SQL.execute("INSERT INTO help_logs (id, user, content, datetime, quality) VALUES (NULL, %s, %s, %s, %s)", [message.author.id, message.content, int(time.time()), quality])
+            SQL.execute("INSERT INTO help_logs (id, user, content, datetime, quality) VALUES (NULL, %s, %s, %s, %s)", [message.author.id, message.content.encode('ascii', errors='ignore'), int(time.time()), quality])
 
         # Checks for things in message.
         if any(x in message.content.lower() for x in email_checks) and message.guild.id == AKATSUKI_SERVER_ID:
@@ -365,21 +365,23 @@ async def on_message(message):
 
             return
 
-        elif any(x in message.content.lower() for x in filters) and not message.author.guild_permissions.manage_messages:
-            SQL.execute("INSERT INTO profanity_filter (user, message, time) VALUES (%s, %s, %s)", [message.author.id, message.content, int(time.time())])
+        elif not message.author.guild_permissions.manage_messages:
+            for split in message.content.lower().split(" "):
+                if any(x == split for x in filters):
+                    SQL.execute("INSERT INTO profanity_filter (user, message, time) VALUES (%s, %s, %s)", [message.author.id, message.content.encode('ascii', errors='ignore'), int(time.time())])
 
-            await message.delete()
-            await message.author.send(
-                "Hello,\n\nYour message in osu!Akatsuki "
-                "has been removed as it has been deemed "
-                "unsuitable.\n\nIf this makes no sense, "
-                "please report it to <@285190493703503872>. "
-                "\n**Do not try to evade this filter as it is "
-                "considered fair ground for a ban**.\n\n```{}```"
-                .format(message.content.replace("`", "")))
+                    await message.delete()
+                    await message.author.send(
+                        "Hello,\n\nYour message in osu!Akatsuki "
+                        "has been removed as it has been deemed "
+                        "unsuitable.\n\nIf this makes no sense, "
+                        "please report it to <@285190493703503872>. "
+                        "\n**Do not try to evade this filter as it is "
+                        "considered fair ground for a ban**.\n\n```{}```"
+                        .format(message.content.replace("`", "")))
 
-            print(Fore.MAGENTA + "Filtered message | '{}: {}'".format(message.author, message.content))
-            return
+                    print(Fore.MAGENTA + "Filtered message | '{}: {}'".format(message.author, message.content))
+                    return
 
         # Private messages.
         if message.guild is None: # Private message
