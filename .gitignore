@@ -4,3 +4,4 @@ gitold/
 *.mp3
 *.wav
 secret/
+constants/__pycache__/
