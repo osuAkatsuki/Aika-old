@@ -84,7 +84,7 @@ else:
 """ Constants """
 
 # The version number of Aika!
-AIKA_VERSION                 = 3.00               # Aika's version number.
+AIKA_VERSION                 = 3.05               # Aika's version number.
 
 ERROR_BAR_LEN                = 100                # Length of the bars for error handler (https://nanahira.life/1uRp27N5TCipZ3Hs12o5PQLEOTyHHYUE.png).
 
