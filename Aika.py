@@ -406,8 +406,6 @@ async def on_message(message):
             messagecontent = message.content.split(" ")
             command = messagecontent[0][1:].lower()
 
-            #if message.author.id == config['discord']['owner_id']: # Process owner commands.
-
             # Change the bot's displayed game.
             if command == "game":
                 if not message.author.guild_permissions.manage_webhooks: # Webhook since it's a bot thing
@@ -736,10 +734,7 @@ async def on_message(message):
                     # The thumbnail for the embed should be Akatsuki's logo.
                     embed.set_thumbnail(url=akatsuki_logo)
 
-                    # Score number.
-                    i = 1
-
-                    for score in resp:
+                    for idx, score in enumerate(resp):
 
                         debug_print(score)
 
@@ -747,9 +742,9 @@ async def on_message(message):
 
                         embed.add_field(
                             name="** **", # :crab:
-                            value="**{i}. `{rank_achieved}` [{artist} - {song_name} \[{diff_name}\]](https://akatsuki.pw/b/{beatmap_id}) ({star_rating}★) {mods_readable}**\n**Score**: {score}\n**PP**: {pp}\n**Combo**: {combo_achieved}/{max_combo}x - [{count300}/{count100}/{count50}/{countmiss}]\n**Date achieved**: {date}" \
+                            value="**{index}. `{rank_achieved}` [{artist} - {song_name} \[{diff_name}\]](https://akatsuki.pw/b/{beatmap_id}) ({star_rating}★) {mods_readable}**\n**Score**: {score}\n**PP**: {pp}\n**Combo**: {combo_achieved}/{max_combo}x - [{count300}/{count100}/{count50}/{countmiss}]\n**Date achieved**: {date}" \
                             .format(
-                                i              = i,
+                                index          = idx + 1,
                                 rank_achieved  = score["rank"], # TODO: This is actually disgusting!
                                 artist         = beatmap["artist"],
                                 song_name      = beatmap["title"],
@@ -767,8 +762,6 @@ async def on_message(message):
                                 countmiss      = score["countmiss"],
                                 date           = score["date"])
                                 )
-
-                        i += 1
 
                     await message.channel.send(embed=embed)
                     return
@@ -996,55 +989,17 @@ async def on_message(message):
                 await send_message_formatted("✨", message, resp, resp_array)
                 return
 
-            # FAQ Command. Frequently asked questions!
-            # Syntax: $faq <callback>
-            elif command in ("faq", "help"):
+            # Info and FAQ command. General information such as rules, etc.
+            # Syntax: $info <callback> | $faq <callback>
+            elif command in ("info", "information", "faq", "help"):
                 if len(messagecontent) > 1:
                     callback = messagecontent[1].lower()
                 else:
                     callback = "" # not nonetype so we can support digit stuff without a copy paste exception fucking python no goto fuck
+                
+                command_type = 0 if command.startswith("info") else 1
 
-                SQL.execute("SELECT * FROM discord_faq WHERE {type} = %s AND type = 1".format(type='id' if callback.isdigit() else 'topic'), [callback])
-
-                result = SQL.fetchone()
-
-                if result is not None:
-                    embed = discord.Embed(title=result[2], description='** **', color=0x00ff00)
-                    embed.set_thumbnail(url=akatsuki_logo)
-                    embed.add_field(
-                        name="** **",
-                        value=result[3]
-                            .replace("{AKATSUKI_IP}", AKATSUKI_IP_ADDRESS)
-                            .replace("{COMMAND_PREFIX}", COMMAND_PREFIX),
-                        inline=result[5])
-                    if result[4] is not None:
-                        embed.set_footer(icon_url='', text=result[4])
-                    await message.channel.send(embed=embed)
-                else:
-                    SQL.execute("SELECT id, topic, title FROM discord_faq WHERE type = 1")
-                    faq_db = SQL.fetchall()
-                    faq_list = ""
-                    for faq in faq_db:
-                        add_len = FAQ_LIST_SPACING - len(faq[1])
-                        spaces = ""
-                        spaces += " " * add_len
-
-                        faq_list += "{}. {}{}|| {}\n".format(faq[0], faq[1], spaces, faq[2])
-
-                    await send_message_formatted("error", message, "I couldn't find a FAQ topic by that {}".format("id" if callback.isdigit() else "name"), ["```{faqlist}```".format(
-                        topic   = " " + callback if len(callback) > 0 else "",
-                        faqlist = faq_list.replace("`", ""))])
-                return
-
-            # Info command. General information such as rules, etc.
-            # Syntax: $info <callback>
-            elif command == ("info", "information"):
-                if len(messagecontent) > 1:
-                    callback = messagecontent[1].lower()
-                else:
-                    callback = "" # not nonetype so we can support digit stuff without a copy paste exception fucking python no goto fuck
-
-                SQL.execute("SELECT * FROM discord_faq WHERE {type} = %s AND type = 0".format(type='id' if callback.isdigit() else 'topic'), [callback])
+                SQL.execute("SELECT * FROM discord_faq WHERE {type} = %s AND type = %s".format(type='id' if callback.isdigit() else 'topic'), [callback, command_type])
   
                 result = SQL.fetchone()
 
@@ -1062,21 +1017,17 @@ async def on_message(message):
                         embed.set_footer(icon_url='', text=result[4])
                     await message.channel.send(embed=embed)
                 else:
-                    SQL.execute("SELECT id, topic, title FROM discord_faq WHERE type = 0")
+                    SQL.execute("SELECT id, topic, title FROM discord_faq WHERE type = %s", [command_type])
 
-                    info_db = SQL.fetchall()
+                    faq_db = SQL.fetchall()
 
-                    info_list = ""
-                    for info in info_db:
-                        add_len = FAQ_LIST_SPACING - len(info[1])
-                        spaces = ""
-                        spaces += " " * add_len
+                    faq_list = ""
+                    for idx, val in enumerate(faq_db):
+                        faq_list += "{}. {}{}|| {}\n".format(idx + 1, val[1], " " * (FAQ_LIST_SPACING - len(val[1])), val[2])
 
-                        info_list += "{}. {}{}|| {}\n".format(info[0], info[1], spaces, info[2])
-
-                    await send_message_formatted("error", message,"I couldn't find a FAQ topic by that {}".format("id" if callback.isdigit() else "name"), ["```{infolist}```".format(
+                    await send_message_formatted("error", message,"I couldn't find a topic by that {}".format("id" if callback.isdigit() else "name"), ["```{faq_list}```".format(
                         topic    = " " + callback if len(callback) > 0 else "",
-                        infolist = info_list.replace("`", ""))])
+                        faq_list = faq_list.replace("`", ""))])
                 return
 
             elif command in ("aika", "botinfo"): # Bot info command.
