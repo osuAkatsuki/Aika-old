@@ -311,7 +311,7 @@ async def on_message(message):
         embedPrivate.add_field(name="Report content", value=message.content, inline=True)
         embedPrivate.set_thumbnail(url=akatsuki_logo)
 
-        if not message.content.startswith('$'): # Do not pm or link to #reports if it is a command.
+        if not message.content.startswith(COMMAND_PREFIX): # Do not pm or link to #reports if it is a command.
             await message.author.send(embed=embedPrivate)
             await client.get_channel(AKATSUKI_REPORTS_ID).send(embed=embed)
             return
@@ -528,14 +528,14 @@ async def on_message(message):
                             return
                         else:
                             await send_message_formatted("error", message, "incorrect syntax.",
-                                ["Please use the syntax `> ${} <username_with_underscores> <-rx (Optional)>".format(command)])
+                                ["Please use the syntax `> {}{} <username_with_underscores> <-rx (Optional)>".format(COMMAND_PREFIX, command)])
                             return
                     else:
                         __user = requests.get('https://akatsuki.pw/api/v1/get_user?u={}'.format(username)).text
 
                         if len(__user) == 2:
                             await send_message_formatted("error", message, "either that user does not exist, or your syntax was incorrect",
-                                ["Syntax: `$stats username_spaced_like_this (-rx)`"])
+                                ["Syntax: `{}stats username_spaced_like_this (-rx)`".format(COMMAND_PREFIX)])
                             return
 
                         _user = json.loads(__user)
@@ -651,7 +651,7 @@ async def on_message(message):
                 with message.channel.typing():
                     execute = ' '.join(messagecontent[1:]).strip()
 
-                    if not len(execute.strip()) > 4 or messagecontent[1][0] != "!":
+                    if not len(execute.strip()) > 4 or messagecontent[1][0] != COMMAND_PREFIX:
                         await send_message_formatted("error", message, "what exactly are you trying to send..?")
                         return
 
@@ -913,8 +913,7 @@ async def on_message(message):
                         "something we will look to give you, rather " \
                         "than vice versa :^)"]
                 else:
-                    await send_message_formatted("error", message,
-                        "I couldn't find a position by that name")
+                    await send_message_formatted("error", message, "I couldn't find a position by that name")
                     return
 
                 await send_message_formatted(emoticon, message, resp, resp_array)
@@ -981,8 +980,7 @@ async def on_message(message):
                     "https://www.youtube.com/watch?v=wKgbDk2hXI8"
 
                 else:
-                    await send_message_formatted("error", message,
-                        "I couldn't find a subcategory by that name")
+                    await send_message_formatted("error", message, "I couldn't find a subcategory by that name")
                     return
 
                 # TODO: send this to author rather than channel..
@@ -1060,7 +1058,7 @@ async def on_message(message):
 
                 if not count.isdigit():
                     await send_message_formatted("error", message, "it seems you didn't specify a correct integer",
-                        ["Correct syntax: `$prune <messagecount>`.", "The limit for deleted messagecount is 1000."])
+                        ["Correct syntax: `{}prune <messagecount>`.".format(COMMAND_PREFIX), "The limit for deleted messagecount is 1000."])
                     return
                 else:
                     count = int(count)
@@ -1072,7 +1070,7 @@ async def on_message(message):
                         plural   = "s" if len(deleted) - 1 > 1 else ""))
                 else:
                     await send_message_formatted("error", message, "It seems you used the command syntax improperly",
-                        ["Correct syntax: `$prune <messagecount>`.", "The limit for deleted messagecount is 1000."])
+                        ["Correct syntax: `{}prune <messagecount>`.".format(COMMAND_PREFIX), "The limit for deleted messagecount is 1000."])
                 return
 
             # Command for linking osu! account to discord
@@ -1087,9 +1085,9 @@ async def on_message(message):
                         await client.add_roles(message.author, discord.utils.get(message.guild.roles, id=result[3]))
                         SQL.execute("UPDATE discord_roles SET verified = 1 WHERE discordid = %s", [message.author.id])
 
-                        await send_message_formatted("success", message, "Your Discord has been sucessfully linked to your Akatsuki account.", ["Your roles should now be synced."])
+                        await send_message_formatted("success", message, "your Discord has been sucessfully linked to your Akatsuki account.", ["Your roles should now be synced."])
                     else:
-                        await send_message_formatted("error", message, "You already have an account linked")
+                        await send_message_formatted("error", message, "you already have an account linked")
                 else:
                     await send_message_formatted("✨", message, "Linking process initiated",
                         ["Next, please use the following command in #osu, or in a DM with 'Aika' ingame.",
