@@ -81,7 +81,7 @@ else:
 """ Constants """
 
 # The version number of Aika!
-AIKA_VERSION                 = 3.12               # Aika's version number.
+AIKA_VERSION                 = 3.15               # Aika's version number.
 
 ERROR_BAR_LEN                = 100                # Length of the bars for error handler (https://nanahira.life/1uRp27N5TCipZ3Hs12o5PQLEOTyHHYUE.png).
 
@@ -228,7 +228,7 @@ def debug_print(string):
     debug = SQL.fetchone()[0]
 
     if debug:
-        print(Fore.MAGENTA + "\nDEBUG: {}\n".format(string))
+        print(Fore.MAGENTA + "\n{}\n".format(string))
 
 
 async def send_message_formatted(type, message, first_line, string_array=[]):
