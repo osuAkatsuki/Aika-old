@@ -277,12 +277,12 @@ async def on_ready():
 
     # Announce online status to #general if we're on a server build of Aika.
     SQL.execute("SELECT value_int FROM aika_settings WHERE name = 'server_build'")
-    server_build = bool(SQL.fetchone())
+    server_build = bool(SQL.fetchone()[0])
 
     if server_build:
         # Get the server's latest version of Aika run.
         SQL.execute("SELECT value_int FROM aika_settings WHERE name = 'version_latest'")
-        version_latest = SQL.fetchone()
+        version_latest = SQL.fetchone()[0]
 
         # If the server version mismatches the version of the code, display the update.
         if version_latest != AIKA_VERSION:
