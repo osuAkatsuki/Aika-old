@@ -294,9 +294,9 @@ async def on_ready():
 @client.event
 async def on_error(event, *args):
     for arg in args:
-        print(Fore.RED + "\n\nAn exception has occurred.\n\n" + Fore.LIGHTRED_EX + "Exception: {exception}\nMessage content: {content}\n\n{traceback}\n\n".format(
+        print(Fore.RED + "\n\nAn exception has occurred.\n\n" + Fore.LIGHTRED_EX + "Exception: {exception}\n\n{content}\n\n{traceback}\n\n".format(
             exception = Fore.LIGHTBLUE_EX + event + Fore.LIGHTRED_EX,
-            content   = Fore.LIGHTBLUE_EX + arg.content + Fore.LIGHTRED_EX,
+            content   = Fore.LIGHTBLUE_EX + "{}: {}".format(arg.author, arg.content) + Fore.LIGHTRED_EX,
             traceback = Fore.LIGHTBLUE_EX + ("-" * ERROR_BAR_LEN) + "\n" + Fore.LIGHTRED_EX + traceback.format_exc() + Fore.LIGHTBLUE_EX + ("-" * ERROR_BAR_LEN) + Fore.LIGHTRED_EX))
 
 
@@ -332,10 +332,7 @@ async def on_message(message):
         embed.add_field(name="Author", value=message.author.mention, inline=True)
 
         # Prepare, and send the report to the reporter.
-        embedPrivate = discord.Embed(
-            title       = "Thank you for the player report.",
-            description = "We will review the report shortly.",
-            color       = 0x00ff00)
+        embedPrivate = discord.Embed(title="Thank you for the player report.", description="We will review the report shortly.", color=0x00ff00)
 
         embedPrivate.add_field(name="Report content", value=message.content, inline=True)
         embedPrivate.set_thumbnail(url=akatsuki_logo)
@@ -364,12 +361,13 @@ async def on_message(message):
         if message.channel.id == AKATSUKI_HELP_ID:
             quality = 1
 
-            if any(x in message.content.lower() for x in profanity): # Ew what the actual fukc TODO
+            # Profanity before high quality and proper formatting.
+            if any(x in message.content.lower() for x in profanity):
                 quality = 0
             elif any(x in message.content.lower() for x in high_quality) or properly_formatted:
                 quality = 2
 
-            debug_print("Quality of message {}: {}".format(message.id, quality))
+            debug_print("Quality of message\n\n{} - {}".format("{}: {}".format(message.author, message.content), quality))
 
             SQL.execute("INSERT INTO help_logs (id, user, content, datetime, quality) VALUES (NULL, %s, %s, %s, %s)", [message.author.id, message.content.encode('ascii', errors='ignore'), int(time.time()), quality])
 
@@ -388,7 +386,7 @@ async def on_message(message):
                         "considered fair ground for a ban**.\n\n```{}```"
                         .format(message.content.replace("`", "")))
 
-                    print(Fore.MAGENTA + "Filtered message | '{}: {}'".format(message.author, message.content))
+                    debug_print("Filtered message | '{}: {}'".format(message.author, message.content))
                     return
 
         # Private messages.
