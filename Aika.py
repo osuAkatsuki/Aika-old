@@ -48,9 +48,6 @@ import re
 import time
 from datetime import datetime
 
-# Our imports.
-from constants import mods
-
 # Initialize colorama.
 init(autoreset=True)
 
@@ -60,15 +57,15 @@ client = discord.Client()
 # Configuration.
 config = configparser.ConfigParser()
 config.sections()
-config.read('config.ini')
+config.read("config.ini")
 
 # MySQL
 try:
     cnx = mysql.connector.connect(
-        user       = str(config['mysql']['user']),
-        password   = str(config['mysql']['passwd']),
-        host       = str(config['mysql']['host']),
-        database   = str(config['mysql']['db']),
+        user       = config['mysql']['user'],
+        password   = config['mysql']['passwd'],
+        host       = config['mysql']['host'],
+        database   = config['mysql']['db'],
         autocommit = True)
 except mysql.connector.Error as err:
     if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
@@ -161,41 +158,68 @@ SQL.execute("SELECT value_int FROM aika_settings WHERE name = 'debug'")
 debug = SQL.fetchone()[0]
 
 
+# osu! Mods
+NOMOD       = 0
+NOFAIL      = 1
+EASY        = 2
+TOUCHSCREEN = 4
+HIDDEN      = 8
+HARDROCK    = 16
+SUDDENDEATH = 32
+DOUBLETIME  = 64
+RELAX       = 128
+HALFTIME    = 256
+NIGHTCORE   = 512
+FLASHLIGHT  = 1024
+AUTOPLAY    = 2048
+SPUNOUT     = 4096
+RELAX2      = 8192
+PERFECT     = 16384
+KEY4        = 32768
+KEY5        = 65536
+KEY6        = 131072
+KEY7        = 262144
+KEY8        = 524288
+KEYMOD      = 1015808
+FADEIN      = 1048576
+RANDOM      = 2097152
+LASTMOD     = 4194304
+KEY9        = 16777216
+KEY10       = 33554432
+KEY1        = 67108864
+KEY3        = 134217728
+KEY2        = 268435456
+SCOREV2     = 536870912
+
 """ Functions """
 
 
-def readableMods(m): # From: Ripple source
-	"""
-	Return a string with readable std mods.
+def osu_mods(mods): # From: Ripple source
 
-	:param m: mods bitwise number
-	:return:  readable mods string, eg HDDT
-	"""
-
-	r = "+"
-	if not m:
+	resp = "+" # At the start to show like +HDDT, +HDRX, etc.
+	if not mods:
 		return ""
-	if m & mods.NOFAIL > 0:
-		r += "NF"
-	if m & mods.EASY > 0:
-		r += "EZ"
-	if m & mods.HIDDEN > 0:
-		r += "HD"
-	if m & mods.HARDROCK > 0:
-		r += "HR"
-	if m & mods.DOUBLETIME > 0:
-		r += "DT"
-	if m & mods.HALFTIME > 0:
-		r += "HT"
-	if m & mods.FLASHLIGHT > 0:
-		r += "FL"
-	if m & mods.SPUNOUT > 0:
-		r += "SO"
-	if m & mods.TOUCHSCREEN > 0:
-		r += "TD"
-	if m & mods.RELAX > 0:
-		r += "RX"
-	return r
+	if mods & NOFAIL > 0:
+		resp += "NF"
+	if mods & EASY > 0:
+		resp += "EZ"
+	if mods & HIDDEN > 0:
+		resp += "HD"
+	if mods & HARDROCK > 0:
+		resp += "HR"
+	if mods & DOUBLETIME > 0:
+		resp += "DT"
+	if mods & HALFTIME > 0:
+		resp += "HT"
+	if mods & FLASHLIGHT > 0:
+		resp += "FL"
+	if mods & SPUNOUT > 0:
+		resp += "SO"
+	if mods & TOUCHSCREEN > 0:
+		resp += "TD"
+	if mods & RELAX > 0:
+		resp += "RX"
+	return resp
 
 
 def debug_print(string):
@@ -781,7 +805,7 @@ async def on_message(message):
 
                         embed.add_field(
                             name="** **", # :crab:
-                            value="**{index}. `{rank_achieved}` [{artist} - {song_name} \[{diff_name}\]](https://akatsuki.pw/b/{beatmap_id}) ({star_rating}★) {mods_readable}**\n**Score**: {score}\n**PP**: {pp}\n**Combo**: {combo_achieved}/{max_combo}x - [{count300}/{count100}/{count50}/{countmiss}]\n**Date achieved**: {date}" \
+                            value="**{index}. `{rank_achieved}` [{artist} - {song_name} \[{diff_name}\]](https://akatsuki.pw/b/{beatmap_id}) ({star_rating}★) {mods}**\n**Score**: {score}\n**PP**: {pp}\n**Combo**: {combo_achieved}/{max_combo}x - [{count300}/{count100}/{count50}/{countmiss}]\n**Date achieved**: {date}" \
                             .format(
                                 index          = idx + 1,
                                 rank_achieved  = score["rank"], # TODO: This is actually disgusting!
@@ -790,7 +814,7 @@ async def on_message(message):
                                 diff_name      = beatmap["version"],
                                 beatmap_id     = score["beatmap_id"],
                                 star_rating    = round(float(beatmap["difficultyrating"]), 2),
-                                mods_readable  = readableMods(int(score["enabled_mods"])),
+                                mods           = osu_mods(int(score["enabled_mods"])),
                                 score          = score["score"],
                                 pp             = score["pp"],
                                 combo_achieved = score["maxcombo"],
@@ -799,8 +823,7 @@ async def on_message(message):
                                 count100       = score["count100"],
                                 count50        = score["count50"],
                                 countmiss      = score["countmiss"],
-                                date           = score["date"])
-                                )
+                                date           = score["date"]))
 
                     await message.channel.send(embed=embed)
                     return
