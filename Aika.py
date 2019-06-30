@@ -275,19 +275,33 @@ async def on_ready():
 
     debug_print("\nDebug: {}\n".format(bool(debug)))
 
-    # Send an announcement that the bots been started in Akatsuki's #general (if debug).
-    if int(config['default']['announce_online']) == 1:
-        announceOnline = discord.Embed(
-            title       = "Aika v{} Online".format(AIKA_VERSION),
+    # Announce online status to #general if we're on a server build of Aika.
+    SQL.execute("SELECT value_int FROM aika_settings WHERE name = 'server_build'")
+    server_build = bool(SQL.fetchone())
+
+    if server_build:
+        # Get the server's latest version of Aika run.
+        SQL.execute("SELECT value_int FROM aika_settings WHERE name = 'version_latest'")
+        version_latest = SQL.fetchone()
+
+        # If the server version mismatches the version of the code, display the update.
+        if version_latest != AIKA_VERSION:
+            announce_title = "Aika has been updated to v{}. (Previous: v{})".format(AIKA_VERSION, version_latest)
+        else:
+            announce_title = "Aika v{} Online".format(AIKA_VERSION)
+
+        # Configure, and send the embed to #general.
+        announce_online = discord.Embed(
+            title       = announce_title,
             description = "Ready for commands <3\n\nAika is osu!Akatsuki's "
                           "[open source](https://github.com/osuAkatsuki/Aika) "
                           "discord bot.\n\n[Akatsuki](https://akatsuki.pw)\n"
                           "[Support Akatsuki](https://akatsuki.pw/support)",
             color       = 0x00ff00)
 
-        announceOnline.set_footer(icon_url=crab, text="Thank you for playing!")
-        announceOnline.set_thumbnail(url=akatsuki_logo)
-        await client.get_channel(AKATSUKI_GENERAL_ID).send(embed=announceOnline)
+        announce_online.set_footer(icon_url=crab, text="Thank you for playing!")
+        announce_online.set_thumbnail(url=akatsuki_logo)
+        await client.get_channel(AKATSUKI_GENERAL_ID).send(embed=announce_online)
 
 
 # On exceptions, don't make the whole thing die :).
