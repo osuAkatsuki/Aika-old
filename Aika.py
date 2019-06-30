@@ -370,7 +370,7 @@ async def on_message(message):
 
         properly_formatted = False
 
-        if messagelen > 0:
+        if messagelen > 0: # TODO: for every single period, check if the next letter is capitalized.
             properly_formatted = message.content[0].isupper() and message.content[messagelen - 1] in (".", "?", "!")
 
         # Message sent in #help, log to db.
@@ -417,7 +417,8 @@ async def on_message(message):
 
         # Handle user verification before the command section. This should speed things up a bit!
         if message.content.split(' ')[0][1:] == "verify" and message.channel.id == AKATSUKI_VERIFY_ID: # Verify command.
-            if message.author.id != config['discord']['owner_id']: # Dont for cmyui, he's probably pinging @everyone to verify.
+            SQL.execute("SELECT value_string FROM aika_settings WHERE name = 'discord_owner'")
+            if message.author.id != SQL.fetchone()[0]: # Dont for cmyui, he's probably pinging @everyone to verify.
                 await message.author.add_roles(discord.utils.get(message.guild.roles, name="Members"))
                 await message.delete()
             return
@@ -545,11 +546,12 @@ async def on_message(message):
                 debug_print("Got #nsfw and #nsfw_traps channel objects.")
 
                 debug_print("Deleting from #nsfw.")
-                nsfw_straight  = await _nsfw_straight.purge(limit=1000, check=check_content)
-                debug_print("Deleting from #nsfw-traps.")
-                nsfw_traps     = await _nsfw_traps.purge(limit=1000, check=check_content)
-                debug_print("Complete. {} messages removed.".format(len(nsfw_straight) + len(nsfw_traps)))
+                nsfw_straight = await _nsfw_straight.purge(limit=1000, check=check_content)
 
+                debug_print("Deleting from #nsfw-traps.")
+                nsfw_traps = await _nsfw_traps.purge(limit=1000, check=check_content)
+
+                debug_print("Complete. {} messages removed.".format(len(nsfw_straight) + len(nsfw_traps)))
                 await send_message_formatted("error", message, "cleaned NSFW channels. {} messages deleted.".format(len(nsfw_straight) + len(nsfw_traps)))
                 return
 
@@ -1141,7 +1143,8 @@ async def on_message(message):
                 return
 
 print(Fore.CYAN + "\nLogging into Discord with token..")
-client.run(str(config['discord']['token']))
+SQL.execute("SELECT value_string FROM aika_settings WHERE name = 'discord_token'")
+client.run(SQL.fetchone()[0])
 
 # Clean up
 print(Fore.MAGENTA + "\nCleaning up MySQL variables..")

@@ -21,14 +21,6 @@ Next, configure the config
 
 The default config should be pretty straight forward. If you're using a token to login to discord, make sure tokenauth is 1, and then just paste your token in. If you're using email/password, disable tokenauth and put the username and password in instead.
 ```
-[default]
-debug = 0/1, whether to show debug messages or not
-announce_online = 0/1, whether to announce when the bot is online in whatever specified channel from config
-
-[discord]
-owner_id = your personal discord id
-token = bot token goes here
-
 [mysql]
 host = mysql access point
 user = mysql username
