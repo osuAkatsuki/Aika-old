@@ -96,6 +96,8 @@ AKATSUKI_VERIFY_ID           = 459856640049676299 # ID for #verify.
 AKATSUKI_PLAYER_REPORTING_ID = 367068661837725706 # ID for #player_reporting.
 AKATSUKI_REPORTS_ID          = 367080772076568596 # ID for #reports.
 AKATSUKI_RANK_REQUESTS_ID    = 557095943602831371 # ID for #rank_requests.
+AKATSUKI_NSFW_STRAIGHT_ID    = 428460752698081291 # ID for #nsfw
+AKATSUKI_NSFW_TRAPS_ID       = 505960162411020288 # ID for #nsfw-traps
 AKATSUKI_IP_ADDRESS          = "51.79.17.191"     # Akatsuki's osu! server IP.
 
 COMMAND_PREFIX               = "!"                 # The bot's command prefix.
@@ -289,6 +291,17 @@ async def on_message(message):
     # Prevent client crashing.. or atleast try a little bit.
     if not all(ord(char) < 128 for char in message.content) and len(message.content) > 1500:
         await message.delete()
+        return
+
+    if message.channel.id in (AKATSUKI_NSFW_STRAIGHT_ID, AKATSUKI_NSFW_TRAPS_ID):
+        def check_content(m): # Don't delete links or images.
+            if "http" in message.content or message.attachments:
+                return False
+            else: # honestly not sure if this is safe without else in async idk how this shit work yehaw.
+                return True
+
+        if check_content(message):
+            await message.delete()
         return
 
     # Message sent in #player-reporting, move to #reports.
@@ -504,6 +517,27 @@ async def on_message(message):
 
                 await message.delete()
                 None.isdigit() # Error, no need to return
+
+            # This will probably only be used when bot goes down and text is sent, since its automated.
+            elif command in ("clearnsfw"):
+                if not message.author.guild_permissions.manage_messages:
+                    await send_message_formatted("error", message, "you lack sufficient privileges to use this command")
+                    return
+                
+                def check_content(m): # Don't delete links or images.
+                    if "http" in m.content or m.attachments:
+                        return False
+                    else: # honestly not sure if this is safe without else in async idk how this shit work yehaw.
+                        return True
+
+                _nsfw_straight = await client.fetch_channel(AKATSUKI_NSFW_STRAIGHT_ID)
+                _nsfw_traps    = await client.fetch_channel(AKATSUKI_NSFW_TRAPS_ID)
+
+                nsfw_straight  = await _nsfw_straight.purge(limit=1000, check=check_content)
+                nsfw_traps     = await _nsfw_traps.purge(limit=1000, check=check_content)
+
+                await send_message_formatted("error", message, "cleaned NSFW channels. {} messages deleted.".format(len(nsfw_straight) + len(nsfw_traps)))
+                return
 
             # Regular user commands for the most part below
 
