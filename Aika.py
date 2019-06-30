@@ -533,8 +533,13 @@ async def on_message(message):
                 _nsfw_straight = await client.fetch_channel(AKATSUKI_NSFW_STRAIGHT_ID)
                 _nsfw_traps    = await client.fetch_channel(AKATSUKI_NSFW_TRAPS_ID)
 
+                debug_print("Got #nsfw and #nsfw_traps channel objects.")
+
+                debug_print("Deleting from #nsfw.")
                 nsfw_straight  = await _nsfw_straight.purge(limit=1000, check=check_content)
+                debug_print("Deleting from #nsfw-traps.")
                 nsfw_traps     = await _nsfw_traps.purge(limit=1000, check=check_content)
+                debug_print("Complete. {} messages removed.".format(len(nsfw_straight) + len(nsfw_traps)))
 
                 await send_message_formatted("error", message, "cleaned NSFW channels. {} messages deleted.".format(len(nsfw_straight) + len(nsfw_traps)))
                 return
