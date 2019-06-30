@@ -138,14 +138,6 @@ high_quality  = [
                 "can help", "i can", "how can i help you"
                 ]
 
-# A list of message (sub)strings used to determine when a user
-# is asking about email verification (which does not exist on Akatsuki).
-email_checks  = [
-                "verify e", "verification", "on email",
-                "verify m", "verify a", "email t",
-                "w verify", "i verify"
-                ]
-
 # Akatsuki's logo.
 # To be used mostly for embed thumbnails.
 akatsuki_logo = "https://akatsuki.pw/static/logos/logo.png"
@@ -380,27 +372,6 @@ async def on_message(message):
             debug_print("Quality of message {}: {}".format(message.id, quality))
 
             SQL.execute("INSERT INTO help_logs (id, user, content, datetime, quality) VALUES (NULL, %s, %s, %s, %s)", [message.author.id, message.content.encode('ascii', errors='ignore'), int(time.time()), quality])
-
-        # Checks for things in message.
-        if any(x in message.content.lower() for x in email_checks) and message.guild.id == AKATSUKI_SERVER_ID:
-            if "badge" not in message.content.lower():
-                await message.author.send(
-                    "Right, this is an automated message as it "
-                    "was assumed you needed assitance in Akatsuki "
-                    "with: Email Verification\n\nAs the verification "
-                    "page says, Akatsuki does not use verification "
-                    "emails. To verify your account, simply install "
-                    "the switcher, install the certificate, click the "
-                    "server you'd like to play on, and click On/Off, "
-                    "then login to osu! to complete the verification process.")
-
-                await message.delete()
-
-                debug_print("Triggered: Verification Email Support\nUser: {}".format(message.author))
-            else:
-                debug_print("Aborted Trigger: Email Verification Support, due to \"badge\" contents of the message.\nUser: {}".format(message.author))
-
-            return
 
         elif not message.author.guild_permissions.manage_messages:
             for split in message.content.lower().split(" "):
