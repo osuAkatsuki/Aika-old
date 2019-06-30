@@ -284,6 +284,8 @@ async def on_ready():
         SQL.execute("SELECT value_int FROM aika_settings WHERE name = 'version_latest'")
         version_latest = SQL.fetchone()[0]
 
+        SQL.execute("UPDATE aika_settings SET value_int = %s WHERE name = 'version_latest'", [AIKA_VERSION])
+
         # If the server version mismatches the version of the code, display the update.
         if version_latest != AIKA_VERSION:
             announce_title = "Aika has been updated to v{}. (Previous: v{})".format(AIKA_VERSION, version_latest)
