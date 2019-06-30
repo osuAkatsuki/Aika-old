@@ -611,64 +611,64 @@ async def on_message(message):
 
                         embed.set_thumbnail(url=akatsuki_logo)
 
-                        if user["{}".format(mode)]["global_leaderboard_rank"] is not None:
+                        if user[mode]["global_leaderboard_rank"] is not None:
                             embed.add_field(
                                 name   = "Global Rank",
-                                value  = "#{:,}".format(user["{}".format(mode)]["global_leaderboard_rank"]),
+                                value  = "#{:,}".format(user[mode]["global_leaderboard_rank"]),
                                 inline = True)
 
-                        if user["{}".format(mode)]["country_leaderboard_rank"] is not None:
+                        if user[mode]["country_leaderboard_rank"] is not None:
                             embed.add_field(
                                 name   = "Country Rank",
-                                value  = "#{:,}".format(user["{}".format(mode)]["country_leaderboard_rank"]),
+                                value  = "#{:,}".format(user[mode]["country_leaderboard_rank"]),
                                 inline = True)
 
-                        if user["{}".format(mode)]["pp"] is not None:
+                        if user[mode]["pp"] is not None:
                             embed.add_field(
                                 name   = "PP",
-                                value  = "{:,}pp".format(user["{}".format(mode)]["pp"]),
+                                value  = "{:,}pp".format(user[mode]["pp"]),
                                 inline = True)
 
-                        if user["{}".format(mode)]["ranked_score"] is not None:
+                        if user[mode]["ranked_score"] is not None:
                             embed.add_field(
                                 name   = "Ranked Score",
-                                value  = "{:,}".format(user["{}".format(mode)]["ranked_score"]),
+                                value  = "{:,}".format(user[mode]["ranked_score"]),
                                 inline = True)
 
-                        if user["{}".format(mode)]["total_score"] is not None:
+                        if user[mode]["total_score"] is not None:
                             embed.add_field(
                                 name   = "Total Score",
-                                value  = "{:,}".format(user["{}".format(mode)]["total_score"]),
+                                value  = "{:,}".format(user[mode]["total_score"]),
                                 inline = True)
 
-                        if user["{}".format(mode)]["level"] is not None:
+                        if user[mode]["level"] is not None:
                             embed.add_field(
                                 name   = "Level",
-                                value  = "{}".format(round(user["{}".format(mode)]["level"], 2)),
+                                value  = "{}".format(round(user[mode]["level"], 2)),
                                 inline = True)
 
-                        if user["{}".format(mode)]["accuracy"] is not None:
+                        if user[mode]["accuracy"] is not None:
                             embed.add_field(
                                 name   = "Accuracy",
-                                value  = "{}%".format(round(user["{}".format(mode)]["accuracy"], 2)),
+                                value  = "{}%".format(round(user[mode]["accuracy"], 2)),
                                 inline = True)
 
-                        if user["{}".format(mode)]["playcount"] is not None:
+                        if user[mode]["playcount"] is not None:
                             embed.add_field(
                                 name   = "Playcount",
-                                value  = "{:,}".format(user["{}".format(mode)]["playcount"]),
+                                value  = "{:,}".format(user[mode]["playcount"]),
                                 inline = True)
 
-                        if user["{}".format(mode)]["playtime"] is not None:
+                        if user[mode]["playtime"] is not None:
                             embed.add_field(
                                 name   = "Playtime",
-                                value  = "{:,} hours".format(round(int(user["{}".format(mode)]["playtime"]) / 3600, 2)),
+                                value  = "{:,} hours".format(round(int(user[mode]["playtime"]) / 3600, 2)),
                                 inline = True)
 
-                        if user["{}".format(mode)]["replays_watched"] is not None:
+                        if user[mode]["replays_watched"] is not None:
                             embed.add_field(
                                 name   = "Replays Watched",
-                                value  = "{:,}".format(user["{}".format(mode)]["replays_watched"]),
+                                value  = "{:,}".format(user[mode]["replays_watched"]),
                                 inline = True)
 
                         if user["followers"] is not None:
@@ -682,23 +682,23 @@ async def on_message(message):
 
             # Run a command on the Akatsuki server
             # TODO: compare against their ingame perms? this could be a good mini project i guess
-            elif command == "r" and message.author.guild_permissions.manage_roles: # guild_permissions does not take channel perms into account
-
-                if not message.author.is_on_mobile(): # Only allow !r to be used from mobile.
-                    return
-
-                with message.channel.typing():
-                    execute = ' '.join(messagecontent[1:]).strip()
-
-                    if not len(execute.strip()) > 4 or messagecontent[1][0] != COMMAND_PREFIX:
-                        await send_message_formatted("error", message, "what exactly are you trying to send..?")
-                        return
-
-                    params = urlencode({"k": config["akatsuki"]["apikey"], "to": "#admin", "msg": execute})
-                    requests.get("http://{}:5001/api/v1/fokabotMessage?{}".format(config["akatsuki"]["ip"], params))
-
-                    await send_message_formatted("success", message, "your command has been successfully executed on Akatsuki", ["`{}`".format(execute)])
-                    return
+#            elif command == "r" and message.author.guild_permissions.manage_roles: # guild_permissions does not take channel perms into account
+#
+#                if not message.author.is_on_mobile(): # Only allow !r to be used from mobile.
+#                    return
+#
+#                with message.channel.typing():
+#                    execute = ' '.join(messagecontent[1:]).strip()
+#
+#                    if not len(execute.strip()) > 4 or messagecontent[1][0] != COMMAND_PREFIX:
+#                        await send_message_formatted("error", message, "what exactly are you trying to send..?")
+#                        return
+#
+#                    params = urlencode({"k": config["akatsuki"]["apikey"], "to": "#admin", "msg": execute})
+#                    requests.get("http://{}:5001/api/v1/fokabotMessage?{}".format(config["akatsuki"]["ip"], params))
+#
+#                    await send_message_formatted("success", message, "your command has been successfully executed on Akatsuki", ["`{}`".format(execute)])
+#                    return
 
             # Return current UNIX timestamp
             elif command in ("time", "unix", "unixtime"):
@@ -838,7 +838,6 @@ async def on_message(message):
                 else:
                     await send_message_formatted("error", message, "I couldn't find a topic by that name")
                     return
-                
                 
                 await send_message_formatted("success", message, resp)
                 return
