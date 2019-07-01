@@ -81,7 +81,7 @@ else:
 """ Constants """
 
 # The version number of Aika!
-AIKA_VERSION                 = 3.15               # Aika's version number.
+AIKA_VERSION                 = 3.16               # Aika's version number.
 
 ERROR_BAR_LEN                = 100                # Length of the bars for error handler (https://nanahira.life/1uRp27N5TCipZ3Hs12o5PQLEOTyHHYUE.png).
 
@@ -370,8 +370,20 @@ async def on_message(message):
 
         properly_formatted = False
 
-        if messagelen > 0: # TODO: for every single period, check if the next letter is capitalized.
-            properly_formatted = message.content[0].isupper() and message.content[messagelen - 1] in (".", "?", "!")
+        if messagelen > 0:
+            sentence_split = message.content.split(".")
+            negative = False
+
+            debug_print("Sentence split: {}".format(sentence_split))
+
+            # After every period, check they have a space and the next sentence starts with a capital letter (ignore things like "...")
+            for idx, sentence in enumerate(sentence_split):
+                if len(sentence) > 1 and idx != 0:
+                    if sentence[0] == " " and sentence[1].isupper():
+                        continue
+                    negative = True
+
+            properly_formatted = message.content[0].isupper() and message.content[messagelen - 1] in (".", "?", "!") and not negative
 
         # Message sent in #help, log to db.
         if message.channel.id == AKATSUKI_HELP_ID:
@@ -690,26 +702,6 @@ async def on_message(message):
 
                         await message.channel.send(embed=embed)
                     return
-
-            # Run a command on the Akatsuki server
-            # TODO: compare against their ingame perms? this could be a good mini project i guess
-#            elif command == "r" and message.author.guild_permissions.manage_roles: # guild_permissions does not take channel perms into account
-#
-#                if not message.author.is_on_mobile(): # Only allow !r to be used from mobile.
-#                    return
-#
-#                with message.channel.typing():
-#                    execute = ' '.join(messagecontent[1:]).strip()
-#
-#                    if not len(execute.strip()) > 4 or messagecontent[1][0] != COMMAND_PREFIX:
-#                        await send_message_formatted("error", message, "what exactly are you trying to send..?")
-#                        return
-#
-#                    params = urlencode({"k": config["akatsuki"]["apikey"], "to": "#admin", "msg": execute})
-#                    requests.get("http://{}:5001/api/v1/fokabotMessage?{}".format(config["akatsuki"]["ip"], params))
-#
-#                    await send_message_formatted("success", message, "your command has been successfully executed on Akatsuki", ["`{}`".format(execute)])
-#                    return
 
             # Return current UNIX timestamp
             elif command in ("time", "unix", "unixtime"):
