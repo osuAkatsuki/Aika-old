@@ -116,11 +116,9 @@ filters       = [
                 "pp.me", "paypal.me",
                 
                 # osu! private servers
-                "yozo", "y0zo", "yoz0", "y0z0",
-                "ainu", "okamura", "kotorikku", "kurikku", "kawata",
-                "ryusei", "ryu-sei", "enjuu", "verge", "katori",
-                "osu-thailand", "gatari", "hidesu", "hiragi",
-                "asuki", "mikoto", "homaru", "awasu",
+                "yozo", "y0zo", "yoz0", "y0z0", "ainu", "okamura", "kotorikku", "kurikku",
+                "kawata", "ryusei", "ryu-sei", "enjuu", "verge", "katori", "osu-thailand",
+                "gatari", "hidesu", "hiragi", "asuki", "mikoto", "homaru", "awasu",
 
                 # Discord links
                 "discord.gg/", "discordapp.com/channels",
@@ -131,16 +129,11 @@ filters       = [
 
 # A list of message (sub)strings that we will use to deem
 # a quantifiable value for the "quality" of a message.
-profanity     = [
-                "nigg", "n1gg", "retard", "idiot",
-                "fuck off", "shut the fuck up", "??"
-                ]
+profanity     = ["nigg", "n1gg", "retard", "idiot",
+                 "fuck off", "shut the fuck up", "??"]
 
-high_quality  = [
-                "!faq", "!help", "welcome", "have a good",
-                "enjoy", "no problem", "of course",
-                "can help", "i can", "how can i help you"
-                ]
+high_quality  = ["!faq", "!help", "welcome", "have a good", "enjoy", "no problem",
+                 "of course", "can help", "i can", "how can i help you"]
 
 # Akatsuki's logo.
 # To be used mostly for embed thumbnails.
@@ -299,10 +292,8 @@ async def on_ready():
         # Configure, and send the embed to #general.
         announce_online = discord.Embed(
             title       = announce_title,
-            description = "Ready for commands <3\n\nAika is osu!Akatsuki's "
-                          "[open source](https://github.com/osuAkatsuki/Aika) "
-                          "discord bot.\n\n[Akatsuki](https://akatsuki.pw)\n"
-                          "[Support Akatsuki](https://akatsuki.pw/support)",
+            description = "Ready for commands <3\n\nAika is osu!Akatsuki's [open source](https://github.com/osuAkatsuki/Aika) "
+                          "discord bot.\n\n[Akatsuki](https://akatsuki.pw)\n[Support Akatsuki](https://akatsuki.pw/support)",
             color       = 0x00ff00)
 
         announce_online.set_footer(icon_url=crab, text="Thank you for playing!")
@@ -857,101 +848,58 @@ async def on_message(message):
                 emoticon = "success"
 
                 if position in (None, "help"):
-                    resp = \
-                        "Please use a role name as an arguement"
-
-                    resp_array = \
-                        ["Eg: $apply bn, or $apply beatmap_nominator"]
-
+                    resp = "Please use a role name as an arguement"
+                    resp_array = ["Eg: $apply bn, or $apply beatmap_nominator"]
                     emoticon = "✨"
 
                 elif 'admin' in position or position == 'commuinity_manager' or position == 'communitymanager':
-                    resp = \
-                        "You cannot apply for this role"
-
-                    resp_array = \
-                        ["Admins are always handpicked from " \
-                        "lower roles or from the community when " \
-                        "we find a member we believe would " \
-                        "be a good fit for the role."]
-
+                    resp = "You cannot apply for this role"
+                    resp_array = ["Admins are always handpicked from lower roles or from the community when we find a member we believe would be a good fit for the role."]
                     emoticon = "error"
 
                 elif 'mod' in position:
-                    resp = \
-                        "You cannot apply for this role"
+                    resp = "You cannot apply for this role"
 
                     resp_array = \
-                        ["Mods are usually handpicked from " \
-                        "lower roles (such as BN, Support Team).",
-                        "This usually happens when we believe " \
-                        "they would be better suited with some " \
-                        "fancy new powers."]
+                        ["Mods are usually handpicked from lower roles (such as BN, Support Team).",
+                         "This usually happens when we believe they would be better suited with some fancy new powers."]
 
                     emoticon = "error"
 
                 elif 'beat' in position or position == 'bn':
-                    resp = \
-                        "BNs are currently in high demand!"
+                    """
+                    resp = "BNs are currently in high demand!"
 
                     resp_array = \
-                        ["If you're interested in this position " \
-                         "(and are quite active on the server, " \
-                         "this will be checked), feel free to " \
-                         "apply!",
+                        ["If you're interested in this position (and are quite active on the server, this will be checked), feel free to apply!",
                          "https://goo.gl/forms/XyLMtFlaA6mHAiIB3"]
+                    """
+                    resp = "We currently have a full team of BNs, and are not looking for additional members."
 
                 elif 'support' in position:
-                    resp = \
-                        "To be considered for the support team, " \
-                        "you will need to be quite active in the " \
-                        "<#365413867167285249> channel already"
-
+                    resp = "To be considered for the support team, you will need to be quite active in the <#365413867167285249> channel already"
                     resp_array = \
-                        ["We use this to ensure that you\'re the right " \
-                        "kind of person for the job.",
-                        "Most likely, if we see you being active, we will offer " \
-                        "you the position if you seem to be a good pick."]
+                        ["We use this to ensure that you\'re the right kind of person for the job.",
+                         "Most likely, if we see you being active, we will offer you the position if you seem to be a good pick."]
 
                 elif 'akatsuki' in position or 'people' in position or 'uploader' in position:
-                    resp = \
-                        "You cannot apply for this role"
-
+                    resp = "You cannot apply for this role"
                     resp_array = \
-                        ["Due to our past experiences with picking " \
-                        "members from the community for this role, " \
-                        "we have decided to no longer make it a public role.",
-                        "Members of the Akatsuki people role are handpicked " \
-                        "by cmyui himself."]
-
+                        ["Due to our past experiences with picking members from the community for this role, we have decided to no longer make it a public role.",
+                         "Members of the Akatsuki people role are handpicked by cmyui himself."]
                     emoticon = "error"
 
                 elif position == 'premium' or position.startswith('don') or position == 'supporter':
-                    resp = \
-                        "This isn\'t a role you can apply for, silly"
-
+                    resp = "This isn\'t a role you can apply for, silly"
                     resp_array = \
-                        ["Supporter: https://akatsuki.pw/donate",
-                        "Premium: https://akatsuki.pw/premium",
-                        "Thanks for considering to support the " \
-                        "server, though!",
-                        "**It means a lot!**"]
+                        ["Supporter: https://akatsuki.pw/donate", "Premium: https://akatsuki.pw/premium",
+                         "Thanks for considering to support the server, though!", "**It means a lot!**"]
 
                 elif 'verif' in position:
-                    resp = \
-                        "The verified role in-game is for players " \
-                        "who we essentially trust (for lack of " \
-                        "better wording)."
-
+                    resp = "The verified role in-game is for players who we essentially trust (for lack of better wording)."
                     resp_array = \
-                        ["These players have either " \
-                        "been verified through liveplays, or maybe " \
-                        "have even met a staff member IRL to prove " \
-                        "their legitimacy (rare, but there are 10+).",
-                        "",
-                        "You cannot apply for verified, as it is " \
-                        "something we will look to give you, rather " \
-                        "than vice versa :^)"]
+                        ["These players have either been verified through liveplays, or maybe have even met a staff member IRL to prove their legitimacy (rare, but there are 10+).",
+                         "", "You cannot apply for verified, as it is something we will look to give you, rather than vice versa :^)"]
                 else:
                     await send_message_formatted("error", message, "I couldn't find a position by that name")
                     return
@@ -971,36 +919,22 @@ async def on_message(message):
                 resp_array = []
 
                 if topic in (None, "help"):
-                    resp = \
-                    "The $cmyui command is just a dictionary of stuff cmyui has saved in it"
+                    resp = "The $cmyui command is just a dictionary of stuff cmyui has saved in it"
 
                 elif topic == 'settings':
-                    resp = \
-                    "Here are cmyui's normal osu! settings"
+                    resp = "Here are cmyui's normal osu! settings"
 
                     resp_array = \
-                    ["",
-                     "**osu! Settings**",
-                     "✅ 1.0x Sensitivity",
-                     "❌ Video & Storyboard",
-                     "💯 Background Dim",
-                     "",
-                     "**Peripherals**",
-                     "🖊 Wacom CTH-480 (CTL470 Pen) Area: https://nanahira.life/Z1BVsPqqvsi8el7SjiCPQVV64zgraHw1.png",
-                     "⌨ CM Masterkeys Pro L (Cherry MX Browns)",
-                     "💻 1: Acer 240hz | 2: Asus 144hz | 3: Asus 60hz",
-                     "🖥 CPU: i7-8700 | GPU: GTX 1070Ti | 16GB DDR4 2444MHz"
+                    ["", "**osu! Settings**", "✅ 1.0x Sensitivity", "❌ Video & Storyboard", "💯 Background Dim", "", "**Peripherals**",
+                     "🖊 Wacom CTH-480 (CTL470 Pen) Area: https://nanahira.life/Z1BVsPqqvsi8el7SjiCPQVV64zgraHw1.png", "⌨ CM Masterkeys Pro L (Cherry MX Browns)",
+                     "💻 1: Acer 240hz | 2: Asus 144hz | 3: Asus 60hz", "🖥 CPU: i7-8700 | GPU: GTX 1070Ti | 16GB DDR4 2444MHz"
                      ]
 
                 elif topic.startswith('skin'):
-                    resp = \
-                    "Here are some of the skins cmyui uses frequently"
-
+                    resp = "Here are some of the skins cmyui uses frequently"
                     resp_array = \
-                    ["",
-                     "**Current Main Skin(s)**",
-                     "(Abyssal 2018-15-06): https://i.namir.in/Asi.osk",
-                     "",
+                    ["", "**Current Main Skin(s)**",
+                     "(Abyssal 2018-15-06): https://i.namir.in/Asi.osk", "",
                      "**Other skins**",
                      "cmyui v5.3: https://i.namir.in/6CF.osk",
                      "cmyui v6.0 (Blue Crystal v2.1): https://i.namir.in/JS9.osk",
@@ -1011,13 +945,10 @@ async def on_message(message):
                      "Justice: https://i.namir.in/b1u.osk",
                      "Cookiezi 32: https://i.namir.in/y8v.osk",
                      "Cookiezi 35: https://i.namir.in/y8v.osk",
-                     "",
-                     "**If any of the links are not working, "
-                     "please tell cmyui#0425 :)**"]
+                     "", "**If any of the links are not working, please tell cmyui#0425 :)**"]
 
                 elif topic == 'psyqui' or topic == 'yvs':
-                    resp = \
-                    "https://www.youtube.com/watch?v=wKgbDk2hXI8"
+                    resp = "https://www.youtube.com/watch?v=wKgbDk2hXI8"
 
                 else:
                     await send_message_formatted("error", message, "I couldn't find a subcategory by that name")
@@ -1073,14 +1004,10 @@ async def on_message(message):
                 embed.set_thumbnail(url=aika_pfp)
                 embed.add_field(
                     name   = "** **",
-                    value  = "I\'m Akatsuki\'s (and cmyui\'s) bot. "
-                             "I provide the server with things such as "
-                             "commands to track ingame stats, help out "
-                             "members in need, and provide overall fun "
-                             "(and lots of useless) commands!\n\nSource "
-                             "code: https://github.com/osuAkatsuki/Aika."
-                             "\nIngame: https://akatsuki.pw/u/999\nCreator: "
-                             "https://akatsuki.pw/u/1001",
+                    value  = "I\'m Akatsuki\'s (and cmyui\'s) bot. I provide the server with things such as "
+                             "commands to track ingame stats, help out members in need, and provide overall fun "
+                             "(and lots of useless) commands!\n\nSource code: https://github.com/osuAkatsuki/Aika."
+                             "\nIngame: https://akatsuki.pw/u/999\nCreator: https://akatsuki.pw/u/1001",
                     inline = False)
 
                 embed.set_footer(icon_url="", text="Good vibes <3")
