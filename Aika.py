@@ -97,10 +97,14 @@ AKATSUKI_NSFW_STRAIGHT_ID    = 428460752698081291 # ID for #nsfw
 AKATSUKI_NSFW_TRAPS_ID       = 505960162411020288 # ID for #nsfw-traps
 AKATSUKI_IP_ADDRESS          = "51.79.17.191"     # Akatsuki's osu! server IP.
 
-COMMAND_PREFIX               = "!"                 # The bot's command prefix.
+COMMAND_PREFIX               = "!"                # The bot's command prefix.
 
-FAQ_LIST_SPACING             = 12                  # When listing FAQ or INFO, use this many spaces between the divider.
+FAQ_LIST_SPACING             = 12                 # When listing FAQ or INFO, use this many spaces between the divider.
 
+
+# Strings to be used for command responses
+INSUFFICIENT_PRIVILEGES      = "you lack sufficient privileges to use this command"
+INCORRECT_SYNTAX             = "it seems you used the command syntax improperly"
 
 # A list of filters.
 # These are to be used to wipe messages that are deemed inappropriate,
@@ -348,13 +352,13 @@ async def on_message(message):
         embed.add_field(name="Author", value=message.author.mention, inline=True)
 
         # Prepare, and send the report to the reporter.
-        embedPrivate = discord.Embed(title="Thank you for the player report.", description="We will review the report shortly.", color=0x00ff00)
+        embed_pm = discord.Embed(title="Thank you for the player report.", description="We will review the report shortly.", color=0x00ff00)
 
-        embedPrivate.add_field(name="Report content", value=message.content, inline=True)
-        embedPrivate.set_thumbnail(url=akatsuki_logo)
+        embed_pm.add_field(name="Report content", value=message.content, inline=True)
+        embed_pm.set_thumbnail(url=akatsuki_logo)
 
         if not message.content.startswith(COMMAND_PREFIX): # Do not pm or link to #reports if it is a command.
-            await message.author.send(embed=embedPrivate)
+            await message.author.send(embed=embed_pm)
             await client.get_channel(AKATSUKI_REPORTS_ID).send(embed=embed)
             return
 
@@ -406,13 +410,10 @@ async def on_message(message):
 
                     await message.delete()
                     await message.author.send(
-                        "Hello,\n\nYour message in osu!Akatsuki "
-                        "has been removed as it has been deemed "
-                        "unsuitable.\n\nIf this makes no sense, "
-                        "please report it to <@285190493703503872>. "
-                        "\n**Do not try to evade this filter as it is "
-                        "considered fair ground for a ban**.\n\n```{}```"
-                        .format(message.content.replace("`", "")))
+                        "Hello,\n\nYour message in osu!Akatsuki has been removed as it has been deemed "
+                        "unsuitable.\n\nIf this makes no sense, please report it to <@285190493703503872>. "
+                        "\n**Do not try to evade this filter as it is considered fair ground for a ban**."
+                        "\n\n```{}```".format(message.content.replace("`", "")))
 
                     debug_print("Filtered message | '{}: {}'".format(message.author, message.content))
                     return
@@ -436,7 +437,6 @@ async def on_message(message):
             return
 
         if message.content.startswith(COMMAND_PREFIX):
-
             # First of all, make a simpler way to deal with message content so u don't develop stage 4 cancer.
             messagecontent = message.content.split(" ")
             command = messagecontent[0][1:].lower()
@@ -444,7 +444,7 @@ async def on_message(message):
             # Change the bot's displayed game.
             if command == "game":
                 if not message.author.guild_permissions.manage_webhooks: # Webhook since it's a bot thing
-                    await send_message_formatted("error", message, "you lack sufficient privileges to use this command")
+                    await send_message_formatted("error", message, INSUFFICIENT_PRIVILEGES)
                     return
 
                 # Change your discord users status / game.
@@ -470,7 +470,7 @@ async def on_message(message):
             elif command in ("hs", "helplogs"):
                 with message.channel.typing():
                     if not message.author.guild_permissions.manage_roles:
-                        await send_message_formatted("error", message, "you lack sufficient privileges to use this command")
+                        await send_message_formatted("error", message, INSUFFICIENT_PRIVILEGES)
                         return
 
                     if not len(messagecontent) > 1:
@@ -511,7 +511,7 @@ async def on_message(message):
             # Flip debug 1/0 in db.
             elif command in ("d", "debug"):
                 if not message.author.guild_permissions.manage_webhooks:
-                    await send_message_formatted("error", message, "you lack sufficient privileges to use this command")
+                    await send_message_formatted("error", message, INSUFFICIENT_PRIVILEGES)
                     return
 
                 SQL.execute("UPDATE aika_settings SET value_int = 1 - value_int WHERE name = 'debug'")
@@ -522,7 +522,7 @@ async def on_message(message):
             # Command to remind my dumbass which parts of embeds can be links.
             elif command == "cmyuiisretarded":
                 if not message.author.guild_permissions.manage_webhooks:
-                    await send_message_formatted("error", message, "you lack sufficient privileges to use this command")
+                    await send_message_formatted("error", message, INSUFFICIENT_PRIVILEGES)
                     return
 
                 embed = discord.Embed(title="[cmyui](https://akatsuki.pw/u/1001)", description='** **', color=0x00ff00)
@@ -534,7 +534,7 @@ async def on_message(message):
             # Error on purpose. This is used to test our error handler!
             elif command in ("e", "error"):
                 if not message.author.guild_permissions.manage_webhooks:
-                    await send_message_formatted("error", message, "you lack sufficient privileges to use this command")
+                    await send_message_formatted("error", message, INSUFFICIENT_PRIVILEGES)
                     return
 
                 await message.delete()
@@ -543,7 +543,7 @@ async def on_message(message):
             # This will probably only be used when bot goes down and text is sent, since its automated.
             elif command in ("clearnsfw"):
                 if not message.author.guild_permissions.manage_messages:
-                    await send_message_formatted("error", message, "you lack sufficient privileges to use this command")
+                    await send_message_formatted("error", message, INSUFFICIENT_PRIVILEGES)
                     return
                 
                 def check_content(m): # Don't delete links or images.
@@ -589,7 +589,7 @@ async def on_message(message):
                             await send_message_formatted("error", message, "please use underscores in your username rather than spaces")
                             return
                         else:
-                            await send_message_formatted("error", message, "incorrect syntax.",
+                            await send_message_formatted("error", message, INCORRECT_SYNTAX,
                                 ["Please use the syntax `> {}{} <username_with_underscores> <-rx (Optional)>".format(COMMAND_PREFIX, command)])
                             return
                     else:
@@ -1097,7 +1097,7 @@ async def on_message(message):
                     count = ""
 
                 if not count.isdigit():
-                    await send_message_formatted("error", message, "it seems you didn't specify a correct integer",
+                    await send_message_formatted("error", message, INCORRECT_SYNTAX,
                         ["Correct syntax: `{}prune <messagecount>`.".format(COMMAND_PREFIX), "The limit for deleted messagecount is 1000."])
                     return
                 else:
@@ -1109,7 +1109,7 @@ async def on_message(message):
                         messages = len(deleted) - 1,
                         plural   = "s" if len(deleted) - 1 > 1 else ""))
                 else:
-                    await send_message_formatted("error", message, "It seems you used the command syntax improperly",
+                    await send_message_formatted("error", message, INCORRECT_SYNTAX,
                         ["Correct syntax: `{}prune <messagecount>`.".format(COMMAND_PREFIX), "The limit for deleted messagecount is 1000."])
                 return
 
