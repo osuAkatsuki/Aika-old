@@ -259,15 +259,16 @@ async def on_message(message):
                     debug_print("Filtered message | '{}: {}'".format(message.author, message.content))
                     return
 
-        # Private messages.
+        message_string = f"{message.created_at} [{message.guild if message.guild is not None else ''} {message.channel}] {message.author}: {message.content}"
+
         if message.guild is None: # Private message
-                print(Fore.YELLOW + Style.BRIGHT + "{} [{}] {}: {}".format(message.created_at, message.channel, message.author, message.content))
+            print(Fore.YELLOW + Style.BRIGHT + message_string)
         elif "cmyui" in message.content.lower(): # cmyui mentioned
-                print(Fore.CYAN + Style.BRIGHT + "{} [{} ({})] {}: {}".format(message.created_at, message.guild, message.channel, message.author, message.content))
+            print(Fore.CYAN + Style.BRIGHT + message_string)
         elif message.guild.id == AKATSUKI_SERVER_ID: # The server is akatsuki.
-            print(Fore.BLUE + Style.BRIGHT + "{} [{} ({})] {}: {}".format(message.created_at, message.guild, message.channel, message.author, message.content))
+            print(Fore.BLUE + Style.BRIGHT + message_string)
         else: # Regular message.
-            print("{} [{} ({})] {}: {}".format(message.created_at, message.guild, message.channel, message.author, message.content))
+            print(message_string)
 
         # Handle user verification before the command section. This should speed things up a bit!
         if message.content.split(' ')[0][1:] == "verify" and message.channel.id == AKATSUKI_VERIFY_ID: # Verify command.
