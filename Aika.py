@@ -100,7 +100,7 @@ def debug_print(string):
     debug = SQL.fetchone()[0]
 
     if debug:
-        print(Fore.MAGENTA + "\n{}\n".format(string))
+        print(Fore.MAGENTA + f"\n{string}\n"
 
 
 def get_prefix(client, message):
@@ -219,7 +219,7 @@ async def on_message(message):
             sentence_split = message.content.split(".")
             negative = False
 
-            debug_print("Sentence split: {}".format(sentence_split))
+            debug_print(f"Sentence split: {sentence_split}")
 
             # After every period, check they have a space and the next sentence starts with a capital letter (ignore things like "...")
             for idx, sentence in enumerate(sentence_split):
@@ -240,7 +240,7 @@ async def on_message(message):
             elif any(x in message.content.lower() for x in high_quality) or properly_formatted:
                 quality = 2
 
-            debug_print("Quality of message\n\n{} - {}".format("{}: {}".format(message.author, message.content), quality))
+            debug_print(f"Quality of message\n\n{message.author}: {message.content} - {quality}")
 
             SQL.execute("INSERT INTO help_logs (id, user, content, datetime, quality) VALUES (NULL, %s, %s, %s, %s)", [message.author.id, message.content.encode('ascii', errors='ignore'), int(time.time()), quality])
 
@@ -251,12 +251,12 @@ async def on_message(message):
 
                     await message.delete()
                     await message.author.send(
-                        "Hello,\n\nYour message in osu!Akatsuki has been removed as it has been deemed "
+                        f"Hello,\n\nYour message in osu!Akatsuki has been removed as it has been deemed "
                         "unsuitable.\n\nIf this makes no sense, please report it to <@285190493703503872>. "
                         "\n**Do not try to evade this filter as it is considered fair ground for a ban**."
-                        "\n\n```{}```".format(message.content.replace("`", "")))
+                        "\n\n```{message.content.replace('q', '')}```")
 
-                    debug_print("Filtered message | '{}: {}'".format(message.author, message.content))
+                    debug_print(f"Filtered message | '{message.author}: {message.content}'")
                     return
 
         message_string = f"{message.created_at} [{message.guild if message.guild is not None else ''} {message.channel}] {message.author}: {message.content}"

@@ -70,7 +70,7 @@ class User(commands.Cog):
 
             faq_list = ""
             for idx, val in enumerate(faq_db):
-                faq_list += "{}. {}{}|| {}\n".format(idx + 1, val[1], " " * (12 - len(val[1])), val[2])
+                faq_list += f"{idx + 1}. {val[1]}{' ' * (12 - len(val[1]))}|| {val[2]}\n"
 
             await ctx.send("{}\n```{}```".format('I couldn\'t find a topic by that name.' if len(callback) else '', faq_list.replace('`', '')))
         else:
