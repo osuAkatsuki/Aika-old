@@ -156,7 +156,7 @@ async def on_ready():
 
         announce_online.set_footer(icon_url=CRAB_EMOJI, text="Thank you for playing!")
         announce_online.set_thumbnail(url=AKATSUKI_LOGO)
-        await client.get_channel(AKATSUKI_GENERAL_ID).send(embed=announce_online)
+        await bot.get_channel(AKATSUKI_GENERAL_ID).send(embed=announce_online)
 
     return
 
