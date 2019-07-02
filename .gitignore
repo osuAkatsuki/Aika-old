@@ -5,3 +5,4 @@ gitold/
 *.wav
 secret/
 constants/__pycache__/
+cogs/__pycache__/

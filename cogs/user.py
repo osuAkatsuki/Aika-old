@@ -94,9 +94,9 @@ class User(commands.Cog):
         aliases     = ['recent', 'stats', 'linkosu', 'time', 'round', 'botinfo', 'aika', 'cmyui', 'apply', 'akatsuki']
     )
     async def rewrite_info(self, ctx):
-        ctx.send(f"Aika is currently undergoing a rewrite, and the {ctx.invoked_with} " \
-                  "command has not yet been implemented.\nRepository:"                  \
-                  "https://github.com/osuAkatsuki/Aika\nSorry for the inconvenience!")
+        await ctx.send(f"**Aika is currently undergoing a rewrite, and the {ctx.invoked_with} " \
+                        "command has not yet been implemented.**\n\nRepository: "                 \
+                        "https://github.com/osuAkatsuki/Aika.\nSorry for the inconvenience!")
         return
 
 def setup(bot):
