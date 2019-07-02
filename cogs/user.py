@@ -72,7 +72,7 @@ class User(commands.Cog):
             for idx, val in enumerate(faq_db):
                 faq_list += f"{idx + 1}. {val[1]}{' ' * (12 - len(val[1]))}|| {val[2]}\n"
 
-            await ctx.send("{}\n```{}```".format('I couldn\'t find a topic by that name.' if len(callback) else '', faq_list.replace('`', '')))
+            await ctx.send(f"{'I could not find a topic by that name.' if len(callback) else ''}\n```{faq_list.replace('`', '')}```")
         else:
             embed = discord.Embed(title=result[2], description='** **', color=0x00ff00)
             embed.set_thumbnail(url=AKATSUKI_LOGO)
