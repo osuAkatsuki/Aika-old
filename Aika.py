@@ -188,7 +188,6 @@ async def on_message(message):
     # Message sent in #player-reporting, move to #reports.
     if message.channel.id == AKATSUKI_PLAYER_REPORTING_ID:
         await message.delete() # Delete the message from #player-reporting.
-        return
 
         # Prepare, and send the report in #reports.
         embed = discord.Embed(title="New report recieved.", description="** **", color=0x00ff00)
