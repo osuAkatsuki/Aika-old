@@ -52,6 +52,9 @@ AKATSUKI_RANK_REQUESTS_ID    = 557095943602831371 # ID for #rank_requests.
 AKATSUKI_NSFW_STRAIGHT_ID    = 428460752698081291 # ID for #nsfw
 AKATSUKI_NSFW_TRAPS_ID       = 505960162411020288 # ID for #nsfw-traps
 
+# Aika's command prefix.
+COMMAND_PREFIX = '!'
+
 # Akatsuki's logo.
 # To be used mostly for embed thumbnails.
 AKATSUKI_LOGO                = "https://akatsuki.pw/static/logos/logo.png"
@@ -109,7 +112,7 @@ def debug_print(string):
 
 def get_prefix(client, message):
 
-    prefixes = ['!'] # More prefixes can be added to this
+    prefixes = [COMMAND_PREFIX] # More prefixes can be added to this
 
     # Users can also mention the bot.
     return commands.when_mentioned_or(*prefixes)(client, message)
@@ -201,7 +204,7 @@ async def on_message(message):
         embed_pm.add_field(name="Report content", value=message.content, inline=True)
         embed_pm.set_thumbnail(url=AKATSUKI_LOGO)
 
-        if not message.content.startswith(get_prefix): # Do not pm or link to #reports if it is a command.
+        if not message.content.startswith(COMMAND_PREFIX): # Do not pm or link to #reports if it is a command.
             await message.author.send(embed=embed_pm)
             await bot.get_channel(AKATSUKI_REPORTS_ID).send(embed=embed)
             return
