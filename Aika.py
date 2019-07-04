@@ -39,7 +39,7 @@ else:
     SQL = cnx.cursor()
 
 # Aika's version.
-AIKA_VERSION = 4.01
+AIKA_VERSION = 4.03
 
 # Akatsuki settings.
 AKATSUKI_SERVER_ID           = 365406575893938177 # Guild ID.
