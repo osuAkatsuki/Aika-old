@@ -64,15 +64,15 @@ CRAB_EMOJI                   = "https://cdn.discordapp.com/attachments/365406576
 # (https://akatsuki.pw/doc/rules).
 filters       = [
                 # Paypal
-                "pp.me", "paypal.me",
-                
+                "https://pp.me", "http://pp.me", "https://paypal.me", "http://paypal.me",
+
                 # osu! private servers
-                "yozo", "y0zo", "yoz0", "y0z0", "ainu", "okamura", "kotorikku", "kurikku",
-                "kawata", "ryusei", "ryu-sei", "enjuu", "verge", "katori", "osu-thailand",
+                "yozora", "ainu", "okamura", "kotorikku", "kurikku", "kawata",
+                "ryusei", "ryu-sei", "enjuu", "verge", "katori", "osu-thailand",
                 "gatari", "hidesu", "hiragi", "asuki", "mikoto", "homaru", "awasu",
 
                 # Discord links
-                "discord.gg/", "discordapp.com/channels",
+                "https://discord.gg/", "http://discord.gg/", "https://discordapp.com/channels", "http://discordapp.com/channels",
 
                 # Bad boy substances
                 "lsd", "dmt", "shrooms"
@@ -125,7 +125,7 @@ cogs = ['cogs.staff', 'cogs.user']
 
 @bot.event
 async def on_ready():
-    print(f'Logged in as {bot.user.name} - {bot.user.id}')
+    print(f"Logged in as {bot.user.name} - {bot.user.id}")
     await bot.change_presence(activity=discord.Game(name="osu!Akatsuki", url="https://akatsuki.pw/", type=1))
     for cog in cogs:
         bot.load_extension(cog)
@@ -187,7 +187,7 @@ async def on_message(message):
         return
 
         # Prepare, and send the report in #reports.
-        embed = discord.Embed(title="New report recieved.", description='** **', color=0x00ff00)
+        embed = discord.Embed(title="New report recieved.", description="** **", color=0x00ff00)
         embed.set_thumbnail(url=AKATSUKI_LOGO)
         embed.add_field(name="Report content", value=message.content, inline=True)
         embed.add_field(name="Author", value=message.author.mention, inline=True)
@@ -242,19 +242,21 @@ async def on_message(message):
 
             debug_print(f"Quality of message\n\n{message.author}: {message.content} - {quality}")
 
-            SQL.execute("INSERT INTO help_logs (id, user, content, datetime, quality) VALUES (NULL, %s, %s, %s, %s)", [message.author.id, message.content.encode('ascii', errors='ignore'), int(time.time()), quality])
+            SQL.execute("INSERT INTO help_logs (id, user, content, datetime, quality) VALUES (NULL, %s, %s, %s, %s)",
+                [message.author.id, message.content.encode('ascii', errors='ignore'), int(time.time()), quality])
 
-        elif not message.author.guild_permissions.manage_messages:
+        if not message.author.guild_permissions.manage_messages:
             for split in message.content.lower().split(" "):
-                if any(x == split for x in filters):
-                    SQL.execute("INSERT INTO profanity_filter (user, message, time) VALUES (%s, %s, %s)", [message.author.id, message.content.encode('ascii', errors='ignore'), int(time.time())])
+                if any(split.startswith(individual_filter) for individual_filter in filters):
+                    SQL.execute("INSERT INTO profanity_filter (user, message, time) VALUES (%s, %s, %s)",
+                        [message.author.id, message.content.encode('ascii', errors='ignore'), int(time.time())])
 
                     await message.delete()
                     await message.author.send(
-                        f"Hello,\n\nYour message in osu!Akatsuki has been removed as it has been deemed "
-                        "unsuitable.\n\nIf this makes no sense, please report it to <@285190493703503872>. "
+                        "Hello,\n\nYour message in osu!Akatsuki has been removed as it has been deemed "
+                        "unsuitable.\n\nIf you have any questions, please ask <@285190493703503872>. "
                         "\n**Do not try to evade this filter as it is considered fair ground for a ban**."
-                        "\n\n```{message.content.replace('q', '')}```")
+                        f"\n\n```{message.author.replace('`', '')}: {message.content.replace('`', '')}```")
 
                     debug_print(f"Filtered message | '{message.author}: {message.content}'")
                     return
