@@ -262,7 +262,7 @@ async def on_message(message):
                         "Hello,\n\nYour message in osu!Akatsuki has been removed as it has been deemed "
                         "unsuitable.\n\nIf you have any questions, please ask <@285190493703503872>. "
                         "\n**Do not try to evade this filter as it is considered fair ground for a ban**."
-                        f"\n\n```{message.author.replace('`', '')}: {message.content.replace('`', '')}```")
+                        f"\n\n```{message.content.replace('`', '')}: {message.content.replace('`', '')}```")
 
                     debug_print(f"Filtered message | '{message.author}: {message.content}'")
                     return
