@@ -94,9 +94,10 @@ class User(commands.Cog):
         aliases     = ['recent', 'stats', 'linkosu', 'time', 'round', 'botinfo', 'aika', 'cmyui', 'apply', 'akatsuki']
     )
     async def rewrite_info(self, ctx):
-        await ctx.send(f"**Aika is currently undergoing a rewrite, and the {ctx.invoked_with} " \
-                        "command has not yet been implemented.**\n\nRepository: "                 \
-                        "https://github.com/osuAkatsuki/Aika.\nSorry for the inconvenience!")
+        await ctx.send(f"**Aika is currently undergoing a rewrite, and the {ctx.invoked_with} command has not yet been implemented.**\n"
+                        "\n"
+                        "Repository: https://github.com/osuAkatsuki/Aika.\n"
+                        "Sorry for the inconvenience!")
         return
 
     @commands.command(
@@ -105,8 +106,17 @@ class User(commands.Cog):
         aliases     = ['nsfwaccess']
     )
     async def nsfw_access(self, ctx): # TODO: toggle or check if already has access
-        await ctx.author.add_roles(discord.utils.get(ctx.message.guild.roles, name="NSFW Access"))
-        await ctx.send("You should now have access to the NSFW channels.")
+        def check(m):
+            return m.channel == ctx.message.channel and m.author == ctx.message.author
+
+        await ctx.send("Please type `Yes` to confirm you are over the age of 18.\n"
+                       "If you falsely accept this, you will be permanently banned from the discord.")
+
+        msg = await self.bot.wait_for("message", check=check)
+        resp = msg.content.lower() == "yes"
+        if resp:
+            await ctx.author.add_roles(discord.utils.get(ctx.message.guild.roles, name="NSFW Access"))
+            await ctx.send("You should now have access to the NSFW channels.")
         return
 
 def setup(bot):

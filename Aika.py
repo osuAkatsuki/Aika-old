@@ -86,6 +86,10 @@ profanity     = ["nigg", "n1gg", "retard", "idiot",
 high_quality  = ["!faq", "!help", "welcome", "have a good", "enjoy", "no problem",
                  "of course", "can help", "i can", "how can i help you"]
 
+# Assign discord owner value.
+SQL.execute("SELECT value_string FROM aika_settings WHERE name = 'discord_owner'")
+discord_owner = int(SQL.fetchone()[0])
+
 def debug_print(string):
     """
     Print a debug message to the console.
@@ -200,7 +204,7 @@ async def on_message(message):
 
         if not message.content.startswith(get_prefix): # Do not pm or link to #reports if it is a command.
             await message.author.send(embed=embed_pm)
-            await client.get_channel(AKATSUKI_REPORTS_ID).send(embed=embed)
+            await bot.get_channel(AKATSUKI_REPORTS_ID).send(embed=embed)
             return
 
     # Request sent in rank_requests.
@@ -210,7 +214,7 @@ async def on_message(message):
         await message.add_reaction("👎")
         return
 
-    elif message.author != client.user:
+    elif message.author != bot.user:
         messagelen = len(message.content)
 
         properly_formatted = False
@@ -272,13 +276,20 @@ async def on_message(message):
         else: # Regular message.
             print(message_string)
 
-        # Handle user verification before the command section. This should speed things up a bit!
-        if message.content.split(' ')[0][1:] == "verify" and message.channel.id == AKATSUKI_VERIFY_ID: # Verify command.
-            SQL.execute("SELECT value_string FROM aika_settings WHERE name = 'discord_owner'")
-            if message.author.id != SQL.fetchone()[0]: # Dont for cmyui, he's probably pinging @everyone to verify.
+        if message.author.id != discord_owner: # Regular user
+            if message.content.split(' ')[0][1:6] == "verify" and message.channel.id == AKATSUKI_VERIFY_ID: # Verify command.
                 await message.author.add_roles(discord.utils.get(message.guild.roles, name="Members"))
                 await message.delete()
-            return
+                return
+        else: # Owner
+            if message.content.split(' ')[0][1:] == "reload":
+                cog_name = message.content.split(' ')[1].lower()
+                if cog_name in ("staff", "user"):
+                    bot.reload_extension(f"cogs.{cog_name}")
+                    await message.channel.send(f"Reloaded my niggé {cog_name}.")
+                else:
+                    await message.channel.send(f"Invalid niggé {cog_name}.")
+                return
 
         # Finally, process commands.
         await bot.process_commands(message)
