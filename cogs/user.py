@@ -77,11 +77,11 @@ class User(commands.Cog):
             embed = discord.Embed(title=result[2], description='** **', color=0x00ff00)
             embed.set_thumbnail(url=AKATSUKI_LOGO)
             embed.add_field(
-                name="** **",
-                value=result[3]
-                    .replace("{AKATSUKI_IP}", AKATSUKI_IP_ADDRESS)
-                    .replace("{COMMAND_PREFIX}", ctx.prefix),
-                inline=result[5])
+                name   = "** **",
+                value  = result[3]
+                            .replace("{AKATSUKI_IP}", AKATSUKI_IP_ADDRESS)
+                            .replace("{COMMAND_PREFIX}", ctx.prefix),
+                inline = result[5])
 
             if result[4] is not None:
                 embed.set_footer(icon_url='', text=result[4])
@@ -97,6 +97,16 @@ class User(commands.Cog):
         await ctx.send(f"**Aika is currently undergoing a rewrite, and the {ctx.invoked_with} " \
                         "command has not yet been implemented.**\n\nRepository: "                 \
                         "https://github.com/osuAkatsuki/Aika.\nSorry for the inconvenience!")
+        return
+
+    @commands.command(
+        name        = "nsfw",
+        description = "Grants access to the NSFW channels of Akatsuki.",
+        aliases     = ['nsfwaccess']
+    )
+    async def nsfw_access(self, ctx): # TODO: toggle or check if already has access
+        await ctx.author.add_roles(discord.utils.get(ctx.message.guild.roles, name="NSFW Access"))
+        await ctx.send("You should now have access to the NSFW channels.")
         return
 
 def setup(bot):
