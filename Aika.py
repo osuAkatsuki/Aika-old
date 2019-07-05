@@ -119,7 +119,7 @@ client = discord.Client()
 bot = commands.Bot(
     command_prefix   = get_prefix,
     description      = "Aika - osu!Akatsuki's official Discord bot.",
-    owner_id         = 285190493703503872,
+    owner_id         = discord_owner,
     case_insensitive = True # No case sensitivity on commands
 )
 
