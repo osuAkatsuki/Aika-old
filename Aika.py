@@ -275,7 +275,7 @@ async def on_message(message):
             print(message_string)
 
         if message.author.id != discord_owner: # Regular user
-            if message.content.split(' ')[0][1:6] == "verify" and message.channel.id == AKATSUKI_VERIFY_ID: # Verify command.
+            if message.content.split(' ')[0][1:7] == "verify" and message.channel.id == AKATSUKI_VERIFY_ID: # Verify command.
                 await message.author.add_roles(discord.utils.get(message.guild.roles, name="Members"))
                 await message.delete()
                 return
