@@ -105,7 +105,7 @@ def debug_print(string):
     debug = SQL.fetchone()[0]
 
     if debug:
-        print(Fore.MAGENTA + f"\n{string}\n")
+        print(f"{Fore.MAGENTA}\n{string}\n")
 
 
 def get_prefix(client, message):

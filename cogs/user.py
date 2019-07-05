@@ -4,6 +4,9 @@ from datetime import datetime as d
 import mysql.connector
 from mysql.connector import errorcode
 import configparser
+import time
+import hashlib
+import re
 
 # Error response strings.
 INSUFFICIENT_PRIVILEGES  = "You do not have sufficient privileges for this command."
@@ -91,7 +94,7 @@ class User(commands.Cog):
     @commands.command(
         name        = "rewrite",
         description = "Aika's rewrite information.",
-        aliases     = ['recent', 'stats', 'linkosu', 'time', 'round', 'botinfo', 'aika', 'cmyui', 'apply', 'akatsuki']
+        aliases     = ['recent', 'stats', 'linkosu', 'botinfo', 'aika', 'cmyui', 'apply', 'akatsuki']
     )
     async def rewrite_info(self, ctx):
         await ctx.send(f"**Aika is currently undergoing a rewrite, and the {ctx.invoked_with} command has not yet been implemented.**\n"
@@ -117,6 +120,60 @@ class User(commands.Cog):
         if resp:
             await ctx.author.add_roles(discord.utils.get(ctx.message.guild.roles, name="NSFW Access"))
             await ctx.send("You should now have access to the NSFW channels.")
+        return
+
+    @commands.command(
+        name        = "time",
+        description = "Returns the current UNIX time.",
+        aliases     = ['unix', 'unixtime']
+    )
+    async def current_unixtime(self, ctx):
+        await ctx.send(f"Current UNIX timestamp: `{int(time.time())}`") # int cast to round lol
+        return
+
+    @commands.command(
+        name        = "hash",
+        description = "Returns the current MD5 of the input string.",
+        aliases     = ['encrypt']
+    )
+    async def hash_string(self, ctx):
+        hash_type = ctx.message.content.split(' ')[1].lower()
+        if hash_type not in ("md5", "sha1", "sha224", "sha256", "sha384", "sha512"):
+            await ctx.send(f"{hash_type} is not a supported algorithm.")
+            return
+
+        string = ''.join(ctx.message.content.split(' ')[2:]).encode('utf-8')
+
+        if hash_type == "md5":
+            r = hashlib.md5(string).hexdigest()
+        elif hash_type == "sha1":
+            r = hashlib.sha1(string).hexdigest()
+        elif hash_type == "sha224":
+            r = hashlib.sha224(string).hexdigest()
+        elif hash_type == "sha256":
+            r = hashlib.sha256(string).hexdigest()
+        elif hash_type == "sha384":
+            r = hashlib.sha384(string).hexdigest()
+        elif hash_type == "sha512":
+            r = hashlib.sha512(string).hexdigest()
+
+        await ctx.send(f"{hash_type.upper()}: `{r}`")
+        return
+
+    @commands.command(
+        name        = "round",
+        description = "Returns arg0 rounded to arg1 decimal places."
+    )
+    async def round_number(self, ctx):
+        fuckpy = None
+        if re.match("^\d+?\.\d+?$", ctx.message.content.split(' ')[1]) is None:
+            await ctx.send("Why are your trying to round that?")
+            return
+
+        if len(ctx.message.content.split(' ')[1].split(".")[1]) < int(ctx.message.content.split(' ')[2]):
+            fuckpy = len(ctx.message.content.split(' ')[1].split(".")[1])
+
+        await ctx.send(f"Rounded value (decimal places: {ctx.message.content.split(' ')[2] if not fuckpy else fuckpy}): `{round(float(ctx.message.content.split(' ')[1]), int(ctx.message.content.split(' ')[2]))}`")
         return
 
 def setup(bot):
