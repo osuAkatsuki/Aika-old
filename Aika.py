@@ -9,16 +9,13 @@ import time
 from colorama import init
 from colorama import Fore, Back, Style
 
-
 # Initialize colorama.
 init(autoreset=True)
-
 
 # Configuration.
 config = configparser.ConfigParser()
 config.sections()
 config.read("config.ini")
-
 
 # MySQL
 try:
@@ -93,6 +90,7 @@ high_quality  = ["!faq", "!help", "welcome", "have a good", "enjoy", "no problem
 SQL.execute("SELECT value_string FROM aika_settings WHERE name = 'discord_owner'")
 discord_owner = int(SQL.fetchone()[0])
 
+
 def debug_print(string):
     """
     Print a debug message to the console.
@@ -116,7 +114,6 @@ def get_prefix(client, message):
 
     # Users can also mention the bot.
     return commands.when_mentioned_or(*prefixes)(client, message)
-
 
 client = discord.Client()
 bot = commands.Bot(
@@ -181,8 +178,7 @@ async def on_message(message):
         def check_content(m): # Don't delete links or images.
             if "http" in message.content or message.attachments:
                 return False
-            else: # honestly not sure if this is safe without else in async idk how this shit work yehaw.
-                return True
+            return True
 
         if check_content(message):
             await message.delete()
@@ -288,9 +284,9 @@ async def on_message(message):
                 cog_name = message.content.split(' ')[1].lower()
                 if cog_name in ("staff", "user"):
                     bot.reload_extension(f"cogs.{cog_name}")
-                    await message.channel.send(f"Reloaded my niggé {cog_name}.")
+                    await message.channel.send(f"Reloaded extension {cog_name}.")
                 else:
-                    await message.channel.send(f"Invalid niggé {cog_name}.")
+                    await message.channel.send(f"Invalid extension {cog_name}.")
                 return
 
         # Finally, process commands.
