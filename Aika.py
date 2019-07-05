@@ -45,7 +45,6 @@ AKATSUKI_HELP_ID             = 365413867167285249 # ID for #help.
 AKATSUKI_VERIFY_ID           = 596662084339761172 # ID for #verify.
 AKATSUKI_PLAYER_REPORTING_ID = 367068661837725706 # ID for #player_reporting.
 AKATSUKI_REPORTS_ID          = 367080772076568596 # ID for #reports.
-AKATSUKI_RANK_REQUESTS_ID    = 557095943602831371 # ID for #rank_requests.
 AKATSUKI_NSFW_STRAIGHT_ID    = 428460752698081291 # ID for #nsfw
 AKATSUKI_NSFW_TRAPS_ID       = 505960162411020288 # ID for #nsfw-traps
 
@@ -219,13 +218,7 @@ async def on_message(message):
         if not message.content.startswith(COMMAND_PREFIX): # Do not pm or link to #reports if it is a command.
             await message.author.send(embed=embed_pm)
             await bot.get_channel(AKATSUKI_REPORTS_ID).send(embed=embed)
-            return
 
-    # Request sent in rank_requests.
-    elif message.channel.id == AKATSUKI_RANK_REQUESTS_ID:
-        # Add base thumbs to all requests.
-        await message.add_reaction("👍")
-        await message.add_reaction("👎")
         return
 
     elif message.author != bot.user:
@@ -261,13 +254,13 @@ async def on_message(message):
             debug_print(f"Quality of message\n\n{message.author}: {message.content} - {quality}")
 
             SQL.execute("INSERT INTO help_logs (id, user, content, datetime, quality) VALUES (NULL, %s, %s, %s, %s)",
-                [message.author.id, message.content.encode('ascii', errors='ignore'), int(time.time()), quality])
+                [message.author.id, message.content.encode('ascii', errors='ignore'), time.time(), quality])
 
         if not message.author.guild_permissions.manage_messages:
             for split in message.content.lower().split(" "):
                 if any(split.startswith(individual_filter) for individual_filter in filters):
                     SQL.execute("INSERT INTO profanity_filter (user, message, time) VALUES (%s, %s, %s)",
-                        [message.author.id, message.content.encode('ascii', errors='ignore'), int(time.time())])
+                        [message.author.id, message.content.encode('ascii', errors='ignore'), time.time()])
 
                     await message.delete()
                     await message.author.send(
