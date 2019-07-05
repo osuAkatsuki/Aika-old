@@ -169,10 +169,26 @@ async def on_ready():
 async def on_message(message):
     await bot.wait_until_ready()
 
-    # Prevent client crashing.. or atleast try a little bit.
-    if not all(ord(char) < 128 for char in message.content) and len(message.content) > 1500:
-        await message.delete()
-        return
+    if message.author.id != discord_owner: # Regular user
+        if message.content.split(' ')[0][1:7] == "verify" and message.channel.id == AKATSUKI_VERIFY_ID: # Verify command.
+            await message.author.add_roles(discord.utils.get(message.guild.roles, name="Members"))
+            await message.delete()
+            return
+        
+        # Prevent client crashing.. or atleast try a little bit.
+        if not all(ord(char) < 128 for char in message.content) and len(message.content) > 1500:
+            await message.delete()
+            return
+
+    else: # Owner
+        if message.content.split(' ')[0][1:] == "reload":
+            cog_name = message.content.split(' ')[1].lower()
+            if cog_name in ("staff", "user"):
+                bot.reload_extension(f"cogs.{cog_name}")
+                await message.channel.send(f"Reloaded extension {cog_name}.")
+            else:
+                await message.channel.send(f"Invalid extension {cog_name}.")
+            return
     
     if message.channel.id in (AKATSUKI_NSFW_STRAIGHT_ID, AKATSUKI_NSFW_TRAPS_ID):
         def check_content(m): # Don't delete links or images.
@@ -273,21 +289,6 @@ async def on_message(message):
             print(Fore.BLUE + Style.BRIGHT + message_string)
         else: # Regular message.
             print(message_string)
-
-        if message.author.id != discord_owner: # Regular user
-            if message.content.split(' ')[0][1:7] == "verify" and message.channel.id == AKATSUKI_VERIFY_ID: # Verify command.
-                await message.author.add_roles(discord.utils.get(message.guild.roles, name="Members"))
-                await message.delete()
-                return
-        else: # Owner
-            if message.content.split(' ')[0][1:] == "reload":
-                cog_name = message.content.split(' ')[1].lower()
-                if cog_name in ("staff", "user"):
-                    bot.reload_extension(f"cogs.{cog_name}")
-                    await message.channel.send(f"Reloaded extension {cog_name}.")
-                else:
-                    await message.channel.send(f"Invalid extension {cog_name}.")
-                return
 
         # Finally, process commands.
         await bot.process_commands(message)
