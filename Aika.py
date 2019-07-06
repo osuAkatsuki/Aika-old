@@ -93,7 +93,7 @@ discord_owner = int(SQL.fetchone()[0])
 def debug_print(string):
     """
     Print a debug message to the console.
-    
+
     Example in use:      https://nanahira.life/dOgXljmmKW336gro3Ts5gJmU7P4hNDZz.png
 
     :param string:       The message to be printed to the console.
@@ -188,7 +188,7 @@ async def on_message(message):
             else:
                 await message.channel.send(f"Invalid extension {cog_name}.")
             return
-    
+
     if message.channel.id in (AKATSUKI_NSFW_STRAIGHT_ID, AKATSUKI_NSFW_TRAPS_ID):
         def check_content(m): # Don't delete links or images.
             if "http" in message.content or message.attachments:

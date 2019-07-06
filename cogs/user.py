@@ -145,19 +145,19 @@ class User(commands.Cog):
         string = ''.join(ctx.message.content.split(' ')[2:]).encode('utf-8')
 
         if hash_type == "md5":
-            r = hashlib.md5(string).hexdigest()
+            r = hashlib.md5(string)
         elif hash_type == "sha1":
-            r = hashlib.sha1(string).hexdigest()
+            r = hashlib.sha1(string)
         elif hash_type == "sha224":
-            r = hashlib.sha224(string).hexdigest()
+            r = hashlib.sha224(string)
         elif hash_type == "sha256":
-            r = hashlib.sha256(string).hexdigest()
+            r = hashlib.sha256(string)
         elif hash_type == "sha384":
-            r = hashlib.sha384(string).hexdigest()
+            r = hashlib.sha384(string)
         elif hash_type == "sha512":
-            r = hashlib.sha512(string).hexdigest()
+            r = hashlib.sha512(string)
 
-        await ctx.send(f"{hash_type.upper()}: `{r}`")
+        await ctx.send(f"{hash_type.upper()}: `{r.hexdigest()}`")
         return
 
     @commands.command(
@@ -170,8 +170,8 @@ class User(commands.Cog):
             await ctx.send("Why are your trying to round that?")
             return
 
-        if len(ctx.message.content.split(' ')[1].split(".")[1]) < int(ctx.message.content.split(' ')[2]):
-            fuckpy = len(ctx.message.content.split(' ')[1].split(".")[1])
+        if len(ctx.message.content.split(' ')[1].split(".")[1]) < int(ctx.message.content.split(' ')[2]): # User specified sig digits > actual amt of sig digits
+            fuckpy = len(ctx.message.content.split(' ')[1].split(".")[1]) # use actual amt of sig digits
 
         await ctx.send(f"Rounded value (decimal places: {ctx.message.content.split(' ')[2] if not fuckpy else fuckpy}): `{round(float(ctx.message.content.split(' ')[1]), int(ctx.message.content.split(' ')[2]))}`")
         return
