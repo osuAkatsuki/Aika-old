@@ -17,7 +17,6 @@ SQL_HOST, SQL_USER, SQL_PASS, SQL_DB = [None] * 4
 # Config
 config = open('config.ini', 'r')
 config_contents = config.read().split("\n")
-print(config_contents)
 for line in config_contents:
     line = line.split("=")
     if line[0].strip() == "SQL_HOST": # IP Address for SQL.
