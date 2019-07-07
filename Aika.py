@@ -268,11 +268,6 @@ async def on_message(message):
             color       = 5516472
         )
 
-        embed.set_author(
-            name     = message.author.name,
-            icon_url = message.author.avatar_url_as(format="png", size=1024) or message.author.default_avatar_url
-        )
-
         embed.set_image(url=f"https://assets.ppy.sh/beatmaps/{map_id}/covers/cover.jpg?1522396856")
         embed.set_author(name=song_name, url=f"https://akatsuki.pw/d/{map_id}", icon_url=AKATSUKI_LOGO)
         embed.set_footer(text="Akatsuki's beatmap nomination system v2.0", icon_url="https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg")
@@ -287,20 +282,23 @@ async def on_message(message):
         #embed.set_author(name=message.author.name)
 
         # Prepare, and send the report to the reporter.
-        embed_pm = discord.Embed(
+        embed_dm = discord.Embed(
             title       = "Your beatmap nomination request has been sent to Akatsuki's Quality Assurance team for review.",
             description = "We will review it shortly.",
             color       = 0x00ff00
         )
 
-        embed_pm.set_thumbnail(url=AKATSUKI_LOGO)
-        embed_pm.set_image(url=f"https://assets.ppy.sh/beatmaps/{map_id}/covers/cover.jpg?1522396856")
-        embed_pm.set_footer(text=f"Akatsuki's beatmap nomination system v2.0", icon_url="https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg")
+        embed_dm.set_thumbnail(url=AKATSUKI_LOGO)
+        embed_dm.set_image(url=f"https://assets.ppy.sh/beatmaps/{map_id}/covers/cover.jpg?1522396856")
+        embed_dm.set_footer(text=f"Akatsuki's beatmap nomination system v2.0", icon_url="https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg")
 
-        if not message.content.startswith(COMMAND_PREFIX): # if it's a command, give up. should probably do this earlier to speed things up in case of a command but whatever.
-            await message.author.send(embed=embed_pm)
-            await bot.get_channel(AKATSUKI_RANK_REQUESTS_ID).send(embed=embed)
+        # Send the embed to the nominator by DM.
+        await message.author.send(embed=embed_dm)
 
+        # Send the embed to the #rank_requests channel.
+        request_post = await bot.get_channel(AKATSUKI_RANK_REQUESTS_ID).send(embed=embed)
+        await request_post.add_reaction("👍")
+        await request_post.add_reaction("👎")
         return
 
 
