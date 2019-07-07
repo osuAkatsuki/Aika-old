@@ -1,8 +1,3 @@
-# No steal my token ty
-config.ini
 gitold/
-*.mp3
-*.wav
-secret/
-constants/__pycache__/
-cogs/__pycache__/
+*/__pycache__/
+config.ini

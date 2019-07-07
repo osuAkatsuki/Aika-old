@@ -3,7 +3,6 @@ from discord.ext import commands
 from datetime import datetime as d
 import mysql.connector
 from mysql.connector import errorcode
-import configparser
 import time
 import hashlib
 import re
@@ -21,18 +20,30 @@ AKATSUKI_IP_ADDRESS      = "51.79.17.191"     # Akatsuki's osu! server IP.
 AKATSUKI_LOGO            = "https://akatsuki.pw/static/logos/logo.png"
 
 
-# Configuration.
-config = configparser.ConfigParser()
-config.sections()
-config.read("config.ini")
+# Config
+config = open('config.ini', 'r')
+config_contents = config.read().split("\n")
+print(config_contents)
+for line in config_contents:
+    line = line.split("=")
+    if line[0].strip() == "SQL_HOST": # IP Address for SQL.
+        SQL_HOST = line[1].strip()
+    elif line[0].strip() == "SQL_USER": # Username for SQL.
+        SQL_USER = line[1].strip()
+    elif line[0].strip() == "SQL_PASS": # Password for SQL.
+        SQL_PASS = line[1].strip()
+    elif line[0].strip() == "SQL_DB": # DB name for SQL.
+        SQL_DB = line[1].strip()
+    else: # Config value is unknown. continue iterating anyways.
+        continue
 
 # MySQL
 try:
     cnx = mysql.connector.connect(
-        user       = config['mysql']['user'],
-        password   = config['mysql']['passwd'],
-        host       = config['mysql']['host'],
-        database   = config['mysql']['db'],
+        user       = SQL_USER,
+        password   = SQL_PASS,
+        host       = SQL_HOST,
+        database   = SQL_DB,
         autocommit = True)
 except mysql.connector.Error as err:
     if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
