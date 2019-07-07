@@ -47,6 +47,8 @@ AKATSUKI_PLAYER_REPORTING_ID = 367068661837725706 # ID for #player_reporting.
 AKATSUKI_REPORTS_ID          = 367080772076568596 # ID for #reports.
 AKATSUKI_NSFW_STRAIGHT_ID    = 428460752698081291 # ID for #nsfw
 AKATSUKI_NSFW_TRAPS_ID       = 505960162411020288 # ID for #nsfw-traps
+AKATSUKI_RANK_REQUEST_ID     = 597200076561055795 # ID for #rank-request (User)
+AKATSUKI_RANK_REQUESTS_ID    = 557095943602831371 # ID for #rank-requests (Staff)
 
 # Aika's command prefix.
 COMMAND_PREFIX = '!'
@@ -198,6 +200,107 @@ async def on_message(message):
         if check_content(message):
             await message.delete()
         return
+
+    # Message sent in #rank-request, move to #rank-requests.
+    if message.channel.id == AKATSUKI_RANK_REQUEST_ID:
+        await message.delete()
+
+        if not any(required in message.content for required in ("akatsuki.pw", "osu.ppy.sh")) or len(message.content) > 30: # Should not EVER be over 30 characters.
+            await message.author.send("Your beatmap request was incorrectly formatted, and thus has not been submitted. Please use the OLD osu links. (e.g. https://osu.ppy.sh/b/123)")
+            return
+
+        if "://" in message.content: # Support both links like "https://osu.ppy.sh/b/123" AND "osu.ppy.sh/b/123". Also allow both /s/ and /b/ links.
+            partitions = message.content.split("/")[3:]
+        else:
+            partitions = message.content.split("/")[1:]
+
+        beatmapset = partitions[0] == "s"
+        map_id = partitions[1] # Can be setid or beatmapid
+
+        if not beatmapset: # If the user used a /b/ link, let's turn it into a set id.
+            SQL.execute(f"SELECT beatmapset_id FROM beatmaps WHERE beatmap_id = %s LIMIT 1", [map_id])
+            map_id = SQL.fetchone()[0]
+
+        # Do this so we can check if any maps in the set are ranked or loved.
+        # If they are, the QAT have most likely already determined statuses of the map.
+        SQL.execute(f"SELECT mode, ranked FROM beatmaps WHERE beatmapset_id = %s ORDER BY ranked DESC LIMIT 1", [map_id])
+        sel = SQL.fetchone()
+
+        if not sel: # We could not find any matching rows with the map_id.
+            await message.author.send("That map seems to be invalid. Quoi?")
+            return
+
+        if sel[1] in (2, 5): # Map is already ranked/loved
+            await message.author.send(f"Some (or all) of the difficulties in the beatmap you requested already seem to be {'ranked' if sel[1] == 2 else 'loved'} on the Akatsuki server!\n\nIf this is false, please contact a QAT directly to proceed.")
+            return
+
+        # Sort out mode to be used to check difficulty.
+        mode = sel[0]
+        if mode == 0:
+            mode = "std"
+            mode_formatted = "osu!"
+        elif mode == 1:
+            mode = "taiko"
+            mode_formatted = "osu!taiko"
+        elif mode == 2:
+            mode = "ctb"
+            mode_formatted = "osu!catch"
+        else:
+            mode = "mania"
+            mode_formatted = "osu!mania"
+
+        # Select map information.
+        SQL.execute(f"SELECT song_name, ar, od, max_combo, difficulty_{mode} FROM beatmaps WHERE beatmapset_id = %s ORDER BY difficulty_{mode} DESC LIMIT 1", [map_id])
+        bdata = SQL.fetchone()
+
+        # Return from DB.
+        song_name   = bdata[0]
+        ar          = bdata[1]
+        od          = bdata[2]
+        max_combo   = bdata[3]
+        star_rating = bdata[4]
+
+        # Create embeds.
+        embed = discord.Embed(
+            title       = "A new beatmap request has been recieved.",
+            description = "** **",
+            color       = 5516472
+        )
+
+        embed.set_author(
+            name     = message.author.name,
+            icon_url = message.author.avatar_url_as(format="png", size=1024) or message.author.default_avatar_url
+        )
+
+        embed.set_image(url=f"https://assets.ppy.sh/beatmaps/{map_id}/covers/cover.jpg?1522396856")
+        embed.set_author(name=song_name, url=f"https://akatsuki.pw/d/{map_id}", icon_url=AKATSUKI_LOGO)
+        embed.set_footer(text="Akatsuki's beatmap nomination system v2.0", icon_url="https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg")
+        embed.add_field(name="Nominator", value=message.author.name)
+        embed.add_field(name="Gamemode", value=mode_formatted)
+        embed.add_field(name="Highest SR", value=round(star_rating, 2))
+        embed.add_field(name="Highest AR", value=ar)
+        embed.add_field(name="Highest OD", value=od)
+        embed.add_field(name="Highest Max Combo", value=max_combo)
+
+        #embed.set_author(name=message.author.name)
+
+        # Prepare, and send the report to the reporter.
+        embed_pm = discord.Embed(
+            title       = "Your beatmap nomination request has been sent to Akatsuki's Quality Assurance team for review.",
+            description = "We will review it shortly.",
+            color       = 0x00ff00
+        )
+
+        embed_pm.set_thumbnail(url=AKATSUKI_LOGO)
+        embed_pm.set_image(url=f"https://assets.ppy.sh/beatmaps/{map_id}/covers/cover.jpg?1522396856")
+        embed_pm.set_footer(text=f"Akatsuki's beatmap nomination system v2.0", icon_url="https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg")
+
+        if not message.content.startswith(COMMAND_PREFIX): # if it's a command, give up. should probably do this earlier to speed things up in case of a command but whatever.
+            await message.author.send(embed=embed_pm)
+            await bot.get_channel(AKATSUKI_RANK_REQUESTS_ID).send(embed=embed)
+
+        return
+
 
     # Message sent in #player-reporting, move to #reports.
     if message.channel.id == AKATSUKI_PLAYER_REPORTING_ID:
