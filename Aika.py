@@ -45,10 +45,11 @@ AKATSUKI_HELP_ID             = 365413867167285249 # ID for #help.
 AKATSUKI_VERIFY_ID           = 596662084339761172 # ID for #verify.
 AKATSUKI_PLAYER_REPORTING_ID = 367068661837725706 # ID for #player_reporting.
 AKATSUKI_REPORTS_ID          = 367080772076568596 # ID for #reports.
-AKATSUKI_NSFW_STRAIGHT_ID    = 428460752698081291 # ID for #nsfw
-AKATSUKI_NSFW_TRAPS_ID       = 505960162411020288 # ID for #nsfw-traps
-AKATSUKI_RANK_REQUEST_ID     = 597200076561055795 # ID for #rank-request (User)
-AKATSUKI_RANK_REQUESTS_ID    = 557095943602831371 # ID for #rank-requests (Staff)
+AKATSUKI_NSFW_STRAIGHT_ID    = 428460752698081291 # ID for #nsfw.
+AKATSUKI_NSFW_TRAPS_ID       = 505960162411020288 # ID for #nsfw-traps.
+AKATSUKI_RANK_REQUEST_ID     = 597200076561055795 # ID for #rank-request (User).
+AKATSUKI_RANK_REQUESTS_ID    = 557095943602831371 # ID for #rank-requests (Staff).
+AKATSUKI_BOTSPAM_ID          = 369829943372152833 # ID for #botspam.
 
 # Aika's command prefix.
 COMMAND_PREFIX = '!'
@@ -182,6 +183,7 @@ async def on_message(message):
             return
 
     else: # Owner
+
         if message.content.split(' ')[0][1:] == "reload":
             cog_name = message.content.split(' ')[1].lower()
             if cog_name in ("staff", "user"):
@@ -190,6 +192,7 @@ async def on_message(message):
             else:
                 await message.channel.send(f"Invalid extension {cog_name}.")
             return
+
 
     if message.channel.id in (AKATSUKI_NSFW_STRAIGHT_ID, AKATSUKI_NSFW_TRAPS_ID):
         def check_content(m): # Don't delete links or images.
@@ -201,21 +204,23 @@ async def on_message(message):
             await message.delete()
         return
 
+
     # Message sent in #rank-request, move to #rank-requests.
     if message.channel.id == AKATSUKI_RANK_REQUEST_ID:
         await message.delete()
 
         if not any(required in message.content for required in ("akatsuki.pw", "osu.ppy.sh")) or len(message.content) > 30: # Should not EVER be over 30 characters.
-            await message.author.send("Your beatmap request was incorrectly formatted, and thus has not been submitted. Please use the OLD osu links. (e.g. https://osu.ppy.sh/b/123)")
+            await message.author.send("Your beatmap request was incorrectly formatted, and thus has not been submitted. Please use the old osu links for the time being. (e.g. https://osu.ppy.sh/b/123)")
             return
 
+        # TODO: New osu link support.
         if "://" in message.content: # Support both links like "https://osu.ppy.sh/b/123" AND "osu.ppy.sh/b/123". Also allow both /s/ and /b/ links.
             partitions = message.content.split("/")[3:]
         else:
             partitions = message.content.split("/")[1:]
 
-        beatmapset = partitions[0] == "s"
-        map_id = partitions[1] # Can be setid or beatmapid
+        beatmapset = partitions[0] == "s" # Link is a beatmapset_id link, not a beatmap_id link.
+        map_id = partitions[1] # Can be SetID or MapID.
 
         if not beatmapset: # If the user used a /b/ link, let's turn it into a set id.
             SQL.execute(f"SELECT beatmapset_id FROM beatmaps WHERE beatmap_id = %s LIMIT 1", [map_id])
@@ -226,16 +231,19 @@ async def on_message(message):
         SQL.execute(f"SELECT mode, ranked FROM beatmaps WHERE beatmapset_id = %s ORDER BY ranked DESC LIMIT 1", [map_id])
         sel = SQL.fetchone()
 
+        mode   = sel[0]
+        status = sel[1]
+
         if not sel: # We could not find any matching rows with the map_id.
             await message.author.send("That map seems to be invalid. Quoi?")
             return
 
-        if sel[1] in (2, 5): # Map is already ranked/loved
-            await message.author.send(f"Some (or all) of the difficulties in the beatmap you requested already seem to be {'ranked' if sel[1] == 2 else 'loved'} on the Akatsuki server!\n\nIf this is false, please contact a QAT directly to proceed.")
+        if status in (2, 5): # Map is already ranked/loved
+            await message.author.send(f"Some (or all) of the difficulties in the beatmap you requested already seem to be {'ranked' if status == 2 else 'loved'} on the Akatsuki server!\n\nIf this is false, please contact a QAT directly to proceed.")
             return
 
         # Sort out mode to be used to check difficulty.
-        mode = sel[0]
+        # Also have a formatted one to be used for final post.
         if mode == 0:
             mode = "std"
             mode_formatted = "osu!"
@@ -279,11 +287,9 @@ async def on_message(message):
         embed.add_field(name="Highest Max Combo", value=max_combo)
         embed.add_field(name="BPM", value=bpm)
 
-        #embed.set_author(name=message.author.name)
-
         # Prepare, and send the report to the reporter.
         embed_dm = discord.Embed(
-            title       = "Your beatmap nomination request has been sent to Akatsuki's Quality Assurance team for review.",
+            title       = "Your beatmap nomination request has been sent to Akatsuki's Quality Assurance Team for review.",
             description = "We will review it shortly.",
             color       = 0x00ff00
         )
@@ -297,6 +303,8 @@ async def on_message(message):
 
         # Send the embed to the #rank_requests channel.
         request_post = await bot.get_channel(AKATSUKI_RANK_REQUESTS_ID).send(embed=embed)
+
+        # Add reaction thumbs to post for votes.
         await request_post.add_reaction("👍")
         await request_post.add_reaction("👎")
         return
@@ -321,7 +329,6 @@ async def on_message(message):
         if not message.content.startswith(COMMAND_PREFIX): # Do not pm or link to #reports if it is a command.
             await message.author.send(embed=embed_pm)
             await bot.get_channel(AKATSUKI_REPORTS_ID).send(embed=embed)
-
         return
 
     elif message.author != bot.user:
@@ -335,7 +342,7 @@ async def on_message(message):
 
             debug_print(f"Sentence split: {sentence_split}")
 
-            # After every period, check they have a space and the next sentence starts with a capital letter (ignore things like "...")
+            # After every period, check they have a space and the next sentence starts with a capital letter (ignore things like "...").
             for idx, sentence in enumerate(sentence_split):
                 if len(sentence) > 1 and idx != 0:
                     if sentence[0] == " " and sentence[1].isupper():
@@ -375,16 +382,19 @@ async def on_message(message):
                     debug_print(f"Filtered message | '{message.author}: {message.content}'")
                     return
 
-        message_string = f"{message.created_at} [{message.guild if message.guild is not None else ''} {message.channel}] {message.author}: {message.content}"
+        if message.channel.id != AKATSUKI_BOTSPAM_ID: # Don't print anything from botspam. This helps reduce a LOT of clutter.
 
-        if message.guild is None: # Private message
-            print(Fore.YELLOW + Style.BRIGHT + message_string)
-        elif "cmyui" in message.content.lower(): # cmyui mentioned
-            print(Fore.CYAN + Style.BRIGHT + message_string)
-        elif message.guild.id == AKATSUKI_SERVER_ID: # The server is akatsuki.
-            print(Fore.BLUE + Style.BRIGHT + message_string)
-        else: # Regular message.
-            print(message_string)
+            # Formatted message to be printed to console on message event.
+            message_string = f"{message.created_at} [{message.guild if message.guild is not None else ''} {message.channel}] {message.author}: {message.content}"
+
+            if message.guild is None: # Private message.
+                print(Fore.YELLOW + Style.BRIGHT + message_string)
+            elif "cmyui" in message.content.lower(): # cmyui was mentioned in the message.
+                print(Fore.CYAN + Style.BRIGHT + message_string)
+            elif message.guild.id == AKATSUKI_SERVER_ID: # The server is Akatsuki.
+                print(Fore.BLUE + Style.BRIGHT + message_string)
+            else: # Regular message.
+                print(message_string)
 
         # Finally, process commands.
         await bot.process_commands(message)
@@ -394,7 +404,7 @@ SQL.execute("SELECT value_string FROM aika_settings WHERE name = 'rewrite_token'
 bot.run(SQL.fetchone()[0], bot=True, reconnect=True)
 
 # Clean up
-print("\nCleaning up MySQL variables..")
+print("\nForce-quit detected. Cleaning up Aika before shutdown..\nCleaning up MySQL variables..")
 SQL.close()
 cnx.close()
 print("Cleaning complete.")
