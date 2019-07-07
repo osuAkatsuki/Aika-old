@@ -223,12 +223,12 @@ async def on_message(message):
         map_id = partitions[1] # Can be SetID or MapID.
 
         if not beatmapset: # If the user used a /b/ link, let's turn it into a set id.
-            SQL.execute(f"SELECT beatmapset_id FROM beatmaps WHERE beatmap_id = %s LIMIT 1", [map_id])
+            SQL.execute("SELECT beatmapset_id FROM beatmaps WHERE beatmap_id = %s LIMIT 1", [map_id])
             map_id = SQL.fetchone()[0]
 
         # Do this so we can check if any maps in the set are ranked or loved.
         # If they are, the QAT have most likely already determined statuses of the map.
-        SQL.execute(f"SELECT mode, ranked FROM beatmaps WHERE beatmapset_id = %s ORDER BY ranked DESC LIMIT 1", [map_id])
+        SQL.execute("SELECT mode, ranked FROM beatmaps WHERE beatmapset_id = %s ORDER BY ranked DESC LIMIT 1", [map_id])
         sel = SQL.fetchone()
 
         mode   = sel[0]
@@ -296,7 +296,7 @@ async def on_message(message):
 
         embed_dm.set_thumbnail(url=AKATSUKI_LOGO)
         embed_dm.set_image(url=f"https://assets.ppy.sh/beatmaps/{map_id}/covers/cover.jpg?1522396856")
-        embed_dm.set_footer(text=f"Akatsuki's beatmap nomination system v2.0", icon_url="https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg")
+        embed_dm.set_footer(text="Akatsuki's beatmap nomination system v2.0", icon_url="https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg")
 
         # Send the embed to the nominator by DM.
         await message.author.send(embed=embed_dm)
