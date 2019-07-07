@@ -19,6 +19,8 @@ AKATSUKI_IP_ADDRESS      = "51.79.17.191"     # Akatsuki's osu! server IP.
 # To be used mostly for embed thumbnails.
 AKATSUKI_LOGO            = "https://akatsuki.pw/static/logos/logo.png"
 
+# Initalize values as Nonetype for now.
+SQL_HOST, SQL_USER, SQL_PASS, SQL_DB = [None] * 4
 
 # Config
 config = open('config.ini', 'r')
