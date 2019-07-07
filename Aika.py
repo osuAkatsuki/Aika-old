@@ -250,7 +250,7 @@ async def on_message(message):
             mode_formatted = "osu!mania"
 
         # Select map information.
-        SQL.execute(f"SELECT song_name, ar, od, max_combo, difficulty_{mode} FROM beatmaps WHERE beatmapset_id = %s ORDER BY difficulty_{mode} DESC LIMIT 1", [map_id])
+        SQL.execute(f"SELECT song_name, ar, od, max_combo, bpm, difficulty_{mode} FROM beatmaps WHERE beatmapset_id = %s ORDER BY difficulty_{mode} DESC LIMIT 1", [map_id])
         bdata = SQL.fetchone()
 
         # Return from DB.
@@ -258,7 +258,8 @@ async def on_message(message):
         ar          = bdata[1]
         od          = bdata[2]
         max_combo   = bdata[3]
-        star_rating = bdata[4]
+        bpm         = bdata[4]
+        star_rating = bdata[5]
 
         # Create embeds.
         embed = discord.Embed(
@@ -281,6 +282,7 @@ async def on_message(message):
         embed.add_field(name="Highest AR", value=ar)
         embed.add_field(name="Highest OD", value=od)
         embed.add_field(name="Highest Max Combo", value=max_combo)
+        embed.add_field(name="BPM", value=bpm)
 
         #embed.set_author(name=message.author.name)
 
