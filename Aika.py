@@ -344,7 +344,7 @@ async def on_message(message):
             await bot.get_channel(AKATSUKI_REPORTS_ID).send(embed=embed)
         return
 
-    elif message.author != bot.user:
+    elif message.author != bot.user and message.guild:
         messagelen = len(message.content)
 
         properly_formatted = False
