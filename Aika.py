@@ -311,11 +311,14 @@ async def on_message(message):
         embed_dm.set_image(url=f"https://assets.ppy.sh/beatmaps/{map_id}/covers/cover.jpg?1522396856")
         embed_dm.set_footer(text="Akatsuki's beatmap nomination system v2.0", icon_url="https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg")
 
-        # Send the embed to the nominator by DM.
-        await message.author.send(embed=embed_dm)
-
         # Send the embed to the #rank_requests channel.
         request_post = await bot.get_channel(AKATSUKI_RANK_REQUESTS_ID).send(embed=embed)
+
+        # Send the embed to the nominator by DM. 
+        try:
+            await message.author.send(embed=embed_dm)
+        except:
+            print(f"Could not DM ({message.author.name}).")
 
         # Add reaction thumbs to post for votes.
         await request_post.add_reaction("👍")
