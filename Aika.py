@@ -4,6 +4,9 @@ import mysql.connector
 from mysql.connector import errorcode
 import time
 
+import json
+import requests
+
 # TODO: stop using these!
 from colorama import init
 from colorama import Fore, Back, Style
@@ -274,6 +277,9 @@ async def on_message(message):
         SQL.execute(f"SELECT song_name, ar, od, max_combo, bpm, difficulty_{mode} FROM beatmaps WHERE beatmapset_id = %s ORDER BY difficulty_{mode} DESC LIMIT 1", [map_id])
         bdata = SQL.fetchone()
 
+        # Get the artist from maxi's API.
+        artist = json.loads(requests.get(f"https://cheesegull.mxr.lol/api/s/{map_id}").text)["Creator"]
+
         # Return from DB.
         song_name   = bdata[0]
         ar          = bdata[1]
@@ -293,6 +299,7 @@ async def on_message(message):
         embed.set_author(name=song_name, url=f"https://akatsuki.pw/d/{map_id}", icon_url=AKATSUKI_LOGO)
         embed.set_footer(text="Akatsuki's beatmap nomination system v2.0", icon_url="https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg")
         embed.add_field(name="Nominator", value=message.author.name)
+        embed.add_field(name="Mapper", value=artist)
         embed.add_field(name="Gamemode", value=mode_formatted)
         embed.add_field(name="Highest SR", value=round(star_rating, 2))
         embed.add_field(name="Highest AR", value=ar)
