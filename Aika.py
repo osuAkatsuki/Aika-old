@@ -53,7 +53,7 @@ else:
     SQL = cnx.cursor()
 
 # Aika's version.
-AIKA_VERSION = 4.17
+AIKA_VERSION = 4.18
 
 # Akatsuki's server/channel IDs.
 # [S] = Server.
