@@ -53,10 +53,12 @@ else:
     SQL = cnx.cursor()
 
 # Aika's version.
-AIKA_VERSION = 4.16
+AIKA_VERSION = 4.17
 
-# Akatsuki settings.
-# S = Server | T = Text | Voice
+# Akatsuki's server/channel IDs.
+# [S] = Server.
+# [T] = Text channel.
+# [V] = Voice channel.
 AKATSUKI_SERVER_ID           = 365406575893938177 # [S] | ID for osu!Akatsuki.
 AKATSUKI_GENERAL_ID          = 592490140497084436 # [T] | ID for #general.
 AKATSUKI_HELP_ID             = 365413867167285249 # [T] | ID for #help.
@@ -78,8 +80,8 @@ COMMAND_PREFIX = '!'
 
 # Akatsuki's logo.
 # To be used mostly for embed thumbnails.
-AKATSUKI_LOGO                = "https://akatsuki.pw/static/logos/logo.png"
-CRAB_EMOJI                   = "https://cdn.discordapp.com/attachments/365406576548511745/591470256497754112/1f980.png"
+AKATSUKI_LOGO = "https://akatsuki.pw/static/logos/logo.png"
+CRAB_EMOJI    = "https://cdn.discordapp.com/attachments/365406576548511745/591470256497754112/1f980.png"
 
 # A list of filters.
 # These are to be used to wipe messages that are deemed inappropriate,
@@ -150,16 +152,21 @@ bot = commands.Bot(
 )
 
 
-cogs = ['cogs.staff', 'cogs.user']
+cogs = ["cogs.staff", "cogs.user"]
 
 
 @bot.event
-async def on_voice_state_update(member, before, after):
+async def on_voice_state_update(member, before, after): # TODO: check if they left dragmein, and delete embed.. if that's even possible..
+    # Await for the bot to be ready before processing voice state updates whatsoever.
+    await bot.wait_until_ready()
+
+    # Only use this event for the "drag me in" voice channel.
     if after.channel is None or after.channel.id != AKATSUKI_DRAG_ME_IN_VOICE:
         return
 
-    print(f"{member} entered drag-me-in voice channel.")
+    debug_print(f"on_voice_state_update event fired.\n\nData:\n\n{member}\n\n{before}\n\n{after}")
 
+    # Create our vote embed.
     embed = discord.Embed(
         title       = f"{member} wants to be dragged in.",
         description = "Please add a reaction to determine their fate owo..",
@@ -168,34 +175,30 @@ async def on_voice_state_update(member, before, after):
     embed.set_footer(icon_url=CRAB_EMOJI, text="Only one vote is required.")
     embed.set_thumbnail(url=AKATSUKI_LOGO)
 
-    friends_only_text  = bot.get_channel(AKATSUKI_FRIENDS_ONLY)
-    friends_only_voice = bot.get_channel(AKATSUKI_FRIENDS_ONLY_VOICE)
+    # Assign friends-only chat and voice channel as constants.
+    FRIENDS_ONLY_TEXT  = bot.get_channel(AKATSUKI_FRIENDS_ONLY)
+    FRIENDS_ONLY_VOICE = bot.get_channel(AKATSUKI_FRIENDS_ONLY_VOICE)
 
-    msg = await friends_only_text.send(embed=embed)
-
+    # Send our embed, and add our base 👍.
+    msg = await FRIENDS_ONLY_TEXT.send(embed=embed)
     await msg.add_reaction("👍")
 
-    try:
-        reaction, user = await bot.wait_for("reaction_add",
-                                            timeout = 300.0,
-                                            check   = lambda reaction, user: reaction.emoji == "👍" and user != bot.user
-                                            )
-
-    except asyncio.TimeoutError:
-        await friends_only_text.send(f"Timed out {member}'s join query.")
+    try: # Wait for a 👍 from a "friend". Timeout: 5 minutes (300 seconds).
+        reaction, user = await bot.wait_for("reaction_add", timeout = 300.0, check = lambda reaction, user: reaction.emoji == "👍" and user != bot.user )
+    except asyncio.TimeoutError: # Timed out. Remove the embed.
+        await FRIENDS_ONLY_TEXT.send(f"Timed out {member}'s join query.")
         await msg.delete()
         return
 
-    # Actually move the member into cmyui channel.
-    try:
-        await member.move_to(channel=friends_only_voice, reason="Voted in.")
-    except discord.errors.HTTPException:
+    try: # Actually move the member into friends voice channel.
+        await member.move_to(channel=FRIENDS_ONLY_VOICE, reason="Voted in.")
+    except discord.errors.HTTPException: # The user has already left the "drag me in" voice channel.
         await msg.delete()
         return
 
-    await friends_only_text.send(f"{user} voted {member} in.")
+    # Send our vote success, and delete the original embed.
+    await FRIENDS_ONLY_TEXT.send(f"{user} voted {member} in.")
     await msg.delete()
-
     return
 
 @bot.event
@@ -238,9 +241,12 @@ async def on_ready():
 
 @bot.event
 async def on_message(message):
+    # Await for the bot to be ready before processing messages whatsoever.
     await bot.wait_until_ready()
 
-    if not message.content: # just an attachment was sent................. bruh
+    # The message has no content.
+    # Don't bother doing anything with it.
+    if not message.content:
         return
 
     if message.author.id != discord_owner: # Regular user
@@ -281,7 +287,7 @@ async def on_message(message):
     if message.channel.id == AKATSUKI_RANK_REQUEST_ID:
         await message.delete()
 
-        if not any(required in message.content for required in ("akatsuki.pw", "osu.ppy.sh")) or len(message.content) > 30: # Should not EVER be over 30 characters.
+        if not any(required in message.content for required in ("akatsuki.pw", "osu.ppy.sh")) or len(message.content) > 29: # Should not EVER be over 29 characters.
             await message.author.send("Your beatmap request was incorrectly formatted, and thus has not been submitted. Please use the old osu links for the time being. (e.g. https://osu.ppy.sh/b/123)")
             return
 
