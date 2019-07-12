@@ -53,7 +53,7 @@ else:
     SQL = cnx.cursor()
 
 # Aika's version.
-AIKA_VERSION = 4.15
+AIKA_VERSION = 4.16
 
 # Akatsuki settings.
 # S = Server | T = Text | Voice
