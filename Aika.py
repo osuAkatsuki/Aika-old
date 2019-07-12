@@ -3,6 +3,7 @@ from discord.ext import commands
 import mysql.connector
 from mysql.connector import errorcode
 import time
+import asyncio
 
 import json
 import requests
@@ -55,17 +56,22 @@ else:
 AIKA_VERSION = 4.15
 
 # Akatsuki settings.
-AKATSUKI_SERVER_ID           = 365406575893938177 # Guild ID.
-AKATSUKI_GENERAL_ID          = 592490140497084436 # ID for #general.
-AKATSUKI_HELP_ID             = 365413867167285249 # ID for #help.
-AKATSUKI_VERIFY_ID           = 596662084339761172 # ID for #verify.
-AKATSUKI_PLAYER_REPORTING_ID = 367068661837725706 # ID for #player_reporting.
-AKATSUKI_REPORTS_ID          = 367080772076568596 # ID for #reports.
-AKATSUKI_NSFW_STRAIGHT_ID    = 428460752698081291 # ID for #nsfw.
-AKATSUKI_NSFW_TRAPS_ID       = 505960162411020288 # ID for #nsfw-traps.
-AKATSUKI_RANK_REQUEST_ID     = 597200076561055795 # ID for #rank-request (User).
-AKATSUKI_RANK_REQUESTS_ID    = 557095943602831371 # ID for #rank-requests (Staff).
-AKATSUKI_BOTSPAM_ID          = 369829943372152833 # ID for #botspam.
+# S = Server | T = Text | Voice
+AKATSUKI_SERVER_ID           = 365406575893938177 # [S] | ID for osu!Akatsuki.
+AKATSUKI_GENERAL_ID          = 592490140497084436 # [T] | ID for #general.
+AKATSUKI_HELP_ID             = 365413867167285249 # [T] | ID for #help.
+AKATSUKI_VERIFY_ID           = 596662084339761172 # [T] | ID for #verify.
+AKATSUKI_PLAYER_REPORTING_ID = 367068661837725706 # [T] | ID for #player_reporting.
+AKATSUKI_REPORTS_ID          = 367080772076568596 # [T] | ID for #reports.
+AKATSUKI_NSFW_STRAIGHT_ID    = 428460752698081291 # [T] | ID for #nsfw.
+AKATSUKI_NSFW_TRAPS_ID       = 505960162411020288 # [T] | ID for #nsfw-traps.
+AKATSUKI_RANK_REQUEST_ID     = 597200076561055795 # [T] | ID for #rank-request (User).
+AKATSUKI_RANK_REQUESTS_ID    = 557095943602831371 # [T] | ID for #rank-requests (Staff).
+AKATSUKI_BOTSPAM_ID          = 369829943372152833 # [T] | ID for #botspam.
+
+AKATSUKI_FRIENDS_ONLY        = 597948877621952533 # [T] | ID for #friends-only.
+AKATSUKI_DRAG_ME_IN_VOICE    = 597949535938936833 # [V] | ID for Drag me in (VC).
+AKATSUKI_FRIENDS_ONLY_VOICE  = 597948898421768192 # [V] | ID for ✨cmyui (VC).
 
 # Aika's command prefix.
 COMMAND_PREFIX = '!'
@@ -146,6 +152,51 @@ bot = commands.Bot(
 
 cogs = ['cogs.staff', 'cogs.user']
 
+
+@bot.event
+async def on_voice_state_update(member, before, after):
+    if after.channel is None or after.channel.id != AKATSUKI_DRAG_ME_IN_VOICE:
+        return
+
+    print(f"{member} entered drag-me-in voice channel.")
+
+    embed = discord.Embed(
+        title       = f"{member} wants to be dragged in.",
+        description = "Please add a reaction to determine their fate owo..",
+        color       = 0x00ff00)
+
+    embed.set_footer(icon_url=CRAB_EMOJI, text="Only one vote is required.")
+    embed.set_thumbnail(url=AKATSUKI_LOGO)
+
+    friends_only_text  = bot.get_channel(AKATSUKI_FRIENDS_ONLY)
+    friends_only_voice = bot.get_channel(AKATSUKI_FRIENDS_ONLY_VOICE)
+
+    msg = await friends_only_text.send(embed=embed)
+
+    await msg.add_reaction("👍")
+
+    try:
+        reaction, user = await bot.wait_for("reaction_add",
+                                            timeout = 300.0,
+                                            check   = lambda reaction, user: reaction.emoji == "👍" and user != bot.user
+                                            )
+
+    except asyncio.TimeoutError:
+        await friends_only_text.send(f"Timed out {member}'s join query.")
+        await msg.delete()
+        return
+
+    # Actually move the member into cmyui channel.
+    try:
+        await member.move_to(channel=friends_only_voice, reason="Voted in.")
+    except discord.errors.HTTPException:
+        await msg.delete()
+        return
+
+    await friends_only_text.send(f"{user} voted {member} in.")
+    await msg.delete()
+
+    return
 
 @bot.event
 async def on_ready():
