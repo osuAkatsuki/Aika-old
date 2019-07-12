@@ -183,8 +183,12 @@ async def on_voice_state_update(member, before, after): # TODO: check if they le
     msg = await FRIENDS_ONLY_TEXT.send(embed=embed)
     await msg.add_reaction("👍")
 
+    def check(reaction, user):
+        if user == bot.user: return False
+        return reaction.emoji == "👍" and user.voice.channel == FRIENDS_ONLY_VOICE
+
     try: # Wait for a 👍 from a "friend". Timeout: 5 minutes (300 seconds).
-        reaction, user = await bot.wait_for("reaction_add", timeout = 300.0, check = lambda reaction, user: reaction.emoji == "👍" and user != bot.user )
+        reaction, user = await bot.wait_for("reaction_add", timeout=300.0, check=check)
     except asyncio.TimeoutError: # Timed out. Remove the embed.
         await FRIENDS_ONLY_TEXT.send(f"Timed out {member}'s join query.")
         await msg.delete()
