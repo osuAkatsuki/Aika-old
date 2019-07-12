@@ -14,10 +14,10 @@ from colorama import Fore, Back, Style
 # Initialize colorama.
 init(autoreset=True)
 
-# Initalize values as Nonetype for now.
+# Initalize values as None for now.
 SQL_HOST, SQL_USER, SQL_PASS, SQL_DB = [None] * 4
 
-# Config
+# Config.
 config = open('config.ini', 'r')
 config_contents = config.read().split("\n")
 for line in config_contents:
@@ -33,7 +33,7 @@ for line in config_contents:
     else: # Config value is unknown. continue iterating anyways.
         continue
 
-# MySQL
+# MySQL.
 try:
     cnx = mysql.connector.connect(
         user       = SQL_USER,
@@ -52,7 +52,7 @@ else:
     SQL = cnx.cursor()
 
 # Aika's version.
-AIKA_VERSION = 4.12
+AIKA_VERSION = 4.15
 
 # Akatsuki settings.
 AKATSUKI_SERVER_ID           = 365406575893938177 # Guild ID.
@@ -88,6 +88,8 @@ filters       = [
                 "yozora", "ainu", "okamura", "kotorikku", "kurikku", "kawata",
                 "ryusei", "ryu-sei", "enjuu", "verge", "katori", "osu-thailand",
                 "gatari", "hidesu", "hiragi", "asuki", "mikoto", "homaru", "awasu",
+                "vipsu", "xii", "xii.nz", "yarota", "silverosu", "sugoisu", "kono",
+                "zeltu", "karizuku", "koreasu", "asta", "tiller", # I really didn't want to block "tiller", but it seems like it keeps getting mentioned..
 
                 # Discord links
                 "https://discord.gg/", "http://discord.gg/", "https://discordapp.com/channels", "http://discordapp.com/channels",
@@ -187,6 +189,9 @@ async def on_ready():
 async def on_message(message):
     await bot.wait_until_ready()
 
+    if not message.content: # just an attachment was sent................. bruh
+        return
+
     if message.author.id != discord_owner: # Regular user
         if message.content.split(' ')[0][1:7] == "verify" and message.channel.id == AKATSUKI_VERIFY_ID: # Verify command.
             await message.author.add_roles(discord.utils.get(message.guild.roles, name="Members"))
@@ -277,10 +282,9 @@ async def on_message(message):
         SQL.execute(f"SELECT song_name, ar, od, max_combo, bpm, difficulty_{mode} FROM beatmaps WHERE beatmapset_id = %s ORDER BY difficulty_{mode} DESC LIMIT 1", [map_id])
         bdata = SQL.fetchone()
 
-        # Get the artist from maxi's API.
-        artist = json.loads(requests.get(f"https://cheesegull.mxr.lol/api/s/{map_id}").text)["Creator"]
-
-        # Return from DB.
+        # Return values from web request/DB query.
+        # TODO: either use the API for everything, or dont use it at all.
+        artist      = json.loads(requests.get(f"https://cheesegull.mxr.lol/api/s/{map_id}").text)["Creator"]
         song_name   = bdata[0]
         ar          = bdata[1]
         od          = bdata[2]
@@ -292,26 +296,26 @@ async def on_message(message):
         embed = discord.Embed(
             title       = "A new beatmap request has been recieved.",
             description = "** **",
-            color       = 5516472
+            color       = 5516472 # Akatsuki purple.
         )
 
         embed.set_image(url=f"https://assets.ppy.sh/beatmaps/{map_id}/covers/cover.jpg?1522396856")
         embed.set_author(name=song_name, url=f"https://akatsuki.pw/d/{map_id}", icon_url=AKATSUKI_LOGO)
-        embed.set_footer(text="Akatsuki's beatmap nomination system v2.0", icon_url="https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg")
+        embed.set_footer(text="Akatsuki's beatmap nomination system v2.1", icon_url="https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg")
         embed.add_field(name="Nominator", value=message.author.name)
         embed.add_field(name="Mapper", value=artist)
         embed.add_field(name="Gamemode", value=mode_formatted)
-        embed.add_field(name="Highest SR", value=round(star_rating, 2))
+        embed.add_field(name="Highest SR", value=round(star_rating, 2) + "*")
         embed.add_field(name="Highest AR", value=ar)
         embed.add_field(name="Highest OD", value=od)
-        embed.add_field(name="Highest Max Combo", value=max_combo)
+        embed.add_field(name="Highest Max Combo", value=max_combo + "x")
         embed.add_field(name="BPM", value=bpm)
 
         # Prepare, and send the report to the reporter.
         embed_dm = discord.Embed(
             title       = "Your beatmap nomination request has been sent to Akatsuki's Quality Assurance Team for review.",
             description = "We will review it shortly.",
-            color       = 0x00ff00
+            color       = 0x00ff00 # Lime green.
         )
 
         embed_dm.set_thumbnail(url=AKATSUKI_LOGO)
@@ -322,14 +326,14 @@ async def on_message(message):
         request_post = await bot.get_channel(AKATSUKI_RANK_REQUESTS_ID).send(embed=embed)
 
         # Send the embed to the nominator by DM. 
-        try:
+        try: # TODO: check if we can message the user rather than abusing try-except.
             await message.author.send(embed=embed_dm)
         except:
             print(f"Could not DM ({message.author.name}).")
 
-        # Add reaction thumbs to post for votes.
-        await request_post.add_reaction("👍")
-        await request_post.add_reaction("👎")
+        for i in ["👎", "👍"]: # Add thumbs.
+            await request_post.add_reaction(i)
+
         return
 
 
@@ -355,13 +359,15 @@ async def on_message(message):
         return
 
     elif message.author != bot.user and message.guild:
-        messagelen = len(message.content)
 
-        properly_formatted = False
-
-        if messagelen > 0:
+        # Message sent in #help, log to db.
+        if message.channel.id == AKATSUKI_HELP_ID:
+            # Split the content into sentences by periods.
+            # TODO: Other punctuation marks!
             sentence_split = message.content.split(".")
-            negative = False
+
+            # Default values for properly formatted messages / negative messages.
+            properly_formatted, negative = [False] * 2
 
             debug_print(f"Sentence split: {sentence_split}")
 
@@ -372,30 +378,36 @@ async def on_message(message):
                         continue
                     negative = True
 
-            properly_formatted = message.content[0].isupper() and message.content[messagelen - 1] in (".", "?", "!") and not negative
+            properly_formatted = message.content[0].isupper() and message.content[len(message.content) - 1] in (".", "?", "!") and not negative
 
-        # Message sent in #help, log to db.
-        if message.channel.id == AKATSUKI_HELP_ID:
+            # Default for quality. 1 : normal message.
             quality = 1
 
-            # Profanity before high quality and proper formatting.
+            # The user used profanity in their message.
+            # Flag it as 'low quality' content.
             if any(x in message.content.lower() for x in profanity):
                 quality = 0
+            # The user either used content deemed 'high quality' in their message, and/or properly formatted their message.
+            # Flag it as 'high quality' content.
             elif any(x in message.content.lower() for x in high_quality) or properly_formatted:
                 quality = 2
 
             debug_print(f"Quality of message\n\n{message.author}: {message.content} - {quality}")
 
+            # TODO: Store the whole bitch in a single number. 
+            # Maybe even do some bitwise black magic shit.
             SQL.execute("INSERT INTO help_logs (id, user, content, datetime, quality) VALUES (NULL, %s, %s, %s, %s)",
                 [message.author.id, message.content.encode('ascii', errors='ignore'), time.time(), quality])
 
+        # Ignore moderators for the following flagging.
         if not message.author.guild_permissions.manage_messages:
+            # Split the message up word by word to avoid problems.
             for split in message.content.lower().split(" "):
+                # Scan for filters, word by word.
                 if any(split.startswith(individual_filter) for individual_filter in filters):
-                    SQL.execute("INSERT INTO profanity_filter (user, message, time) VALUES (%s, %s, %s)",
-                        [message.author.id, message.content.encode('ascii', errors='ignore'), time.time()])
-
+                    # Delete the message from the server.
                     await message.delete()
+
                     await message.author.send(
                         "Hello,\n\nYour message in osu!Akatsuki has been removed as it has been deemed "
                         "unsuitable.\n\nIf you have any questions, please ask <@285190493703503872>. "
@@ -403,6 +415,11 @@ async def on_message(message):
                         f"\n\n```{message.content.replace('`', '')}: {message.content.replace('`', '')}```")
 
                     debug_print(f"Filtered message | '{message.author}: {message.content}'")
+
+                    SQL.execute("INSERT INTO profanity_filter (user, message, time) VALUES (%s, %s, %s)",
+                        [message.author.id, message.content.encode('ascii', errors='ignore'), time.time()])
+
+                    # End here so we don't process the message as a command or anything like that..
                     return
 
         if message.channel.id != AKATSUKI_BOTSPAM_ID: # Don't print anything from botspam. This helps reduce a LOT of clutter.
