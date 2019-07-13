@@ -239,7 +239,6 @@ async def on_ready():
         announce_online.set_footer(icon_url=CRAB_EMOJI, text="Thank you for playing!")
         announce_online.set_thumbnail(url=AKATSUKI_LOGO)
         await bot.get_channel(AKATSUKI_GENERAL_ID).send(embed=announce_online)
-
     return
 
 
@@ -313,31 +312,23 @@ async def on_message(message):
         SQL.execute("SELECT mode, ranked FROM beatmaps WHERE beatmapset_id = %s ORDER BY ranked DESC LIMIT 1", [map_id])
         sel = SQL.fetchone()
 
-        mode   = sel[0]
-        status = sel[1]
-
         if not sel: # We could not find any matching rows with the map_id.
             await message.author.send("That map seems to be invalid. Quoi?")
             return
 
+        mode, status = sel
+
         if status in (2, 5): # Map is already ranked/loved
-            await message.author.send(f"Some (or all) of the difficulties in the beatmap you requested already seem to be {'ranked' if status == 2 else 'loved'} on the Akatsuki server!\n\nIf this is false, please contact a QAT directly to proceed.")
+            await message.author.send(f"Some (or all) of the difficulties in the beatmap you requested already seem to be {'ranked' if status == 2 else 'loved'} "
+                                       "on the Akatsuki server!\n\nIf this is false, please contact a QAT directly to proceed.")
             return
 
         # Sort out mode to be used to check difficulty.
         # Also have a formatted one to be used for final post.
-        if mode == 0:
-            mode = "std"
-            mode_formatted = "osu!"
-        elif mode == 1:
-            mode = "taiko"
-            mode_formatted = "osu!taiko"
-        elif mode == 2:
-            mode = "ctb"
-            mode_formatted = "osu!catch"
-        else:
-            mode = "mania"
-            mode_formatted = "osu!mania"
+        if mode == 0: mode, mode_formatted = "std", "osu!"
+        elif mode == 1: mode, mode_formatted = "taiko", "osu!taiko"
+        elif mode == 2: mode, mode_formatted = "ctb", "osu!catch"
+        else: mode, mode_formatted = "mania", "osu!mania"
 
         # Select map information.
         SQL.execute(f"SELECT song_name, ar, od, max_combo, bpm, difficulty_{mode} FROM beatmaps WHERE beatmapset_id = %s ORDER BY difficulty_{mode} DESC LIMIT 1", [map_id])
@@ -345,13 +336,8 @@ async def on_message(message):
 
         # Return values from web request/DB query.
         # TODO: either use the API for everything, or dont use it at all.
-        artist      = json.loads(requests.get(f"https://cheesegull.mxr.lol/api/s/{map_id}").text)["Creator"]
-        song_name   = bdata[0]
-        ar          = bdata[1]
-        od          = bdata[2]
-        max_combo   = bdata[3]
-        bpm         = bdata[4]
-        star_rating = bdata[5]
+        artist = json.loads(requests.get(f"https://cheesegull.mxr.lol/api/s/{map_id}").text)["Creator"]
+        song_name, ar, od, max_combo, bpm, star_rating = bdata
 
         # Create embeds.
         embed = discord.Embed(
@@ -366,10 +352,10 @@ async def on_message(message):
         embed.add_field(name="Nominator", value=message.author.name)
         embed.add_field(name="Mapper", value=artist)
         embed.add_field(name="Gamemode", value=mode_formatted)
-        embed.add_field(name="Highest SR", value=round(star_rating, 2) + "*")
+        embed.add_field(name="Highest SR", value=f"{round(star_rating, 2)}*")
         embed.add_field(name="Highest AR", value=ar)
         embed.add_field(name="Highest OD", value=od)
-        embed.add_field(name="Highest Max Combo", value=max_combo + "x")
+        embed.add_field(name="Highest Max Combo", value=f"{max_combo}x")
         embed.add_field(name="BPM", value=bpm)
 
         # Prepare, and send the report to the reporter.
@@ -394,7 +380,6 @@ async def on_message(message):
 
         for i in ["👎", "👍"]: # Add thumbs.
             await request_post.add_reaction(i)
-
         return
 
 
