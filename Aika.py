@@ -463,7 +463,7 @@ async def on_message(message):
 
                     debug_print(f"Filtered message | '{message.author}: {message.content}'")
 
-                    SQL.execute("INSERT INTO profanity_filter (user, message, time) VALUES (%s, %s, %s)",
+                    SQL.execute("INSERT INTO profanity_logs (id, user, content, datetime) VALUES (NULL, %s, %s, %s)",
                         [message.author.id, message.content.encode('ascii', errors='ignore'), time.time()])
 
                     # End here so we don't process the message as a command or anything like that..
