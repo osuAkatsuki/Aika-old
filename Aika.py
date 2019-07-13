@@ -52,8 +52,9 @@ except mysql.connector.Error as err:
 else:
     SQL = cnx.cursor()
 
-# Aika's version.
-AIKA_VERSION = 4.18
+# Subsystem versions.
+AIKA_VERSION = 4.18 # Aika (This bot).
+ABNS_VERSION = 2.10 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
 
 # Akatsuki's server/channel IDs.
 # [S] = Server.
@@ -348,7 +349,7 @@ async def on_message(message):
 
         embed.set_image(url=f"https://assets.ppy.sh/beatmaps/{map_id}/covers/cover.jpg?1522396856")
         embed.set_author(name=song_name, url=f"https://akatsuki.pw/d/{map_id}", icon_url=AKATSUKI_LOGO)
-        embed.set_footer(text="Akatsuki's beatmap nomination system v2.1", icon_url="https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg")
+        embed.set_footer(text=f"Akatsuki's beatmap nomination system v{ABNS_VERSION}", icon_url="https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg")
         embed.add_field(name="Nominator", value=message.author.name)
         embed.add_field(name="Mapper", value=artist)
         embed.add_field(name="Gamemode", value=mode_formatted)
@@ -367,7 +368,7 @@ async def on_message(message):
 
         embed_dm.set_thumbnail(url=AKATSUKI_LOGO)
         embed_dm.set_image(url=f"https://assets.ppy.sh/beatmaps/{map_id}/covers/cover.jpg?1522396856")
-        embed_dm.set_footer(text="Akatsuki's beatmap nomination system v2.0", icon_url="https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg")
+        embed_dm.set_footer(text=f"Akatsuki's beatmap nomination system v{ABNS_VERSION}", icon_url="https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg")
 
         # Send the embed to the #rank_requests channel.
         request_post = await bot.get_channel(AKATSUKI_RANK_REQUESTS_ID).send(embed=embed)
