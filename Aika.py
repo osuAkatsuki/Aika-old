@@ -475,11 +475,11 @@ async def on_message(message):
             message_string = f"{message.created_at} [{message.guild if message.guild is not None else ''} {message.channel}] {message.author}: {message.content}"
 
             if message.guild is None: # Private message.
-                print(Fore.YELLOW + Style.BRIGHT + message_string)
+                print(Fore.YELLOW + message_string)
             elif "cmyui" in message.content.lower(): # cmyui was mentioned in the message.
-                print(Fore.CYAN + Style.BRIGHT + message_string)
+                print(Fore.CYAN + message_string)
             elif message.guild.id == AKATSUKI_SERVER_ID: # The server is Akatsuki.
-                print(Fore.BLUE + Style.BRIGHT + message_string)
+                print(Fore.BLUE + message_string)
             else: # Regular message.
                 print(message_string)
 
