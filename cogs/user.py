@@ -188,5 +188,66 @@ class User(commands.Cog):
         await ctx.send(f"Rounded value (decimal places: {ctx.message.content.split(' ')[2] if not fuckpy else fuckpy}): `{round(float(ctx.message.content.split(' ')[1]), int(ctx.message.content.split(' ')[2]))}`")
         return
 
+    @commands.command(
+        name        = "ar",
+        description = "Returns AR with the specified AR and mods."
+    )
+    async def calculate_ar(self, ctx):
+        def check(m):
+            return m.channel == ctx.message.channel and m.author == ctx.message.author
+
+        def ApplyModsToDifficulty(difficulty, hardRockFactor, mods):
+            if "EZ" in mods:
+                difficulty = max(0, difficulty / 2)
+            if "HR" in mods:
+                difficulty = min(10, difficulty * hardRockFactor)
+            return difficulty
+
+        def MapDifficultyRange(difficulty, min, mid, max, mods):
+            difficulty = ApplyModsToDifficulty(difficulty, 1.4, mods)
+
+            if difficulty > 5:
+                return mid + (max - mid) * (difficulty - 5) / 5
+            if difficulty < 5:
+                return mid - (mid - min) * (5 - difficulty) / 5
+            return mid
+
+        await ctx.send("What AR would you like to calculate?")
+        ar = await self.bot.wait_for("message", check=check)
+
+        try:
+            ar = float(ar.content)
+            if ar > 10 or ar < 0: raise ValueError
+        except ValueError:
+            await ctx.send("Please use a valid AR.")
+            return
+
+        await ctx.send("What mod(s) would you like to calculate with? (None is fine!)")
+        _mods = await self.bot.wait_for("message", check=check)
+
+        try:
+            _mods = mods.content.lower()
+        except ValueError:
+            await ctx.send("Please use valid mods (EZ/HR/DT/HT).")
+            return
+
+        mods = []
+
+        if "ez" in _mods: mods.append("EZ") # Add EZ to mods.
+        if "hr" in _mods: mods.append("HR") # Add HR to mods.
+        if "dt" in _mods: mods.append("DT") # Add DT to mods.
+        if "ht" in _mods: mods.append("HT") # Add HT to mods.
+
+        ar_ms = round(MapDifficultyRange(ar, 1800, 1200, 450, mods))
+
+        # Calculate ms with speed changing mods.
+        if "DT" in mods: ar_ms /= 1.5
+        if "HT" in mods: ar_ms *= 1.5
+
+        # Calculate AR. Round to 3 decimal places.
+        ar = round(-(ar_ms - 1800.0) / 120.0 if ar_ms > 1200.0 else -(ar_ms - 1200.0) / 150.0 + 5.0, 3)
+        await ctx.send(f"AR{ar} ({ar_ms}ms){f' [Mods: {mods}]' if mods != [] else ''}")
+        return
+
 def setup(bot):
     bot.add_cog(User(bot))
