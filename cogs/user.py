@@ -226,7 +226,7 @@ class User(commands.Cog):
         _mods = await self.bot.wait_for("message", check=check)
 
         try:
-            _mods = mods.content.lower()
+            _mods = _mods.content.lower()
         except ValueError:
             await ctx.send("Please use valid mods (EZ/HR/DT/HT).")
             return
