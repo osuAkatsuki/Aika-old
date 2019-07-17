@@ -242,7 +242,7 @@ class User(commands.Cog):
 
         # Calculate ms with speed changing mods.
         if "DT" in mods: ar_ms /= 1.5
-        if "HT" in mods: ar_ms *= 1.5
+        if "HT" in mods: ar_ms /= 0.75
 
         # Calculate AR. Round to 3 decimal places.
         ar = round(-(ar_ms - 1800.0) / 120.0 if ar_ms > 1200.0 else -(ar_ms - 1200.0) / 150.0 + 5.0, 3)
