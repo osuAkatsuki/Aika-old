@@ -245,7 +245,7 @@ class User(commands.Cog):
         if "HT" in mods: ar_ms /= 0.75
 
         # Calculate AR. Round to 3 decimal places.
-        ar = round(-(ar_ms - 1800.0) / 120.0 if ar_ms > 1200.0 else -(ar_ms - 1200.0) / 150.0 + 5.0, 3)
+        ar = "%.3f" % round(-(ar_ms - 1800.0) / 120.0 if ar_ms > 1200.0 else -(ar_ms - 1200.0) / 150.0 + 5.0, 3)
         await ctx.send(f"AR{ar} ({ar_ms}ms){f' [Mods: {mods}]' if mods != [] else ''}")
         return
 
