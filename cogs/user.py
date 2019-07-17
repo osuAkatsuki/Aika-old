@@ -227,7 +227,7 @@ class User(commands.Cog):
 
         try:
             _mods = _mods.content.lower()
-            if ("ht" and "dt" in _mods) or ("hr" and "ez" in _mods): raise ValueError # Check for conflicting mods.
+            if ("ht" in _mods and "dt" in _mods) or ("hr" in _mods and "ez" in _mods): raise ValueError # Check for conflicting mods. TODO: all()
         except ValueError:
             await ctx.send("Please use valid mods (EZ/HR/DT/HT).")
             return
