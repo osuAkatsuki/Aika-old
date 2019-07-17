@@ -353,7 +353,7 @@ async def on_message(message):
         embed.add_field(name="Nominator", value=message.author.name)
         embed.add_field(name="Mapper", value=artist)
         embed.add_field(name="Gamemode", value=mode_formatted)
-        embed.add_field(name="Highest SR", value=f"{round(star_rating, 2)}*")
+        embed.add_field(name="Highest SR", value="%.2f*" % round(star_rating, 2))
         embed.add_field(name="Highest AR", value=ar)
         embed.add_field(name="Highest OD", value=od)
         embed.add_field(name="Highest Max Combo", value=f"{max_combo}x")
