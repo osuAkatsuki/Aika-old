@@ -217,7 +217,7 @@ class User(commands.Cog):
 
         try:
             ar = float(ar.content)
-            if ar > 10 or ar < 0: raise ValueError
+            if ar > 10 or ar < 0: raise ValueError # Check for invalid ARs.
         except ValueError:
             await ctx.send("Please use a valid AR.")
             return
@@ -227,6 +227,7 @@ class User(commands.Cog):
 
         try:
             _mods = _mods.content.lower()
+            if ("ht" and "dt" in _mods) or ("hr" and "ez" in _mods): raise ValueError # Check for conflicting mods.
         except ValueError:
             await ctx.send("Please use valid mods (EZ/HR/DT/HT).")
             return
@@ -238,6 +239,7 @@ class User(commands.Cog):
         if "dt" in _mods: mods.append("DT") # Add DT to mods.
         if "ht" in _mods: mods.append("HT") # Add HT to mods.
 
+        # Calculate the ms of the AR.
         ar_ms = round(MapDifficultyRange(ar, 1800, 1200, 450, mods))
 
         # Calculate ms with speed changing mods.
