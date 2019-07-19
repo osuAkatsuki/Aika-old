@@ -101,7 +101,7 @@ filters       = [
                 "zeltu", "karizuku", "koreasu", "asta", "tiller", # I really didn't want to block "tiller", but it seems like it keeps getting mentioned..
 
                 # osu! cheating programs
-                "aqn", "hq", "hqosu",
+                "aqn", "hq", "hqosu", "aquila",
 
                 # Discord links
                 "https://discord.gg/", "http://discord.gg/", "https://discordapp.com/channels", "http://discordapp.com/channels",
