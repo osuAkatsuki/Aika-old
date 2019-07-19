@@ -6,6 +6,7 @@ from mysql.connector import errorcode
 import time
 import hashlib
 import re
+import random
 
 # Error response strings.
 INSUFFICIENT_PRIVILEGES  = "You do not have sufficient privileges for this command."
@@ -61,6 +62,7 @@ class User(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+
     @commands.command(
         name        = "faq",
         description = "Frequently asked questions.",
@@ -103,6 +105,7 @@ class User(commands.Cog):
             await ctx.send(embed=embed)
         return
 
+
     @commands.command(
         name        = "rewrite",
         description = "Aika's rewrite information.",
@@ -114,6 +117,7 @@ class User(commands.Cog):
                         "Repository: https://github.com/osuAkatsuki/Aika.\n"
                         "Sorry for the inconvenience!")
         return
+
 
     @commands.command(
         name        = "nsfw",
@@ -134,6 +138,7 @@ class User(commands.Cog):
             await ctx.send("You should now have access to the NSFW channels.")
         return
 
+
     @commands.command(
         name        = "time",
         description = "Returns the current UNIX time.",
@@ -142,6 +147,7 @@ class User(commands.Cog):
     async def current_unixtime(self, ctx):
         await ctx.send(f"Current UNIX timestamp: `{int(time.time())}`") # int cast to round lol
         return
+
 
     @commands.command(
         name        = "hash",
@@ -154,7 +160,7 @@ class User(commands.Cog):
             await ctx.send(f"{hash_type} is not a supported algorithm.")
             return
 
-        string = ''.join(ctx.message.content.split(' ')[2:]).encode('utf-8')
+        string = "".join(ctx.message.content.split(' ')[2:]).encode('utf-8')
 
         if hash_type == "md5":
             r = hashlib.md5(string)
@@ -172,6 +178,7 @@ class User(commands.Cog):
         await ctx.send(f"{hash_type.upper()}: `{r.hexdigest()}`")
         return
 
+
     @commands.command(
         name        = "round",
         description = "Returns arg0 rounded to arg1 decimal places."
@@ -187,6 +194,16 @@ class User(commands.Cog):
 
         await ctx.send(f"Rounded value (decimal places: {ctx.message.content.split(' ')[2] if not fuckpy else fuckpy}): `{round(float(ctx.message.content.split(' ')[1]), int(ctx.message.content.split(' ')[2]))}`")
         return
+    
+
+    @commands.command(
+        name        = "roll",
+        description = "Rolls a random number between 1-100"
+    )
+    async def roll(self, ctx):
+        await ctx.send(f"{ctx.message.author} rolled a {(str(random.randint(1, 100)))}!")
+        return
+
 
     @commands.command(
         name        = "ar",
@@ -250,6 +267,7 @@ class User(commands.Cog):
         ar = "%.3f" % round(-(ar_ms - 1800.0) / 120.0 if ar_ms > 1200.0 else -(ar_ms - 1200.0) / 150.0 + 5.0, 3)
         await ctx.send(f"AR{ar} ({ar_ms}ms){f' [Mods: {mods}]' if mods != [] else ''}")
         return
+
 
 def setup(bot):
     bot.add_cog(User(bot))
