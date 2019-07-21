@@ -164,8 +164,8 @@ async def on_voice_state_update(member, before, after): # TODO: check if they le
     # Await for the bot to be ready before processing voice state updates whatsoever.
     await bot.wait_until_ready()
 
-    # Only use this event for the dragmein voice channel. Don't update if previous channel was also dragmein.
-    if (after.channel is None or after.channel.id != AKATSUKI_DRAG_ME_IN_VOICE) or (before.channel is None or before.channel.id == AKATSUKI_DRAG_ME_IN_VOICE):
+    # Only use this event for the "drag me in" voice channel.
+    if after.channel is None or after.channel.id != AKATSUKI_DRAG_ME_IN_VOICE:
         return
 
     debug_print(f"on_voice_state_update event fired.\n\nData:\n\n{member}\n\n{before}\n\n{after}")
