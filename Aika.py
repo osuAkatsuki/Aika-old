@@ -54,7 +54,7 @@ else:
 
 # Subsystem versions.
 AIKA_VERSION = 4.19 # Aika (This bot).
-ABNS_VERSION = 2.11 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
+ABNS_VERSION = 2.13 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
 
 # Akatsuki's server/channel IDs.
 # [S] = Server.
