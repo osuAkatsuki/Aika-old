@@ -225,17 +225,15 @@ async def on_ready():
         SQL.execute("SELECT value_int FROM aika_settings WHERE name = 'version_latest'")
         version_latest = SQL.fetchone()[0]
 
-        SQL.execute("UPDATE aika_settings SET value_int = %s WHERE name = 'version_latest'", [AIKA_VERSION])
+        # If the server version mismatches the version of the code, display the update in a #general webhook.
+        if version_latest == AIKA_VERSION:
+            return
 
-        # If the server version mismatches the version of the code, display the update.
-        if version_latest != AIKA_VERSION:
-            announce_title = f"Aika has been updated to v{AIKA_VERSION}. (Previous: v{version_latest})"
-        else:
-            announce_title = f"Aika v{AIKA_VERSION} Online"
+        SQL.execute("UPDATE aika_settings SET value_int = %s WHERE name = 'version_latest'", [AIKA_VERSION])
 
         # Configure, and send the embed to #general.
         announce_online = discord.Embed(
-            title       = announce_title,
+            title       = f"Aika has been updated to v{AIKA_VERSION}. (Previous: v{version_latest})",
             description = "Ready for commands <3\n\nAika is osu!Akatsuki's [open source](https://github.com/osuAkatsuki/Aika) "
                           "discord bot.\n\n[Akatsuki](https://akatsuki.pw)\n[Support Akatsuki](https://akatsuki.pw/support)",
             color       = 0x00ff00)
