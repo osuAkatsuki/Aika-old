@@ -292,7 +292,7 @@ async def on_message(message):
     if message.channel.id == AKATSUKI_RANK_REQUEST_ID:
         await message.delete()
 
-        if not any(required in message.content for required in ("akatsuki.pw", "osu.ppy.sh")) or len(message.content) > 58: # Should not EVER be over 58 characters.
+        if not any(required in message.content for required in ("akatsuki.pw", "osu.ppy.sh")) or len(message.content) > 58: # Should not EVER be over 58 characters. (57 but safe)
             await message.author.send("Your beatmap request was incorrectly formatted, and thus has not been submitted. "
                                       "Please use the old osu links for the time being. (e.g. https://osu.ppy.sh/b/123)")
             return
