@@ -292,17 +292,22 @@ async def on_message(message):
     if message.channel.id == AKATSUKI_RANK_REQUEST_ID:
         await message.delete()
 
-        if not any(required in message.content for required in ("akatsuki.pw", "osu.ppy.sh")) or len(message.content) > 29: # Should not EVER be over 29 characters.
-            await message.author.send("Your beatmap request was incorrectly formatted, and thus has not been submitted. Please use the old osu links for the time being. (e.g. https://osu.ppy.sh/b/123)")
+        if not any(required in message.content for required in ("akatsuki.pw", "osu.ppy.sh")) or len(message.content) > 58: # Should not EVER be over 58 characters.
+            await message.author.send("Your beatmap request was incorrectly formatted, and thus has not been submitted. "
+                                      "Please use the old osu links for the time being. (e.g. https://osu.ppy.sh/b/123)")
             return
 
-        # TODO: New osu link support.
-        if "://" in message.content: # Support both links like "https://osu.ppy.sh/b/123" AND "osu.ppy.sh/b/123". Also allow both /s/ and /b/ links.
+        # Support both links like "https://osu.ppy.sh/b/123" AND "osu.ppy.sh/b/123".
+        # Also allow for /s/, /b/, and /beatmapset/setid/discussion/mapid links.
+        if "://" in message.content:
             partitions = message.content.split("/")[3:]
         else:
             partitions = message.content.split("/")[1:]
 
-        beatmapset = partitions[0] == "s" # Link is a beatmapset_id link, not a beatmap_id link.
+        # Yea thank you for sending something useless in #rank-request very cool.
+        if partitions[0] not in ("s", "b", "beatmapset"): return
+
+        beatmapset = partitions[0] in ("s", "beatmapset") # Link is a beatmapset_id link, not a beatmap_id link.
         map_id = partitions[1] # Can be SetID or MapID.
 
         if not beatmapset: # If the user used a /b/ link, let's turn it into a set id.
