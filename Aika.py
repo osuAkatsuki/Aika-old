@@ -255,7 +255,7 @@ async def on_message(message):
         return
 
     if message.author.id != discord_owner: # Regular user
-        if message.content.lower().split(' ')[0][1:7] == "verify" and message.channel.id == AKATSUKI_VERIFY_ID: # Verify command.
+        if message.content.lower().split(' ')[0][1] == "v" and message.channel.id == AKATSUKI_VERIFY_ID: # Verify command.
             await message.author.add_roles(discord.utils.get(message.guild.roles, name="Members"))
             await message.delete()
             return
@@ -339,12 +339,11 @@ async def on_message(message):
 
         # Select map information.
         SQL.execute(f"SELECT song_name, ar, od, max_combo, bpm, difficulty_{mode} FROM beatmaps WHERE beatmapset_id = %s ORDER BY difficulty_{mode} DESC LIMIT 1", [map_id])
-        bdata = SQL.fetchone()
+        song_name, ar, od, max_combo, bpm, star_rating = SQL.fetchone()
 
         # Return values from web request/DB query.
         # TODO: either use the API for everything, or dont use it at all.
         artist = json.loads(requests.get(f"https://cheesegull.mxr.lol/api/s/{map_id}").text)["Creator"]
-        song_name, ar, od, max_combo, bpm, star_rating = bdata
 
         # Create embeds.
         embed = discord.Embed(
