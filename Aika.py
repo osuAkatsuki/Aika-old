@@ -305,9 +305,9 @@ async def on_message(message):
             partitions = message.content.split("/")[1:]
 
         # Yea thank you for sending something useless in #rank-request very cool.
-        if partitions[0] not in ("s", "b", "beatmapset"): return
+        if partitions[0] not in ("s", "b", "beatmapsets"): return
 
-        beatmapset = partitions[0] in ("s", "beatmapset") # Link is a beatmapset_id link, not a beatmap_id link.
+        beatmapset = partitions[0] in ("s", "beatmapsets") # Link is a beatmapset_id link, not a beatmap_id link.
         map_id = partitions[1] # Can be SetID or MapID.
 
         if not beatmapset: # If the user used a /b/ link, let's turn it into a set id.
