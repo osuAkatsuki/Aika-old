@@ -1,12 +1,13 @@
 import discord
 from discord.ext import commands
-import mysql.connector
-from mysql.connector import errorcode
-import time
 import asyncio
 
-import json
-import requests
+import mysql.connector
+from mysql.connector import errorcode
+
+from time import time
+from json import loads
+from requests import get
 
 # TODO: stop using these!
 from colorama import init
@@ -27,7 +28,7 @@ for _line in config_contents:
     val = line[1].strip()
 
     if key == "SQL_HOST": SQL_HOST = val # IP Address for SQL.
-    elif key == "SQL_USER": SQL_USER = val# Username for SQL.
+    elif key == "SQL_USER": SQL_USER = val # Username for SQL.
     elif key == "SQL_PASS": SQL_PASS = val # Password for SQL.
     elif key == "SQL_DB": SQL_DB = val # DB name for SQL.
 
@@ -50,8 +51,8 @@ else:
     SQL = cnx.cursor()
 
 # Subsystem versions.
-AIKA_VERSION = 4.20 # Aika (This bot).
-ABNS_VERSION = 2.13 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
+AIKA_VERSION = 4.21 # Aika (This bot).
+ABNS_VERSION = 2.14 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
 
 # Akatsuki's server/channel IDs.
 # [S] = Server.
@@ -104,7 +105,7 @@ filters       = [
 # Secondary filters.
 # These are the same idea as filters,
 # although they are *searched for within a string*, rather than compared against.
-secondary_filters = [
+substring_filters = [
                     # PayPal
                     "pp.me", "paypal.me",
 
@@ -121,7 +122,7 @@ high_quality  = ["!faq", "!help", "welcome", "have a good", "enjoy", "no problem
                  "of course", "can help", "i can", "how can i help you"]
 
 # Assign discord owner value.
-SQL.execute("SELECT value_string FROM aika_settings WHERE name = 'discord_owner'")
+SQL.execute("SELECT value_string FROM aika_settings WHERE name = %s", ["discord_owner"])
 discord_owner = int(SQL.fetchone()[0])
 
 
@@ -135,12 +136,14 @@ def debug_print(string):
     """
 
     # Debug value
-    SQL.execute("SELECT value_int FROM aika_settings WHERE name = 'debug'")
+    SQL.execute("SELECT value_int FROM aika_settings WHERE name = %s", ["debug"])
     debug = SQL.fetchone()[0]
 
     if debug:
-        print(f"{Fore.MAGENTA}\n{string}\n")
+        print(Fore.MAGENTA, string, "", sep="\n")
 
+
+def safe_discord(s): return str(s).replace("`", "") 
 
 def get_prefix(client, message):
 
@@ -167,8 +170,7 @@ async def on_voice_state_update(member, before, after): # TODO: check if they le
     await bot.wait_until_ready()
 
     # Only use this event for the "drag me in" voice channel.
-    if after.channel is None or after.channel.id != AKATSUKI_DRAG_ME_IN_VOICE:
-        return
+    if not after.channel or after.channel.id != AKATSUKI_DRAG_ME_IN_VOICE: return
 
     debug_print(f"on_voice_state_update event fired.\n\nData:\n\n{member}\n\n{before}\n\n{after}")
 
@@ -193,18 +195,15 @@ async def on_voice_state_update(member, before, after): # TODO: check if they le
         if user == bot.user: return False
         return reaction.emoji == "👍" and user.voice.channel == FRIENDS_ONLY_VOICE
 
-    try: # Wait for a 👍 from a "friend". Timeout: 5 minutes (300 seconds).
-        reaction, user = await bot.wait_for("reaction_add", timeout=300.0, check=check)
+    # Wait for a 👍 from a "friend". Timeout: 5 minutes.
+    try: reaction, user = await bot.wait_for("reaction_add", timeout=5*60, check=check)
     except asyncio.TimeoutError: # Timed out. Remove the embed.
         await FRIENDS_ONLY_TEXT.send(f"Timed out {member}'s join query.")
         await msg.delete()
         return
 
-    try: # Actually move the member into friends voice channel.
-        await member.move_to(channel=FRIENDS_ONLY_VOICE, reason="Voted in.")
-    except discord.errors.HTTPException: # The user has already left the "drag me in" voice channel.
-        await msg.delete()
-        return
+    try: await member.move_to(channel=FRIENDS_ONLY_VOICE, reason="Voted in.")
+    except discord.errors.HTTPException: await msg.delete(); return
 
     # Send our vote success, and delete the original embed.
     await FRIENDS_ONLY_TEXT.send(f"{user} voted {member} in.")
@@ -215,27 +214,25 @@ async def on_voice_state_update(member, before, after): # TODO: check if they le
 async def on_ready():
     print(f"Logged in as {bot.user.name} - {bot.user.id}")
     await bot.change_presence(activity=discord.Game(name="osu!Akatsuki", url="https://akatsuki.pw/", type=1))
-    for cog in cogs:
-        bot.load_extension(cog)
+    for cog in cogs: bot.load_extension(cog)
 
     # Announce online status to #general if we're on a server build of Aika.
-    SQL.execute("SELECT value_int FROM aika_settings WHERE name = 'server_build'")
+    SQL.execute("SELECT value_int FROM aika_settings WHERE name = %s", ["server_build"])
     server_build = bool(SQL.fetchone()[0])
 
     if server_build:
         # Get the server's latest version of Aika run.
-        SQL.execute("SELECT value_int FROM aika_settings WHERE name = 'version_latest'")
+        SQL.execute("SELECT value_int FROM aika_settings WHERE name = %s", ["version_latest"])
         version_latest = SQL.fetchone()[0]
 
         # If the server version mismatches the version of the code, display the update in a #general webhook.
-        if version_latest == AIKA_VERSION:
-            return
+        if version_latest == AIKA_VERSION: return
 
-        SQL.execute("UPDATE aika_settings SET value_int = %s WHERE name = 'version_latest'", [AIKA_VERSION])
+        SQL.execute("UPDATE aika_settings SET value_int = %s WHERE name = %s", [AIKA_VERSION, "version_latest"])
 
         # Configure, and send the embed to #general.
         announce_online = discord.Embed(
-            title       = f"Aika has been updated to v{AIKA_VERSION}. (Previous: v{version_latest})",
+            title       = f"Aika has been updated to v{'%.2f' % AIKA_VERSION}. (Previous: v{'%.2f' % version_latest})",
             description = "Ready for commands <3\n\nAika is osu!Akatsuki's [open source](https://github.com/osuAkatsuki/Aika) "
                           "discord bot.\n\n[Akatsuki](https://akatsuki.pw)\n[Support Akatsuki](https://akatsuki.pw/support)",
             color       = 0x00ff00)
@@ -260,16 +257,12 @@ async def on_message(message):
             await message.author.add_roles(discord.utils.get(message.guild.roles, name="Members"))
             await message.delete()
             return
-        
-        # Prevent client crashing.. or atleast try a little bit.
-        if not all(ord(char) < 128 for char in message.content) and len(message.content) > 1500:
-            await message.delete()
-            return
 
+        # if we have unicode in > 1k char message, it's probably with crashing intent?
+        if not all(ord(char) < 128 for char in message.content) and len(message.content) > 1000: await message.delete(); return
     else: # Owner
-
-        if message.content.split(' ')[0][1:] == "reload":
-            cog_name = message.content.split(' ')[1].lower()
+        if len(message.content) > 5 and message.content[1:7] == "reload":
+            cog_name = message.content[9:].lower()
             if cog_name in ("staff", "user"):
                 bot.reload_extension(f"cogs.{cog_name}")
                 await message.channel.send(f"Reloaded extension {cog_name}.")
@@ -280,12 +273,10 @@ async def on_message(message):
 
     if message.channel.id in (AKATSUKI_NSFW_STRAIGHT_ID, AKATSUKI_NSFW_TRAPS_ID):
         def check_content(m): # Don't delete links or images.
-            if "http" in message.content or message.attachments:
-                return False
+            if "http" in message.content or message.attachments: return False
             return True
 
-        if check_content(message):
-            await message.delete()
+        if check_content(message): await message.delete()
         return
 
 
@@ -300,10 +291,8 @@ async def on_message(message):
 
         # Support both links like "https://osu.ppy.sh/b/123" AND "osu.ppy.sh/b/123".
         # Also allow for /s/, /b/, and /beatmapset/setid/discussion/mapid links.
-        if "://" in message.content:
-            partitions = message.content.split("/")[3:]
-        else:
-            partitions = message.content.split("/")[1:]
+        if "://" in message.content: partitions = message.content.split("/")[3:]
+        else:                        partitions = message.content.split("/")[1:]
 
         # Yea thank you for sending something useless in #rank-request very cool.
         if partitions[0] not in ("s", "b", "beatmapsets"): return
@@ -344,7 +333,7 @@ async def on_message(message):
 
         # Return values from web request/DB query.
         # TODO: either use the API for everything, or dont use it at all.
-        artist = json.loads(requests.get(f"https://cheesegull.mxr.lol/api/s/{map_id}").text)["Creator"]
+        artist = loads(get(f"https://cheesegull.mxr.lol/api/s/{map_id}").text)["Creator"]
 
         # Create embeds.
         embed = discord.Embed(
@@ -355,7 +344,7 @@ async def on_message(message):
 
         embed.set_image(url=f"https://assets.ppy.sh/beatmaps/{map_id}/covers/cover.jpg?1522396856")
         embed.set_author(name=song_name, url=f"https://akatsuki.pw/d/{map_id}", icon_url=AKATSUKI_LOGO)
-        embed.set_footer(text=f"Akatsuki's beatmap nomination system v{ABNS_VERSION}", icon_url="https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg")
+        embed.set_footer(text=f"Akatsuki's beatmap nomination system v{'%.2f' % ABNS_VERSION}", icon_url="https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg")
         embed.add_field(name="Nominator", value=message.author.name)
         embed.add_field(name="Mapper", value=artist)
         embed.add_field(name="Gamemode", value=mode_formatted)
@@ -379,14 +368,11 @@ async def on_message(message):
         # Send the embed to the #rank_requests channel.
         request_post = await bot.get_channel(AKATSUKI_RANK_REQUESTS_ID).send(embed=embed)
 
-        # Send the embed to the nominator by DM. 
-        try: # TODO: check if we can message the user rather than abusing try-except.
-            await message.author.send(embed=embed_dm)
-        except:
-            print(f"Could not DM ({message.author.name}).")
+        # Send the embed to the nominator by DM. TODO: check if we can message the user rather than abusing try-except? that might just be slower lul
+        try: await message.author.send(embed=embed_dm)
+        except: print(f"Could not DM ({message.author.name}).")
 
-        for i in ["👎", "👍"]: # Add thumbs.
-            await request_post.add_reaction(i)
+        [request_post.add_reaction(i) for i in ["👎", "👍"]]
         return
 
 
@@ -412,7 +398,6 @@ async def on_message(message):
         return
 
     elif message.author != bot.user and message.guild:
-
         # Message sent in #help, log to db.
         if message.channel.id == AKATSUKI_HELP_ID:
             # Split the content into sentences by periods.
@@ -426,78 +411,66 @@ async def on_message(message):
 
             # After every period, check they have a space and the next sentence starts with a capital letter (ignore things like "...").
             for idx, sentence in enumerate(sentence_split):
-                if len(sentence) > 1 and idx != 0:
-                    if sentence[0] == " " and sentence[1].isupper():
-                        continue
+                if len(sentence) > 1 and idx:
+                    if sentence[0] == " " and sentence[1].isupper(): continue
                     negative = True
 
             properly_formatted = message.content[0].isupper() and message.content[len(message.content) - 1] in (".", "?", "!") and not negative
 
-            # Default for quality. 1 : normal message.
             quality = 1
-
-            # The user used profanity in their message.
-            # Flag it as 'low quality' content.
-            if any(x in message.content.lower() for x in profanity):
-                quality = 0
-            # The user either used content deemed 'high quality' in their message, and/or properly formatted their message.
-            # Flag it as 'high quality' content.
-            elif any(x in message.content.lower() for x in high_quality) or properly_formatted:
-                quality = 2
+            if any(x in message.content.lower() for x in profanity): quality = 0
+            elif any(x in message.content.lower() for x in high_quality) or properly_formatted: quality = 2
 
             debug_print(f"Quality of message\n\n{message.author}: {message.content} - {quality}")
 
             # TODO: Store the whole bitch in a single number. 
             # Maybe even do some bitwise black magic shit.
             SQL.execute("INSERT INTO help_logs (id, user, content, datetime, quality) VALUES (NULL, %s, %s, %s, %s)",
-                [message.author.id, message.content.encode('ascii', errors='ignore'), time.time(), quality])
+                [message.author.id, message.content.encode("ascii", errors="ignore"), time(), quality])
 
         # Ignore moderators for the following flagging.
         if message.author.guild_permissions.manage_messages:
             PROFANITY_WARNING = "Hello,\n\nYour message in osu!Akatsuki has been removed as it has been deemed "   \
                                "unsuitable.\n\nIf you have any questions, please ask <@285190493703503872>. "      \
                                 "\n**Do not try to evade this filter as it is considered fair ground for a ban**." \
-                                f"\n\n```{message.content.replace('`', '')}: {message.content.replace('`', '')}```"
+                                f"\n\n```" + safe_discord(message.author.name) + ':' +  safe_discord(message.content) + "```"
 
             # Primary filters.
             # These are looking for direct comparison results.
             for split in message.content.lower().split(" "):
-                if any(split.startswith(individual_filter) for individual_filter in filters) or any(individual_filter in message.content.lower() for individual_filter in secondary_filters):
+                if any(split.startswith(i) for i in filters) or any(i in message.content.lower() for i in substring_filters):
                     await message.delete()
 
                     try: await message.author.send(PROFANITY_WARNING)
-                    except: print(f"{Fore.RED}Could not warn {message.author.name} - no DM privileges.")
+                    except: print(f"{Fore.LIGHTRED_EX}Could not warn {message.author.name}.")
 
-                    debug_print(f"Filtered message | '{message.author}: {message.content}'")
+                    debug_print(f"Filtered message | '{message.author.name}: {message.content}'")
 
                     SQL.execute("INSERT INTO profanity_logs (id, user, content, datetime) VALUES (NULL, %s, %s, %s)",
-                        [message.author.id, message.content.encode('ascii', errors='ignore'), time.time()])
+                        [message.author.id, message.content.encode("ascii", errors="ignore"), time()])
 
                     return
 
-        if message.channel.id != AKATSUKI_BOTSPAM_ID: # Don't print anything from botspam. This helps reduce a LOT of clutter.
+        if message.channel.id != AKATSUKI_BOTSPAM_ID:
+            message_string = f"%s{message.created_at} [{message.guild if message.guild else ''} {message.channel}] {message.author}: {message.content}"
 
-            # Formatted message to be printed to console on message event.
-            message_string = f"{message.created_at} [{message.guild if message.guild is not None else ''} {message.channel}] {message.author}: {message.content}"
+            _c = None
+            if not message.guild: _c = Fore.YELLOW
+            elif "cmyui" in message.content.lower(): _c = Fore.CYAN
+            elif message.guild.id == AKATSUKI_SERVER_ID:  _c = Fore.BLUE
 
-            if message.guild is None: # Private message.
-                print(Fore.YELLOW + message_string)
-            elif "cmyui" in message.content.lower(): # cmyui was mentioned in the message.
-                print(Fore.CYAN + message_string)
-            elif message.guild.id == AKATSUKI_SERVER_ID: # The server is Akatsuki.
-                print(Fore.BLUE + message_string)
-            else: # Regular message.
-                print(message_string)
+            print(message_string % _c)
+            del _c
 
         # Finally, process commands.
         await bot.process_commands(message)
     return
 
-SQL.execute("SELECT value_string FROM aika_settings WHERE name = 'rewrite_token'")
+SQL.execute("SELECT value_string FROM aika_settings WHERE name = %s", ["rewrite_token"])
 bot.run(SQL.fetchone()[0], bot=True, reconnect=True)
 
 # Clean up
-print("\nForce-quit detected. Cleaning up Aika before shutdown..\nCleaning up MySQL variables..")
+print("", "Force-quit detected. Cleaning up Aika before shutdown..", "Cleaning up MySQL variables..", sep="\n")
 SQL.close()
 cnx.close()
 print("Cleaning complete.")
