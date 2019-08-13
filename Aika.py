@@ -21,18 +21,15 @@ SQL_HOST, SQL_USER, SQL_PASS, SQL_DB = [None] * 4
 # Config.
 config = open('config.ini', 'r')
 config_contents = config.read().split("\n")
-for line in config_contents:
-    line = line.split("=")
-    if line[0].strip() == "SQL_HOST": # IP Address for SQL.
-        SQL_HOST = line[1].strip()
-    elif line[0].strip() == "SQL_USER": # Username for SQL.
-        SQL_USER = line[1].strip()
-    elif line[0].strip() == "SQL_PASS": # Password for SQL.
-        SQL_PASS = line[1].strip()
-    elif line[0].strip() == "SQL_DB": # DB name for SQL.
-        SQL_DB = line[1].strip()
-    else: # Config value is unknown. continue iterating anyways.
-        continue
+for _line in config_contents:
+    line = _line.split("=")
+    key = line[0].strip()
+    val = line[1].strip()
+
+    if key == "SQL_HOST": SQL_HOST = val # IP Address for SQL.
+    elif key == "SQL_USER": SQL_USER = val# Username for SQL.
+    elif key == "SQL_PASS": SQL_PASS = val # Password for SQL.
+    elif key == "SQL_DB": SQL_DB = val # DB name for SQL.
 
 # MySQL.
 try:
@@ -90,9 +87,6 @@ CRAB_EMOJI    = "https://cdn.discordapp.com/attachments/365406576548511745/59147
 # as required by rule #2 of the Akatsuki Discord & Chat Rules
 # (https://akatsuki.pw/doc/rules).
 filters       = [
-                # Paypal
-                "https://pp.me", "http://pp.me", "https://paypal.me", "http://paypal.me",
-
                 # osu! private servers
                 "yozora", "ainu", "okamura", "kotorikku", "kurikku", "kawata",
                 "ryusei", "ryu-sei", "enjuu", "verge", "katori", "osu-thailand",
@@ -103,12 +97,20 @@ filters       = [
                 # osu! cheating programs
                 "aqn", "hq", "hqosu", "aquila",
 
-                # Discord links
-                "https://discord.gg/", "http://discord.gg/", "https://discordapp.com/channels", "http://discordapp.com/channels",
-
                 # Bad boy substances
                 "lsd", "dmt", "shrooms"
                 ]
+
+# Secondary filters.
+# These are the same idea as filters,
+# although they are *searched for within a string*, rather than compared against.
+secondary_filters = [
+                    # PayPal
+                    "pp.me", "paypal.me",
+
+                    # Discord invite links
+                    "discord.gg/", "discordapp.com/channels"
+                    ]
 
 # A list of message (sub)strings that we will use to deem
 # a quantifiable value for the "quality" of a message.
@@ -451,19 +453,19 @@ async def on_message(message):
                 [message.author.id, message.content.encode('ascii', errors='ignore'), time.time(), quality])
 
         # Ignore moderators for the following flagging.
-        if not message.author.guild_permissions.manage_messages:
-            # Split the message up word by word to avoid problems.
+        if message.author.guild_permissions.manage_messages:
+            PROFANITY_WARNING = "Hello,\n\nYour message in osu!Akatsuki has been removed as it has been deemed "   \
+                               "unsuitable.\n\nIf you have any questions, please ask <@285190493703503872>. "      \
+                                "\n**Do not try to evade this filter as it is considered fair ground for a ban**." \
+                                f"\n\n```{message.content.replace('`', '')}: {message.content.replace('`', '')}```"
+
+            # Primary filters.
+            # These are looking for direct comparison results.
             for split in message.content.lower().split(" "):
-                # Scan for filters, word by word.
-                if any(split.startswith(individual_filter) for individual_filter in filters):
-                    # Delete the message from the server.
+                if any(split.startswith(individual_filter) for individual_filter in filters) or any(individual_filter in message.content.lower() for individual_filter in secondary_filters):
                     await message.delete()
 
-                    try:
-                        await message.author.send("Hello,\n\nYour message in osu!Akatsuki has been removed as it has been deemed "
-                                                "unsuitable.\n\nIf you have any questions, please ask <@285190493703503872>. "
-                                                "\n**Do not try to evade this filter as it is considered fair ground for a ban**."
-                                                f"\n\n```{message.content.replace('`', '')}: {message.content.replace('`', '')}```")
+                    try: await message.author.send(PROFANITY_WARNING)
                     except: print(f"{Fore.RED}Could not warn {message.author.name} - no DM privileges.")
 
                     debug_print(f"Filtered message | '{message.author}: {message.content}'")
@@ -471,7 +473,6 @@ async def on_message(message):
                     SQL.execute("INSERT INTO profanity_logs (id, user, content, datetime) VALUES (NULL, %s, %s, %s)",
                         [message.author.id, message.content.encode('ascii', errors='ignore'), time.time()])
 
-                    # End here so we don't process the message as a command or anything like that..
                     return
 
         if message.channel.id != AKATSUKI_BOTSPAM_ID: # Don't print anything from botspam. This helps reduce a LOT of clutter.
