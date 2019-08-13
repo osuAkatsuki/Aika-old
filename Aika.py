@@ -28,6 +28,8 @@ with open('config.ini', 'r') as f:
         elif key == "SQL_PASS": SQL_PASS = val # Password for SQL.
         elif key == "SQL_DB": SQL_DB = val # DB name for SQL.
 
+if any(not i for i in [SQL_HOST, SQL_USER, SQL_PASS, SQL_DB]):
+    raise Exception("Not all required configuration values could be found.")
 
 try:
     cnx = mysql.connector.connect(
