@@ -12,27 +12,23 @@ from requests import get
 # TODO: stop using these!
 from colorama import init
 from colorama import Fore, Back, Style
-
-# Initialize colorama.
 init(autoreset=True)
 
-# Initalize values as None for now.
+
 SQL_HOST, SQL_USER, SQL_PASS, SQL_DB = [None] * 4
+with open('config.ini', 'r') as f:
+    for _line in f.read().splitlines():
+        if not _line: continue
+        line = _line.split("=")
+        key = line[0].rstrip()
+        val = line[1].lstrip()
 
-# Config.
-config = open('config.ini', 'r')
-config_contents = config.read().split("\n")
-for _line in config_contents:
-    line = _line.split("=")
-    key = line[0].strip()
-    val = line[1].strip()
+        if key == "SQL_HOST": SQL_HOST = val # IP Address for SQL.
+        elif key == "SQL_USER": SQL_USER = val # Username for SQL.
+        elif key == "SQL_PASS": SQL_PASS = val # Password for SQL.
+        elif key == "SQL_DB": SQL_DB = val # DB name for SQL.
 
-    if key == "SQL_HOST": SQL_HOST = val # IP Address for SQL.
-    elif key == "SQL_USER": SQL_USER = val # Username for SQL.
-    elif key == "SQL_PASS": SQL_PASS = val # Password for SQL.
-    elif key == "SQL_DB": SQL_DB = val # DB name for SQL.
 
-# MySQL.
 try:
     cnx = mysql.connector.connect(
         user       = SQL_USER,
@@ -50,9 +46,11 @@ except mysql.connector.Error as err:
 else:
     SQL = cnx.cursor()
 
+
 # Subsystem versions.
 AIKA_VERSION = 4.21 # Aika (This bot).
 ABNS_VERSION = 2.14 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
+
 
 # Akatsuki's server/channel IDs.
 # [S] = Server.
@@ -74,13 +72,16 @@ AKATSUKI_FRIENDS_ONLY        = 597948877621952533 # [T] | ID for #friends-only.
 AKATSUKI_DRAG_ME_IN_VOICE    = 597949535938936833 # [V] | ID for Drag me in (VC).
 AKATSUKI_FRIENDS_ONLY_VOICE  = 597948898421768192 # [V] | ID for ✨cmyui (VC).
 
+
 # Aika's command prefix.
 COMMAND_PREFIX = '!'
+
 
 # Akatsuki's logo.
 # To be used mostly for embed thumbnails.
 AKATSUKI_LOGO = "https://akatsuki.pw/static/logos/logo.png"
 CRAB_EMOJI    = "https://cdn.discordapp.com/attachments/365406576548511745/591470256497754112/1f980.png"
+
 
 # A list of filters.
 # These are to be used to wipe messages that are deemed inappropriate,
@@ -113,6 +114,7 @@ substring_filters = [
                     "discord.gg/", "discordapp.com/channels"
                     ]
 
+
 # A list of message (sub)strings that we will use to deem
 # a quantifiable value for the "quality" of a message.
 profanity     = ["nigg", "n1gg", "retard", "idiot",
@@ -120,6 +122,7 @@ profanity     = ["nigg", "n1gg", "retard", "idiot",
 
 high_quality  = ["!faq", "!help", "welcome", "have a good", "enjoy", "no problem",
                  "of course", "can help", "i can", "how can i help you"]
+
 
 # Assign discord owner value.
 SQL.execute("SELECT value_string FROM aika_settings WHERE name = %s", ["discord_owner"])
@@ -145,12 +148,14 @@ def debug_print(string):
 
 def safe_discord(s): return str(s).replace("`", "") 
 
+
 def get_prefix(client, message):
 
     prefixes = [COMMAND_PREFIX] # More prefixes can be added to this
 
     # Users can also mention the bot.
     return commands.when_mentioned_or(*prefixes)(client, message)
+
 
 client = discord.Client()
 bot = commands.Bot(
