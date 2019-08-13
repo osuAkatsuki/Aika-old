@@ -53,7 +53,7 @@ else:
     SQL = cnx.cursor()
 
 # Subsystem versions.
-AIKA_VERSION = 4.19 # Aika (This bot).
+AIKA_VERSION = 4.20 # Aika (This bot).
 ABNS_VERSION = 2.13 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
 
 # Akatsuki's server/channel IDs.
