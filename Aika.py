@@ -459,14 +459,14 @@ async def on_message(message):
                     return
 
         if message.channel.id != AKATSUKI_BOTSPAM_ID:
-            message_string = f"%s{message.created_at} [{message.guild if message.guild else ''} {message.channel}] {message.author}: {message.content}"
+            message_string = f"{message.created_at} [{message.guild if message.guild else ''} {message.channel}] {message.author}: {message.content}"
 
             _c = None
             if not message.guild: _c = Fore.YELLOW
             elif "cmyui" in message.content.lower(): _c = Fore.CYAN
             elif message.guild.id == AKATSUKI_SERVER_ID:  _c = Fore.BLUE
 
-            print(message_string % _c)
+            print(_c + message_string)
             del _c
 
         # Finally, process commands.
