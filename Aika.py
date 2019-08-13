@@ -460,11 +460,12 @@ async def on_message(message):
                     # Delete the message from the server.
                     await message.delete()
 
-                    await message.author.send(
-                        "Hello,\n\nYour message in osu!Akatsuki has been removed as it has been deemed "
-                        "unsuitable.\n\nIf you have any questions, please ask <@285190493703503872>. "
-                        "\n**Do not try to evade this filter as it is considered fair ground for a ban**."
-                        f"\n\n```{message.content.replace('`', '')}: {message.content.replace('`', '')}```")
+                    try:
+                        await message.author.send("Hello,\n\nYour message in osu!Akatsuki has been removed as it has been deemed "
+                                                "unsuitable.\n\nIf you have any questions, please ask <@285190493703503872>. "
+                                                "\n**Do not try to evade this filter as it is considered fair ground for a ban**."
+                                                f"\n\n```{message.content.replace('`', '')}: {message.content.replace('`', '')}```")
+                    except: print(f"{Fore.RED}Could not warn {message.author.name} - no DM privileges.")
 
                     debug_print(f"Filtered message | '{message.author}: {message.content}'")
 
