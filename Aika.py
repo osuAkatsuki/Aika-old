@@ -436,7 +436,7 @@ async def on_message(message):
                 [message.author.id, message.content.encode("ascii", errors="ignore"), time(), quality])
 
         # Ignore moderators for the following flagging.
-        if message.author.guild_permissions.manage_messages:
+        if not message.author.guild_permissions.manage_messages:
             PROFANITY_WARNING = "Hello,\n\nYour message in osu!Akatsuki has been removed as it has been deemed "   \
                                "unsuitable.\n\nIf you have any questions, please ask <@285190493703503872>. "      \
                                 "\n**Do not try to evade this filter as it is considered fair ground for a ban**." \
