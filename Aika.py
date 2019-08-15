@@ -440,7 +440,7 @@ async def on_message(message):
             PROFANITY_WARNING = "Hello,\n\nYour message in osu!Akatsuki has been removed as it has been deemed "   \
                                "unsuitable.\n\nIf you have any questions, please ask <@285190493703503872>. "      \
                                 "\n**Do not try to evade this filter as it is considered fair ground for a ban**." \
-                                f"\n\n```" + safe_discord(message.author.name) + ':' +  safe_discord(message.content) + "```"
+                                "\n\n```" + safe_discord(message.author.name) + ': ' +  safe_discord(message.content) + "```"
 
             # Primary filters.
             # These are looking for direct comparison results.
