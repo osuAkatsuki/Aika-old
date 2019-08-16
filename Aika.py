@@ -17,16 +17,18 @@ init(autoreset=True)
 
 SQL_HOST, SQL_USER, SQL_PASS, SQL_DB = [None] * 4
 with open('config.ini', 'r') as f:
-    for _line in f.read().splitlines():
-        if not _line: continue
-        line = _line.split("=")
-        key = line[0].rstrip()
-        val = line[1].lstrip()
+    conf_data = f.read().splitlines()
 
-        if key == "SQL_HOST": SQL_HOST = val # IP Address for SQL.
-        elif key == "SQL_USER": SQL_USER = val # Username for SQL.
-        elif key == "SQL_PASS": SQL_PASS = val # Password for SQL.
-        elif key == "SQL_DB": SQL_DB = val # DB name for SQL.
+for _line in conf_data:
+    if not _line: continue
+    line = _line.split("=")
+    key = line[0].rstrip()
+    val = line[1].lstrip()
+
+    if key == "SQL_HOST": SQL_HOST = val # IP Address for SQL.
+    elif key == "SQL_USER": SQL_USER = val # Username for SQL.
+    elif key == "SQL_PASS": SQL_PASS = val # Password for SQL.
+    elif key == "SQL_DB": SQL_DB = val # DB name for SQL.
 
 if any(not i for i in [SQL_HOST, SQL_USER, SQL_PASS, SQL_DB]):
     raise Exception("Not all required configuration values could be found.")
@@ -40,17 +42,18 @@ try:
         autocommit = True)
 except mysql.connector.Error as err:
     if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-        print("Something is wrong with your username or password.")
+        raise Exception("Something is wrong with your username or password.")
     elif err.errno == errorcode.ER_BAD_DB_ERROR:
-        print("Database does not exist.")
+        raise Exception("Database does not exist.")
     else:
-        print(err)
+        raise Exception(err)
 else:
     SQL = cnx.cursor()
 
+if not SQL: raise Exception("Could not connect to SQL.")
 
 # Subsystem versions.
-AIKA_VERSION = 4.21 # Aika (This bot).
+AIKA_VERSION = 4.22 # Aika (This bot).
 ABNS_VERSION = 2.14 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
 
 
@@ -239,7 +242,7 @@ async def on_ready():
 
         # Configure, and send the embed to #general.
         announce_online = discord.Embed(
-            title       = f"Aika has been updated to v{'%.2f' % AIKA_VERSION}. (Previous: v{'%.2f' % version_latest})",
+            title       = "Aika has been updated to v%.2f. (Previous: v%.2f)" % (AIKA_VERSION, version_latest),
             description = "Ready for commands <3\n\nAika is osu!Akatsuki's [open source](https://github.com/osuAkatsuki/Aika) "
                           "discord bot.\n\n[Akatsuki](https://akatsuki.pw)\n[Support Akatsuki](https://akatsuki.pw/support)",
             color       = 0x00ff00)
@@ -351,7 +354,7 @@ async def on_message(message):
 
         embed.set_image(url=f"https://assets.ppy.sh/beatmaps/{map_id}/covers/cover.jpg?1522396856")
         embed.set_author(name=song_name, url=f"https://akatsuki.pw/d/{map_id}", icon_url=AKATSUKI_LOGO)
-        embed.set_footer(text=f"Akatsuki's beatmap nomination system v{'%.2f' % ABNS_VERSION}", icon_url="https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg")
+        embed.set_footer(text="Akatsuki's beatmap nomination system v%.2f" % ABNS_VERSION, icon_url="https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg")
         embed.add_field(name="Nominator", value=message.author.name)
         embed.add_field(name="Mapper", value=artist)
         embed.add_field(name="Gamemode", value=mode_formatted)
