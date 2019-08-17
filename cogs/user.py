@@ -20,26 +20,24 @@ AKATSUKI_IP_ADDRESS      = "51.79.17.191"     # Akatsuki's osu! server IP.
 # To be used mostly for embed thumbnails.
 AKATSUKI_LOGO            = "https://akatsuki.pw/static/logos/logo.png"
 
-# Initalize values as Nonetype for now.
 SQL_HOST, SQL_USER, SQL_PASS, SQL_DB = [None] * 4
+with open("config.ini", 'r') as f:
+    conf_data = f.read().splitlines()
 
-# Config
-config = open('config.ini', 'r')
-config_contents = config.read().split("\n")
-for line in config_contents:
-    line = line.split("=")
-    if line[0].strip() == "SQL_HOST": # IP Address for SQL.
-        SQL_HOST = line[1].strip()
-    elif line[0].strip() == "SQL_USER": # Username for SQL.
-        SQL_USER = line[1].strip()
-    elif line[0].strip() == "SQL_PASS": # Password for SQL.
-        SQL_PASS = line[1].strip()
-    elif line[0].strip() == "SQL_DB": # DB name for SQL.
-        SQL_DB = line[1].strip()
-    else: # Config value is unknown. continue iterating anyways.
-        continue
+for _line in conf_data:
+    if not _line: continue
+    line = _line.split('=')
+    key = line[0].rstrip()
+    val = line[1].lstrip()
 
-# MySQL
+    if key == "SQL_HOST": SQL_HOST = val # IP Address for SQL.
+    elif key == "SQL_USER": SQL_USER = val # Username for SQL.
+    elif key == "SQL_PASS": SQL_PASS = val # Password for SQL.
+    elif key == "SQL_DB": SQL_DB = val # DB name for SQL.
+
+if any(not i for i in [SQL_HOST, SQL_USER, SQL_PASS, SQL_DB]):
+    raise Exception("Not all required configuration values could be found (SQL_HOST, SQL_USER, SQL_PASS, SQL_DB).")
+
 try:
     cnx = mysql.connector.connect(
         user       = SQL_USER,
@@ -49,13 +47,15 @@ try:
         autocommit = True)
 except mysql.connector.Error as err:
     if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-        print("Something is wrong with your username or password.")
+        raise Exception("Something is wrong with your username or password.")
     elif err.errno == errorcode.ER_BAD_DB_ERROR:
-        print("Database does not exist.")
+        raise Exception("Database does not exist.")
     else:
-        print(err)
+        raise Exception(err)
 else:
     SQL = cnx.cursor()
+
+if not SQL: raise Exception("Could not connect to SQL.")
 
 class User(commands.Cog):
 
@@ -66,54 +66,58 @@ class User(commands.Cog):
     @commands.command(
         name        = "faq",
         description = "Frequently asked questions.",
-        aliases     = ['info', 'information'],
+        aliases     = ["info", "information"],
         usage       = "<callback>"
     )
     async def faq_command(self, ctx):
-        text = ctx.message.content[len(ctx.prefix) + len(ctx.invoked_with) + 1:]
-
-        # 0 = info : 1 = faq
         command_type = 0 if ctx.invoked_with.startswith("info") else 1
-
-        callback = text.split(" ")[0]
-
-        SQL.execute("SELECT * FROM discord_faq WHERE topic = %s AND type = %s", [callback, command_type])
-        result = SQL.fetchone()
-
-        if callback == "" or result is None:
+        async def fail():
+            faq_list = []
             SQL.execute("SELECT id, topic, title FROM discord_faq WHERE type = %s", [command_type])
 
-            faq_db = SQL.fetchall()
+            for idx, val in enumerate(SQL.fetchall()):
+                faq_list.append(f"{idx + 1}. {val[1]}{' ' * (12 - len(val[1]))}|| {val[2]}")
 
-            faq_list = ""
-            for idx, val in enumerate(faq_db):
-                faq_list += f"{idx + 1}. {val[1]}{' ' * (12 - len(val[1]))}|| {val[2]}\n"
+            _ = "I could not find a topic by that name." if len(callback) else ''
+            await ctx.send(_ + "\n```" + '\n'.join(faq_list) + "```")
 
-            await ctx.send(f"{'I could not find a topic by that name.' if len(callback) else ''}\n```{faq_list.replace('`', '')}```")
-        else:
-            embed = discord.Embed(title=result[2], description='** **', color=0x00ff00)
-            embed.set_thumbnail(url=AKATSUKI_LOGO)
-            embed.add_field(
-                name   = "** **",
-                value  = result[3]
-                            .replace("{AKATSUKI_IP}", AKATSUKI_IP_ADDRESS)
-                            .replace("{COMMAND_PREFIX}", ctx.prefix),
-                inline = result[5])
+        if len(ctx.message.content.split(' ')) == 1: await fail(); return
+        callback = ctx.message.content[len(ctx.prefix) + len(ctx.invoked_with) + 1:]
+    
+        SQL.execute("SELECT id, title, content, footer, inline FROM discord_faq WHERE topic = %s AND type = %s", [callback, command_type])
+        result = SQL.fetchone()
 
-            if result[4] is not None:
-                embed.set_footer(icon_url='', text=result[4])
-            await ctx.send(embed=embed)
+        if not result: await fail(); return
+
+        id, title, content, footer, inline = result
+
+        if len(content) > 1024:
+            await ctx.send(f"An error occurred while trying to print the faq.\n\n<@285190493703503872> `faq [{id}] content {len(content)} too long`.")
+            return
+
+        embed = discord.Embed(title=title, description="** **", color=0x00ff00)
+        embed.set_thumbnail(url=AKATSUKI_LOGO)
+        embed.add_field(
+            name   = "** **",
+            value  = content
+                        .replace("{AKATSUKI_IP}", AKATSUKI_IP_ADDRESS)
+                        .replace("{COMMAND_PREFIX}", ctx.prefix),
+            inline = inline)
+
+        if footer is not None:
+            embed.set_footer(icon_url='', text=footer)
+        await ctx.send(embed=embed)
         return
 
 
     @commands.command(
         name        = "rewrite",
         description = "Aika's rewrite information.",
-        aliases     = ['recent', 'stats', 'linkosu', 'botinfo', 'aika', 'cmyui', 'apply', 'akatsuki']
+        aliases     = ["recent", "stats", "linkosu", "botinfo", "aika", "cmyui", "apply", "akatsuki"]
     )
     async def rewrite_info(self, ctx):
         await ctx.send(f"**Aika is currently undergoing a rewrite, and the {ctx.invoked_with} command has not yet been implemented.**\n"
-                        "\n"
+                        '\n'
                         "Repository: https://github.com/osuAkatsuki/Aika.\n"
                         "Sorry for the inconvenience!")
         return
@@ -122,7 +126,7 @@ class User(commands.Cog):
     @commands.command(
         name        = "nsfw",
         description = "Grants access to the NSFW channels of Akatsuki.",
-        aliases     = ['nsfwaccess']
+        aliases     = ["nsfwaccess"]
     )
     async def nsfw_access(self, ctx): # TODO: toggle or check if already has access
         def check(m):
@@ -142,7 +146,7 @@ class User(commands.Cog):
     @commands.command(
         name        = "time",
         description = "Returns the current UNIX time.",
-        aliases     = ['unix', 'unixtime']
+        aliases     = ["unix", "unixtime"]
     )
     async def current_unixtime(self, ctx):
         await ctx.send(f"Current UNIX timestamp: `{int(time.time())}`") # int cast to round lol
@@ -152,7 +156,7 @@ class User(commands.Cog):
     @commands.command(
         name        = "hash",
         description = "Returns the current MD5 of the input string.",
-        aliases     = ['encrypt']
+        aliases     = ["encrypt"]
     )
     async def hash_string(self, ctx):
         hash_type = ctx.message.content.split(' ')[1].lower()
@@ -160,7 +164,7 @@ class User(commands.Cog):
             await ctx.send(f"{hash_type} is not a supported algorithm.")
             return
 
-        string = "".join(ctx.message.content.split(' ')[2:]).encode('utf-8')
+        string = ''.join(ctx.message.content.split(' ')[2:]).encode("utf-8")
 
         if hash_type == "md5":
             r = hashlib.md5(string)
@@ -189,8 +193,8 @@ class User(commands.Cog):
             await ctx.send("Why are your trying to round that?")
             return
 
-        if len(ctx.message.content.split(' ')[1].split(".")[1]) < int(ctx.message.content.split(' ')[2]): # User specified sig digits > actual amt of sig digits
-            fuckpy = len(ctx.message.content.split(' ')[1].split(".")[1]) # use actual amt of sig digits
+        if len(ctx.message.content.split(' ')[1].split('.')[1]) < int(ctx.message.content.split(' ')[2]): # User specified sig digits > actual amt of sig digits
+            fuckpy = len(ctx.message.content.split(' ')[1].split('.')[1]) # use actual amt of sig digits
 
         await ctx.send(f"Rounded value (decimal places: {ctx.message.content.split(' ')[2] if not fuckpy else fuckpy}): `{round(float(ctx.message.content.split(' ')[1]), int(ctx.message.content.split(' ')[2]))}`")
         return
@@ -234,18 +238,16 @@ class User(commands.Cog):
 
         try:
             ar = float(ar.content)
-            if ar > 10 or ar < 0: raise ValueError # Check for invalid ARs.
+            if ar > 10.0 or ar < 0.0: raise ValueError # Check for invalid ARs.
         except ValueError:
             await ctx.send("Please use a valid AR.")
             return
 
         await ctx.send("What mod(s) would you like to calculate with? (None is fine!)")
         _mods = await self.bot.wait_for("message", check=check)
+        _mods = _mods.content.lower()
 
-        try:
-            _mods = _mods.content.lower()
-            if ("ht" in _mods and "dt" in _mods) or ("hr" in _mods and "ez" in _mods): raise ValueError # Check for conflicting mods. TODO: all()
-        except ValueError:
+        if ("ht" in _mods and "dt" in _mods) or ("hr" in _mods and "ez" in _mods):
             await ctx.send("Please use valid mods (EZ/HR/DT/HT).")
             return
 
@@ -257,7 +259,7 @@ class User(commands.Cog):
         if "ht" in _mods: mods.append("HT") # Add HT to mods.
 
         # Calculate the ms of the AR.
-        ar_ms = round(MapDifficultyRange(ar, 1800, 1200, 450, mods))
+        ar_ms = round(MapDifficultyRange(ar, 1800.0, 1200.0, 450.0, mods))
 
         # Calculate ms with speed changing mods.
         if "DT" in mods: ar_ms /= 1.5

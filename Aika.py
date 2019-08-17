@@ -16,12 +16,12 @@ init(autoreset=True)
 
 
 SQL_HOST, SQL_USER, SQL_PASS, SQL_DB = [None] * 4
-with open('config.ini', 'r') as f:
+with open("config.ini", 'r') as f:
     conf_data = f.read().splitlines()
 
 for _line in conf_data:
     if not _line: continue
-    line = _line.split("=")
+    line = _line.split('=')
     key = line[0].rstrip()
     val = line[1].lstrip()
 
@@ -31,7 +31,7 @@ for _line in conf_data:
     elif key == "SQL_DB": SQL_DB = val # DB name for SQL.
 
 if any(not i for i in [SQL_HOST, SQL_USER, SQL_PASS, SQL_DB]):
-    raise Exception("Not all required configuration values could be found.")
+    raise Exception("Not all required configuration values could be found (SQL_HOST, SQL_USER, SQL_PASS, SQL_DB).")
 
 try:
     cnx = mysql.connector.connect(
@@ -53,7 +53,7 @@ else:
 if not SQL: raise Exception("Could not connect to SQL.")
 
 # Subsystem versions.
-AIKA_VERSION = 4.22 # Aika (This bot).
+AIKA_VERSION = 4.25 # Aika (This bot).
 ABNS_VERSION = 2.14 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
 
 
@@ -148,10 +148,10 @@ def debug_print(string):
     debug = SQL.fetchone()[0]
 
     if debug:
-        print(Fore.MAGENTA, string, "", sep="\n")
+        print(Fore.MAGENTA, string, '', sep="\n")
 
 
-def safe_discord(s): return str(s).replace("`", "") 
+def safe_discord(s): return str(s).replace('`', '') 
 
 
 def get_prefix(client, message):
@@ -263,7 +263,7 @@ async def on_message(message):
     if not message.content or len(message.content) < 2: return
 
     if message.author.id != discord_owner: # Regular user
-        if message.content.lower()[1] == "v" and message.channel.id == AKATSUKI_VERIFY_ID: # Verify command.
+        if message.content.lower()[1] == 'v' and message.channel.id == AKATSUKI_VERIFY_ID: # Verify command.
             await message.author.add_roles(discord.utils.get(message.guild.roles, name="Members"))
             await message.delete()
             return
@@ -301,13 +301,12 @@ async def on_message(message):
 
         # Support both links like "https://osu.ppy.sh/b/123" AND "osu.ppy.sh/b/123".
         # Also allow for /s/, /b/, and /beatmapset/setid/discussion/mapid links.
-        if "://" in message.content: partitions = message.content.split("/")[3:]
-        else:                        partitions = message.content.split("/")[1:]
+        partitions = message.content.split("/")[3 if "://" in message.content else 1:]
 
         # Yea thank you for sending something useless in #rank-request very cool.
-        if partitions[0] not in ("s", "b", "beatmapsets"): return
+        if partitions[0] not in ('s', 'b', "beatmapsets"): return
 
-        beatmapset = partitions[0] in ("s", "beatmapsets") # Link is a beatmapset_id link, not a beatmap_id link.
+        beatmapset = partitions[0] in ('s', "beatmapsets") # Link is a beatmapset_id link, not a beatmap_id link.
         map_id = partitions[1] # Can be SetID or MapID.
 
         if not beatmapset: # If the user used a /b/ link, let's turn it into a set id.
@@ -382,7 +381,7 @@ async def on_message(message):
         try: await message.author.send(embed=embed_dm)
         except: print(f"Could not DM ({message.author.name}).")
 
-        [request_post.add_reaction(i) for i in ["👎", "👍"]]
+        for e in ['👎', '👍']: request_post.add_reaction(e)
         return
 
 
@@ -422,10 +421,10 @@ async def on_message(message):
             # After every period, check they have a space and the next sentence starts with a capital letter (ignore things like "...").
             for idx, sentence in enumerate(sentence_split):
                 if len(sentence) > 1 and idx:
-                    if sentence[0] == " " and sentence[1].isupper(): continue
+                    if sentence[0] == ' ' and sentence[1].isupper(): continue
                     negative = True
 
-            properly_formatted = message.content[0].isupper() and message.content[len(message.content) - 1] in (".", "?", "!") and not negative
+            properly_formatted = message.content[0].isupper() and message.content[len(message.content) - 1] in ('.', '?', '!') and not negative
 
             quality = 1
             if any(x in message.content.lower() for x in profanity): quality = 0
@@ -447,7 +446,7 @@ async def on_message(message):
 
             # Primary filters.
             # These are looking for direct comparison results.
-            for split in message.content.lower().split(" "):
+            for split in message.content.lower().split(' '):
                 if any(split.startswith(i) for i in filters) or any(i in message.content.lower() for i in substring_filters):
                     await message.delete()
 
@@ -464,13 +463,13 @@ async def on_message(message):
         if message.channel.id != AKATSUKI_BOTSPAM_ID:
             message_string = f"{message.created_at} [{message.guild if message.guild else ''} {message.channel}] {message.author}: {message.content}"
 
-            _c = None
-            if not message.guild: _c = Fore.YELLOW
-            elif "cmyui" in message.content.lower(): _c = Fore.CYAN
-            elif message.guild.id == AKATSUKI_SERVER_ID:  _c = Fore.BLUE
+            col = None
+            if not message.guild: col = Fore.YELLOW
+            elif "cmyui" in message.content.lower(): col = Fore.CYAN
+            elif message.guild.id == AKATSUKI_SERVER_ID:  col = Fore.BLUE
 
-            print(_c + message_string)
-            del _c
+            print(col + message_string)
+            del col
 
         # Finally, process commands.
         await bot.process_commands(message)

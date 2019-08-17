@@ -24,10 +24,10 @@ class Staff(commands.Cog):
 
         text = ctx.message.content[len(ctx.prefix) + len(ctx.invoked_with) + 1:]
 
-        if text == "":
+        if text == '':
             await ctx.send(content=INCORRECT_NUMBER_OF_ARGS)
         else:
-            message_count = text.split(" ")[0]
+            message_count = text.split(' ')[0]
 
             if not message_count.isdigit():
                 await ctx.send(content=INCORRECT_SYNTAX)
