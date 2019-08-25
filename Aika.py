@@ -1,6 +1,5 @@
-import discord
+import discord, asyncio, os
 from discord.ext import commands
-import asyncio
 
 import mysql.connector
 from mysql.connector import errorcode
@@ -16,7 +15,7 @@ init(autoreset=True)
 
 
 SQL_HOST, SQL_USER, SQL_PASS, SQL_DB = [None] * 4
-with open("config.ini", 'r') as f:
+with open(os.path.dirname(os.path.realpath(__file__)) + "/config.ini", 'r') as f:
     conf_data = f.read().splitlines()
 
 for _line in conf_data:

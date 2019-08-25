@@ -1,12 +1,7 @@
-import discord
+import discord, time, hashlib, re, os, random, mysql.connector
 from discord.ext import commands
 from datetime import datetime as d
-import mysql.connector
 from mysql.connector import errorcode
-import time
-import hashlib
-import re
-import random
 
 # Error response strings.
 INSUFFICIENT_PRIVILEGES  = "You do not have sufficient privileges for this command."
@@ -21,7 +16,7 @@ AKATSUKI_IP_ADDRESS      = "51.79.17.191"     # Akatsuki's osu! server IP.
 AKATSUKI_LOGO            = "https://akatsuki.pw/static/logos/logo.png"
 
 SQL_HOST, SQL_USER, SQL_PASS, SQL_DB = [None] * 4
-with open("config.ini", 'r') as f:
+with open(os.path.dirname(os.path.realpath(__file__)) + "/../config.ini", 'r') as f:
     conf_data = f.read().splitlines()
 
 for _line in conf_data:
@@ -152,6 +147,20 @@ class User(commands.Cog):
         await ctx.send(f"Current UNIX timestamp: `{int(time.time())}`") # int cast to round lol
         return
 
+    @commands.command(
+        name        = "ftcm",
+        description = "Feet & inches > cm. So all our Americans can understand us metric boys.",
+        aliases     = ["fttocm", "america"]
+    )
+    async def ft_to_cm(self, ctx): # TODO both inches and ft alone
+        ft_in = ctx.message.content.split(' ')[1]
+        if any(i not in "1234567890'" for i in ft_in): await ctx.send("no"); return
+        if "'" in ft_in:
+            if len(ft_in.split("'")) != 2: await ctx.send("no"); return
+            feet, inches = [int(i) for i in ft_in.split("'")]
+            await ctx.send(f"`{feet}ft {inches}in` -> `{'%.2f' % (((feet * 12) + inches) * 2.54)}cm`")
+        else: await ctx.send(f"`{int(ft_in)}ft` -> `{'%.2f' % (int(ft_in) * 30.48)}cm`")
+        return
 
     @commands.command(
         name        = "hash",
