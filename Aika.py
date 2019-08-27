@@ -382,7 +382,7 @@ async def on_message(message):
         try: await message.author.send(embed=embed_dm)
         except: print(f"Could not DM ({message.author.name}).")
 
-        for e in ['👎', '👍']: request_post.add_reaction(e)
+        for e in ['👎', '👍']: await request_post.add_reaction(e)
         return
 
 
