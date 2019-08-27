@@ -124,8 +124,12 @@ class User(commands.Cog):
         aliases     = ["nsfwaccess"]
     )
     async def nsfw_access(self, ctx): # TODO: toggle or check if already has access
+        if not any(role.name in ["Supporter", "Premium"] for role in ctx.author.roles):
+            await ctx.send("This command requires atleast the Supporter role.")
+            return
+
         def check(m):
-            return m.channel == ctx.message.channel and m.author == ctx.message.author
+            return m.channel == ctx.channel and m.author == ctx.author
 
         await ctx.send("Please type `Yes` to confirm you are over the age of 18.\n"
                        "If you falsely accept this, you will be permanently banned from the discord.")
@@ -214,7 +218,7 @@ class User(commands.Cog):
         description = "Rolls a random number between 1-100"
     )
     async def roll(self, ctx):
-        await ctx.send(f"{ctx.message.author} rolled a {(str(random.randint(1, 100)))}!")
+        await ctx.send(f"{ctx.author} rolled a {(str(random.randint(1, 100)))}!")
         return
 
 
@@ -224,7 +228,7 @@ class User(commands.Cog):
     )
     async def calculate_ar(self, ctx):
         def check(m):
-            return m.channel == ctx.message.channel and m.author == ctx.message.author
+            return m.channel == ctx.channel and m.author == ctx.author
 
         def ApplyModsToDifficulty(difficulty, hardRockFactor, mods):
             if "EZ" in mods:

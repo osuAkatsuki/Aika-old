@@ -52,8 +52,8 @@ else:
 if not SQL: raise Exception("Could not connect to SQL.")
 
 # Subsystem versions.
-AIKA_VERSION = 4.25 # Aika (This bot).
-ABNS_VERSION = 2.14 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
+AIKA_VERSION = 4.26 # Aika (This bot).
+ABNS_VERSION = 2.15 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
 
 
 # Akatsuki's server/channel IDs.
@@ -66,16 +66,18 @@ AKATSUKI_HELP_ID             = 365413867167285249 # [T] | ID for #help.
 AKATSUKI_VERIFY_ID           = 596662084339761172 # [T] | ID for #verify.
 AKATSUKI_PLAYER_REPORTING_ID = 367068661837725706 # [T] | ID for #player_reporting.
 AKATSUKI_REPORTS_ID          = 367080772076568596 # [T] | ID for #reports.
-AKATSUKI_NSFW_STRAIGHT_ID    = 428460752698081291 # [T] | ID for #nsfw.
-AKATSUKI_NSFW_TRAPS_ID       = 505960162411020288 # [T] | ID for #nsfw-traps.
 AKATSUKI_RANK_REQUEST_ID     = 597200076561055795 # [T] | ID for #rank-request (User).
 AKATSUKI_RANK_REQUESTS_ID    = 557095943602831371 # [T] | ID for #rank-requests (Staff).
 AKATSUKI_BOTSPAM_ID          = 369829943372152833 # [T] | ID for #botspam.
+AKATSUKI_NSFW_ID             = 564208623090139146 # [T] | ID for #nsfw.
 
 AKATSUKI_FRIENDS_ONLY        = 597948877621952533 # [T] | ID for #friends-only.
 AKATSUKI_DRAG_ME_IN_VOICE    = 597949535938936833 # [V] | ID for Drag me in (VC).
 AKATSUKI_FRIENDS_ONLY_VOICE  = 597948898421768192 # [V] | ID for ✨cmyui (VC).
 
+
+# Akatsuki's beatmap mirror.
+MIRROR_ADDRESS = "store.that.wtf"
 
 # Aika's command prefix.
 COMMAND_PREFIX = '!'
@@ -200,7 +202,7 @@ async def on_voice_state_update(member, before, after): # TODO: check if they le
     msg = await FRIENDS_ONLY_TEXT.send(embed=embed)
     await msg.add_reaction("👍")
 
-    def check(reaction, user):
+    def check(reaction, user): # TODO: safe
         if user == bot.user: return False
         return reaction.emoji == "👍" and user.voice.channel == FRIENDS_ONLY_VOICE
 
@@ -259,7 +261,7 @@ async def on_message(message):
 
     # The message has no content.
     # Don't bother doing anything with it.
-    if not message.content or len(message.content) < 2: return
+    if not message.content: return
 
     if message.author.id != discord_owner: # Regular user
         if message.content.lower()[1] == 'v' and message.channel.id == AKATSUKI_VERIFY_ID: # Verify command.
@@ -280,9 +282,9 @@ async def on_message(message):
             return
 
 
-    if message.channel.id in (AKATSUKI_NSFW_STRAIGHT_ID, AKATSUKI_NSFW_TRAPS_ID):
+    if message.channel.id == AKATSUKI_NSFW_ID:
         def check_content(m): # Don't delete links or images.
-            if "http" in message.content or message.attachments: return False
+            if any(message.content.startswith(s) for s in ("http://", "https://")) or message.attachments: return False
             return True
 
         if check_content(message): await message.delete()
@@ -341,7 +343,7 @@ async def on_message(message):
 
         # Return values from web request/DB query.
         # TODO: either use the API for everything, or dont use it at all.
-        artist = loads(get(f"https://cheesegull.mxr.lol/api/s/{map_id}").text)["Creator"]
+        artist = loads(get(f"https://{MIRROR_ADDRESS}/s/{map_id}").text)["Creator"]
 
         # Create embeds.
         embed = discord.Embed(
