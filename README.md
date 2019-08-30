@@ -9,7 +9,7 @@ Aika is essentially the place I decided to take my small knowledge of python, an
 Apparently it's good enough that other osu! servers have decided to fork and use it aswell! If that's what you're interested in doing, feel free to give it a shot (although I'm sure you'd be better off finding an alternative, or making one yourself!).
 
 ## Requirements
-- Python3.6
+- Python>=3.6 (fstrings are used, so 3.6 is a minimum)
 - Requirements (pip3 install -r requirements.txt)
 
 ## How to set up Aika.
@@ -25,11 +25,10 @@ Next, configure the config
 
 The default config should be pretty straight forward. If you're using a token to login to discord, make sure tokenauth is 1, and then just paste your token in. If you're using email/password, disable tokenauth and put the username and password in instead.
 ```
-[mysql]
-host = Your server's IP Address
-user = Your MySQL username
-passwd = Your MySQL password
-db = Your MySQL DB name
+SQL_HOST = Your servers IP Address
+SQL_USER = Your MySQL username
+SQL_PASS = Your MySQL password
+SQL_DB   = Your MySQL DB name
 ```
 Finish up by installing requirements.txt, and then you're on your way.
 ```
