@@ -264,13 +264,16 @@ async def on_message(message):
     if not message.content: return
 
     if message.author.id != discord_owner: # Regular user
-        if message.content.lower()[1] == 'v' and message.channel.id == AKATSUKI_VERIFY_ID: # Verify command.
+        if message.channel.id == AKATSUKI_VERIFY_ID and message.content.lower()[1] == 'v': # Verify command.
             await message.author.add_roles(discord.utils.get(message.guild.roles, name="Members"))
             await message.delete()
             return
 
         # if we have unicode in > 1k char message, it's probably with crashing intent?
-        if not all(ord(char) < 128 for char in message.content) and len(message.content) > 1000: await message.delete(); return
+        if not all(ord(char) < 128 for char in message.content) and len(message.content) > 1000:
+            await message.delete()
+            return
+
     else: # Owner
         if len(message.content) > 5 and message.content[1:7] == "reload":
             cog_name = message.content[9:].lower()
