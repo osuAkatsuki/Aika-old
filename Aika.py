@@ -14,7 +14,7 @@ from colorama import Fore, Back, Style
 init(autoreset=True)
 
 
-SQL_HOST, SQL_USER, SQL_PASS, SQL_DB = [None] * 4
+SQL, SQL_HOST, SQL_USER, SQL_PASS, SQL_DB = [None] * 5
 with open(os.path.dirname(os.path.realpath(__file__)) + "/config.ini", 'r') as f:
     conf_data = f.read().splitlines()
 
@@ -24,10 +24,10 @@ for _line in conf_data:
     key = line[0].rstrip()
     val = line[1].lstrip()
 
-    if key == "SQL_HOST": SQL_HOST = val # IP Address for SQL.
+    if key   == "SQL_HOST": SQL_HOST = val # IP Address for SQL.
     elif key == "SQL_USER": SQL_USER = val # Username for SQL.
     elif key == "SQL_PASS": SQL_PASS = val # Password for SQL.
-    elif key == "SQL_DB": SQL_DB = val # DB name for SQL.
+    elif key == "SQL_DB":   SQL_DB   = val # DB name for SQL.
 
 if any(not i for i in [SQL_HOST, SQL_USER, SQL_PASS, SQL_DB]):
     raise Exception("Not all required configuration values could be found (SQL_HOST, SQL_USER, SQL_PASS, SQL_DB).")
@@ -50,10 +50,11 @@ else:
     SQL = cnx.cursor()
 
 if not SQL: raise Exception("Could not connect to SQL.")
+del SQL_HOST, SQL_USER, SQL_PASS, SQL_DB
 
 # Subsystem versions.
-AIKA_VERSION = 4.26 # Aika (This bot).
-ABNS_VERSION = 2.15 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
+AIKA_VERSION = 4.27 # Aika (This bot).
+ABNS_VERSION = 2.16 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
 
 
 # Akatsuki's server/channel IDs.
@@ -77,7 +78,7 @@ AKATSUKI_FRIENDS_ONLY_VOICE  = 597948898421768192 # [V] | ID for ✨cmyui (VC).
 
 
 # Akatsuki's beatmap mirror.
-MIRROR_ADDRESS = "store.that.wtf"
+MIRROR_ADDRESS = "https://store.that.wtf"
 
 # Aika's command prefix.
 COMMAND_PREFIX = '!'
@@ -322,7 +323,7 @@ async def on_message(message):
         sel = SQL.fetchone()
 
         if not sel: # We could not find any matching rows with the map_id.
-            await message.author.send("That map seems to be invalid. Quoi?")
+            await message.author.send("The beatmap could not be found in our database.")
             return
 
         mode, status = sel
@@ -345,7 +346,7 @@ async def on_message(message):
 
         # Return values from web request/DB query.
         # TODO: either use the API for everything, or dont use it at all.
-        artist = loads(get(f"https://{MIRROR_ADDRESS}/s/{map_id}").text)["Creator"]
+        artist = loads(get(f"{MIRROR_ADDRESS}/s/{map_id}").text)["Creator"]
 
         # Create embeds.
         embed = discord.Embed(
@@ -464,7 +465,7 @@ async def on_message(message):
                     return
 
         if message.channel.id != AKATSUKI_BOTSPAM_ID:
-            message_string = f"{message.created_at} [{message.guild if message.guild else ''} {message.channel}] {message.author}: {message.content}"
+            message_string = f"{message.created_at} [{message.guild} #{message.channel}] {message.author}: {message.content}"
 
             col = None
             if not message.guild: col = Fore.YELLOW
