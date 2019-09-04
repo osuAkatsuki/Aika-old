@@ -266,7 +266,7 @@ async def on_message(message):
 
     if message.author.id != discord_owner: # Regular user
         if message.channel.id == AKATSUKI_VERIFY_ID and message.content.lower()[1] == 'v': # Verify command.
-            await message.author.add_roles(discord.utils.get(message.guild.roles, name="Members"))
+            if not message.content.lower().split(' ')[-1].isdigit(): await message.author.add_roles(discord.utils.get(message.guild.roles, name="Members"))
             await message.delete()
             return
 
