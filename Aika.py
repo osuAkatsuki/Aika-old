@@ -451,7 +451,7 @@ async def on_message(message):
             # Primary filters.
             # These are looking for direct comparison results.
             for split in message.content.lower().split(' '):
-                if any(split.startswith(i) for i in filters) or any(i in message.content.lower() for i in substring_filters):
+                if any(i == split for i in filters) or any(i in message.content.lower() for i in substring_filters):
                     await message.delete()
 
                     try: await message.author.send(PROFANITY_WARNING)
