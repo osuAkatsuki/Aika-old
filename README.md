@@ -25,10 +25,12 @@ Next, configure the config
 
 The default config should be pretty straight forward. If you're using a token to login to discord, make sure tokenauth is 1, and then just paste your token in. If you're using email/password, disable tokenauth and put the username and password in instead.
 ```
-SQL_HOST = Your servers IP Address
-SQL_USER = Your MySQL username
-SQL_PASS = Your MySQL password
-SQL_DB   = Your MySQL DB name
+{
+    "SQL_HOST": "",
+    "SQL_USER": "",
+    "SQL_PASS": "",
+    "SQL_DB": ""
+}
 ```
 Finish up by installing requirements.txt, and then you're on your way.
 ```

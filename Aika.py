@@ -13,21 +13,16 @@ from colorama import init
 from colorama import Fore, Back, Style
 init(autoreset=True)
 
-
+# Init memory and set values from config.json file.
 SQL, SQL_HOST, SQL_USER, SQL_PASS, SQL_DB = [None] * 5
-with open(os.path.dirname(os.path.realpath(__file__)) + "/config.ini", 'r') as f:
-    conf_data = f.read().splitlines()
+with open(os.path.dirname(os.path.realpath(__file__)) + "/config.json", 'r') as f:
+    config = loads(f.read())
 
-for _line in conf_data:
-    if not _line: continue
-    line = _line.split('=')
-    key = line[0].rstrip()
-    val = line[1].lstrip()
-
-    if key   == "SQL_HOST": SQL_HOST = val # IP Address for SQL.
-    elif key == "SQL_USER": SQL_USER = val # Username for SQL.
-    elif key == "SQL_PASS": SQL_PASS = val # Password for SQL.
-    elif key == "SQL_DB":   SQL_DB   = val # DB name for SQL.
+SQL_HOST = config["SQL_HOST"]
+SQL_USER = config["SQL_USER"]
+SQL_PASS = config["SQL_PASS"]
+SQL_DB = config["SQL_DB"]
+del config
 
 if any(not i for i in [SQL_HOST, SQL_USER, SQL_PASS, SQL_DB]):
     raise Exception("Not all required configuration values could be found (SQL_HOST, SQL_USER, SQL_PASS, SQL_DB).")
@@ -56,7 +51,6 @@ del SQL_HOST, SQL_USER, SQL_PASS, SQL_DB
 AIKA_VERSION = 4.27 # Aika (This bot).
 ABNS_VERSION = 2.16 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
 
-
 # Akatsuki's server/channel IDs.
 # [S] = Server.
 # [T] = Text channel.
@@ -76,13 +70,11 @@ AKATSUKI_FRIENDS_ONLY        = 597948877621952533 # [T] | ID for #friends-only.
 AKATSUKI_DRAG_ME_IN_VOICE    = 597949535938936833 # [V] | ID for Drag me in (VC).
 AKATSUKI_FRIENDS_ONLY_VOICE  = 597948898421768192 # [V] | ID for ✨cmyui (VC).
 
-
 # Akatsuki's beatmap mirror.
 MIRROR_ADDRESS = "https://store.that.wtf"
 
 # Aika's command prefix.
 COMMAND_PREFIX = '!'
-
 
 # Akatsuki's logo.
 # To be used mostly for embed thumbnails.
@@ -150,7 +142,7 @@ def debug_print(string):
     debug = SQL.fetchone()[0]
 
     if debug:
-        print(Fore.MAGENTA, string, '', sep="\n")
+        print(Fore.MAGENTA, string, '', sep='\n')
 
 
 def safe_discord(s): return str(s).replace('`', '') 
@@ -201,14 +193,14 @@ async def on_voice_state_update(member, before, after): # TODO: check if they le
 
     # Send our embed, and add our base 👍.
     msg = await FRIENDS_ONLY_TEXT.send(embed=embed)
-    await msg.add_reaction("👍")
+    await msg.add_reaction('👍')
 
     def check(reaction, user): # TODO: safe
         if user == bot.user: return False
-        return reaction.emoji == "👍" and user.voice.channel == FRIENDS_ONLY_VOICE
+        return reaction.emoji == '👍' and user.voice.channel == FRIENDS_ONLY_VOICE
 
     # Wait for a 👍 from a "friend". Timeout: 5 minutes.
-    try: reaction, user = await bot.wait_for("reaction_add", timeout=5*60, check=check)
+    try: reaction, user = await bot.wait_for("reaction_add", timeout=5 * 60, check=check)
     except asyncio.TimeoutError: # Timed out. Remove the embed.
         await FRIENDS_ONLY_TEXT.send(f"Timed out {member}'s join query.")
         await msg.delete()
@@ -271,7 +263,7 @@ async def on_message(message):
             return
 
         # if we have unicode in > 1k char message, it's probably with crashing intent?
-        if not all(ord(char) < 128 for char in message.content) and len(message.content) > 1000:
+        if not all(ord(char) < 128 for char in message.content) and len(message.content) >= 1000:
             await message.delete()
             return
 
@@ -329,8 +321,8 @@ async def on_message(message):
         mode, status = sel
 
         if status in (2, 5): # Map is already ranked/loved
-            await message.author.send(f"Some (or all) of the difficulties in the beatmap you requested already seem to be {'ranked' if status == 2 else 'loved'} "
-                                       "on the Akatsuki server!\n\nIf this is false, please contact a QAT directly to proceed.")
+            await message.author.send(f"Some (or all) of the difficulties in the beatmap you requested already seem to be {'ranked' if status == 2 else 'loved'}"
+                                       " on the Akatsuki server!\n\nIf this is false, please contact a QAT directly to proceed.")
             return
 
         # Sort out mode to be used to check difficulty.
@@ -415,7 +407,7 @@ async def on_message(message):
         if message.channel.id == AKATSUKI_HELP_ID:
             # Split the content into sentences by periods.
             # TODO: Other punctuation marks!
-            sentence_split = message.content.split(".")
+            sentence_split = message.content.split('.')
 
             # Default values for properly formatted messages / negative messages.
             properly_formatted, negative = [False] * 2
@@ -483,7 +475,7 @@ SQL.execute("SELECT value_string FROM aika_settings WHERE name = %s", ["rewrite_
 bot.run(SQL.fetchone()[0], bot=True, reconnect=True)
 
 # Clean up
-print("", "Force-quit detected. Cleaning up Aika before shutdown..", "Cleaning up MySQL variables..", sep="\n")
+print('', "Force-quit detected. Cleaning up Aika before shutdown..", "Cleaning up MySQL variables..", sep='\n')
 SQL.close()
 cnx.close()
 print("Cleaning complete.")

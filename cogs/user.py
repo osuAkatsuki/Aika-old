@@ -2,6 +2,7 @@ import discord, time, hashlib, re, os, random, mysql.connector
 from discord.ext import commands
 from datetime import datetime as d
 from mysql.connector import errorcode
+from json import loads
 
 # Error response strings.
 INSUFFICIENT_PRIVILEGES  = "You do not have sufficient privileges for this command."
@@ -15,20 +16,16 @@ AKATSUKI_IP_ADDRESS      = "51.79.17.191"     # Akatsuki's osu! server IP.
 # To be used mostly for embed thumbnails.
 AKATSUKI_LOGO            = "https://akatsuki.pw/static/logos/logo.png"
 
-SQL_HOST, SQL_USER, SQL_PASS, SQL_DB = [None] * 4
-with open(os.path.dirname(os.path.realpath(__file__)) + "/../config.ini", 'r') as f:
-    conf_data = f.read().splitlines()
+# Init memory and set values from config.json file.
+SQL, SQL_HOST, SQL_USER, SQL_PASS, SQL_DB = [None] * 5
+with open(os.path.dirname(os.path.realpath(__file__)) + "/../config.json", 'r') as f:
+    config = loads(f.read())
 
-for _line in conf_data:
-    if not _line: continue
-    line = _line.split('=')
-    key = line[0].rstrip()
-    val = line[1].lstrip()
-
-    if key == "SQL_HOST": SQL_HOST = val # IP Address for SQL.
-    elif key == "SQL_USER": SQL_USER = val # Username for SQL.
-    elif key == "SQL_PASS": SQL_PASS = val # Password for SQL.
-    elif key == "SQL_DB": SQL_DB = val # DB name for SQL.
+SQL_HOST = config["SQL_HOST"]
+SQL_USER = config["SQL_USER"]
+SQL_PASS = config["SQL_PASS"]
+SQL_DB = config["SQL_DB"]
+del config
 
 if any(not i for i in [SQL_HOST, SQL_USER, SQL_PASS, SQL_DB]):
     raise Exception("Not all required configuration values could be found (SQL_HOST, SQL_USER, SQL_PASS, SQL_DB).")
