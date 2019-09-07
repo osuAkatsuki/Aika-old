@@ -21,7 +21,7 @@ with open(os.path.dirname(os.path.realpath(__file__)) + "/config.json", 'r') as 
 SQL_HOST = config["SQL_HOST"]
 SQL_USER = config["SQL_USER"]
 SQL_PASS = config["SQL_PASS"]
-SQL_DB = config["SQL_DB"]
+SQL_DB   = config["SQL_DB"]
 del config
 
 if any(not i for i in [SQL_HOST, SQL_USER, SQL_PASS, SQL_DB]):
@@ -43,12 +43,10 @@ except mysql.connector.Error as err:
         raise Exception(err)
 else:
     SQL = cnx.cursor()
-
-if not SQL: raise Exception("Could not connect to SQL.")
-del SQL_HOST, SQL_USER, SQL_PASS, SQL_DB
+    del SQL_HOST, SQL_USER, SQL_PASS, SQL_DB
 
 # Subsystem versions.
-AIKA_VERSION = 4.27 # Aika (This bot).
+AIKA_VERSION = 4.29 # Aika (This bot).
 ABNS_VERSION = 2.16 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
 
 # Akatsuki's server/channel IDs.

@@ -24,7 +24,7 @@ with open(os.path.dirname(os.path.realpath(__file__)) + "/../config.json", 'r') 
 SQL_HOST = config["SQL_HOST"]
 SQL_USER = config["SQL_USER"]
 SQL_PASS = config["SQL_PASS"]
-SQL_DB = config["SQL_DB"]
+SQL_DB   = config["SQL_DB"]
 del config
 
 if any(not i for i in [SQL_HOST, SQL_USER, SQL_PASS, SQL_DB]):
@@ -46,8 +46,7 @@ except mysql.connector.Error as err:
         raise Exception(err)
 else:
     SQL = cnx.cursor()
-
-if not SQL: raise Exception("Could not connect to SQL.")
+    del SQL_HOST, SQL_USER, SQL_PASS, SQL_DB
 
 class User(commands.Cog):
 
