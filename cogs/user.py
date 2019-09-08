@@ -61,6 +61,7 @@ class User(commands.Cog):
         usage       = "<callback>"
     )
     async def faq_command(self, ctx):
+        cnx.ping(reconnect=True, attempts=2, delay=1)
         command_type = 0 if ctx.invoked_with.startswith("info") else 1
         async def fail():
             faq_list = []

@@ -303,6 +303,8 @@ async def on_message(message):
         beatmapset = partitions[0] in ('s', "beatmapsets") # Link is a beatmapset_id link, not a beatmap_id link.
         map_id = partitions[1] # Can be SetID or MapID.
 
+        cnx.ping(reconnect=True, attempts=2, delay=1)
+
         if not beatmapset: # If the user used a /b/ link, let's turn it into a set id.
             SQL.execute("SELECT beatmapset_id FROM beatmaps WHERE beatmap_id = %s LIMIT 1", [map_id])
             map_id = SQL.fetchone()[0]
@@ -426,6 +428,8 @@ async def on_message(message):
 
             debug_print(f"Quality of message\n\n{message.author}: {message.content} - {quality}")
 
+            cnx.ping(reconnect=True, attempts=2, delay=1)
+
             # TODO: Store the whole bitch in a single number. 
             # Maybe even do some bitwise black magic shit.
             SQL.execute("INSERT INTO help_logs (id, user, content, datetime, quality) VALUES (NULL, %s, %s, %s, %s)",
@@ -448,6 +452,8 @@ async def on_message(message):
                     except: print(f"{Fore.LIGHTRED_EX}Could not warn {message.author.name}.")
 
                     debug_print(f"Filtered message | '{message.author.name}: {message.content}'")
+
+                    cnx.ping(reconnect=True, attempts=2, delay=1)
 
                     SQL.execute("INSERT INTO profanity_logs (id, user, content, datetime) VALUES (NULL, %s, %s, %s)",
                         [message.author.id, message.content.encode("ascii", errors="ignore"), time()])
