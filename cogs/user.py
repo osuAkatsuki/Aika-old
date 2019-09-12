@@ -63,6 +63,8 @@ class User(commands.Cog):
     async def faq_command(self, ctx):
         cnx.ping(reconnect=True, attempts=2, delay=1)
         command_type = 0 if ctx.invoked_with.startswith("info") else 1
+        callback = ctx.message.content[len(ctx.prefix) + len(ctx.invoked_with) + 1:]
+
         async def fail():
             faq_list = []
             SQL.execute("SELECT id, topic, title FROM discord_faq WHERE type = %s", [command_type])
