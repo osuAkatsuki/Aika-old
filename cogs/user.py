@@ -93,7 +93,7 @@ class User(commands.Cog):
         embed.add_field(
             name   = "** **",
             value  = content
-                        .replace("{AKATSUKI_IP}", AKATSUKI_IP_ADDRESS)
+                        .replace("{AKATSUKI_IP}",    AKATSUKI_IP_ADDRESS)
                         .replace("{COMMAND_PREFIX}", ctx.prefix),
             inline = inline)
 
@@ -158,12 +158,23 @@ class User(commands.Cog):
     )
     async def ft_to_cm(self, ctx): # TODO both inches and ft alone
         ft_in = ctx.message.content.split(' ')[1]
-        if any(i not in "1234567890'" for i in ft_in): await ctx.send("no"); return
+
+        if any(i not in "1234567890'" for i in ft_in):
+            await ctx.send("no")
+            return
+
         if "'" in ft_in:
-            if len(ft_in.split("'")) != 2: await ctx.send("no"); return
+            if len(ft_in.split("'")) != 2:
+                await ctx.send("no")
+                return
+
             feet, inches = [int(i) for i in ft_in.split("'")]
+
             await ctx.send(f"`{feet}ft {inches}in` -> `{'%.2f' % (((feet * 12) + inches) * 2.54)}cm`")
-        else: await ctx.send(f"`{int(ft_in)}ft` -> `{'%.2f' % (int(ft_in) * 30.48)}cm`")
+
+        else:
+            await ctx.send(f"`{int(ft_in)}ft` -> `{'%.2f' % (int(ft_in) * 30.48)}cm`")
+
         return
 
     @commands.command(
@@ -179,18 +190,12 @@ class User(commands.Cog):
 
         string = ''.join(ctx.message.content.split(' ')[2:]).encode("utf-8")
 
-        if hash_type == "md5":
-            r = hashlib.md5(string)
-        elif hash_type == "sha1":
-            r = hashlib.sha1(string)
-        elif hash_type == "sha224":
-            r = hashlib.sha224(string)
-        elif hash_type == "sha256":
-            r = hashlib.sha256(string)
-        elif hash_type == "sha384":
-            r = hashlib.sha384(string)
-        elif hash_type == "sha512":
-            r = hashlib.sha512(string)
+        if   hash_type == "md5":    r = hashlib.md5   (string)
+        elif hash_type == "sha1":   r = hashlib.sha1  (string)
+        elif hash_type == "sha224": r = hashlib.sha224(string)
+        elif hash_type == "sha256": r = hashlib.sha256(string)
+        elif hash_type == "sha384": r = hashlib.sha384(string)
+        elif hash_type == "sha512": r = hashlib.sha512(string)
 
         await ctx.send(f"{hash_type.upper()}: `{r.hexdigest()}`")
         return
@@ -231,10 +236,8 @@ class User(commands.Cog):
             return m.channel == ctx.channel and m.author == ctx.author
 
         def ApplyModsToDifficulty(difficulty, hardRockFactor, mods):
-            if "EZ" in mods:
-                difficulty = max(0, difficulty / 2)
-            if "HR" in mods:
-                difficulty = min(10, difficulty * hardRockFactor)
+            if "EZ" in mods: difficulty = max(0, difficulty / 2)
+            if "HR" in mods: difficulty = min(10, difficulty * hardRockFactor)
             return difficulty
 
         def MapDifficultyRange(difficulty, min, mid, max, mods):
