@@ -126,6 +126,7 @@ class User(commands.Cog):
             await ctx.send("This command requires atleast the Supporter role.")
             return
 
+        """
         def check(m):
             return m.channel == ctx.channel and m.author == ctx.author
 
@@ -134,9 +135,9 @@ class User(commands.Cog):
 
         msg = await self.bot.wait_for("message", check=check)
         resp = msg.content.lower() == "yes"
-        if resp:
-            await ctx.author.add_roles(discord.utils.get(ctx.message.guild.roles, name="NSFW Access"))
-            await ctx.send("You should now have access to the NSFW channels.")
+        if resp:"""
+        await ctx.author.add_roles(discord.utils.get(ctx.message.guild.roles, name="NSFW Access"))
+        await ctx.send("You should now have access to the NSFW channels.")
         return
 
 

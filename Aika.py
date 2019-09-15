@@ -295,7 +295,7 @@ async def on_message(message):
 
         # Support both links like "https://osu.ppy.sh/b/123" AND "osu.ppy.sh/b/123".
         # Also allow for /s/, /b/, and /beatmapset/setid/discussion/mapid links.
-        partitions = message.content.split("/")[3 if "://" in message.content else 1:]
+        partitions = message.content.split('/')[3 if "://" in message.content else 1:]
 
         # Yea thank you for sending something useless in #rank-request very cool.
         if partitions[0] not in ('s', 'b', "beatmapsets"): return
