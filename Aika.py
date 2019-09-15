@@ -471,8 +471,8 @@ async def on_message(message):
 
             col = None
             if not message.guild: col = Fore.YELLOW
-            elif "cmyui" in message.content.lower(): col = Fore.CYAN
-            elif message.guild.id == AKATSUKI_SERVER_ID:  col = Fore.BLUE
+            elif "cmyui" in message.content.lower(): col = Fore.LIGHTRED_EX
+            elif message.guild.id == AKATSUKI_SERVER_ID:  col = Fore.CYAN
 
             print(col + message_string)
             del col
