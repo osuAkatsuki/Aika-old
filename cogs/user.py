@@ -123,7 +123,7 @@ class User(commands.Cog):
     )
     async def nsfw_access(self, ctx): # TODO: toggle or check if already has access
         if not any(role.name in ["Supporter", "Premium"] for role in ctx.author.roles):
-            await ctx.send("This command requires atleast the Supporter role.")
+            #await ctx.send("This command requires atleast the Supporter role.")
             return
 
         """
@@ -137,7 +137,8 @@ class User(commands.Cog):
         resp = msg.content.lower() == "yes"
         if resp:"""
         await ctx.author.add_roles(discord.utils.get(ctx.message.guild.roles, name="NSFW Access"))
-        await ctx.send("You should now have access to the NSFW channels.")
+        await ctx.message.delete()
+        #await ctx.send("You should now have access to the NSFW channels.")
         return
 
 
@@ -239,10 +240,8 @@ class User(commands.Cog):
         def MapDifficultyRange(difficulty, min, mid, max, mods):
             difficulty = ApplyModsToDifficulty(difficulty, 1.4, mods)
 
-            if difficulty > 5:
-                return mid + (max - mid) * (difficulty - 5) / 5
-            if difficulty < 5:
-                return mid - (mid - min) * (5 - difficulty) / 5
+            if difficulty > 5: return mid + (max - mid) * (difficulty - 5) / 5
+            if difficulty < 5: return mid - (mid - min) * (5 - difficulty) / 5
             return mid
 
         await ctx.send("What AR would you like to calculate?")
@@ -274,8 +273,7 @@ class User(commands.Cog):
         ar_ms = round(MapDifficultyRange(ar, 1800.0, 1200.0, 450.0, mods))
 
         # Calculate ms with speed changing mods.
-        if "DT" in mods: ar_ms /= 1.5
-        if "HT" in mods: ar_ms /= 0.75
+        ar_ms /= 1.5 if "DT" in mods else 0.75
 
         # Calculate AR. Round to 3 decimal places.
         ar = "%.3f" % round(-(ar_ms - 1800.0) / 120.0 if ar_ms > 1200.0 else -(ar_ms - 1200.0) / 150.0 + 5.0, 3)
