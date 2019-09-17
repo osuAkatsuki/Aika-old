@@ -85,7 +85,7 @@ class User(commands.Cog):
         id, title, content, footer, inline = result
 
         if len(content) > 1024:
-            await ctx.send(f"An error occurred while trying to print the faq.\n\n<@285190493703503872> `faq [{id}] content {1024 - len(content)} too long`.")
+            await ctx.send(f"An error occurred while trying to print the faq.\n\n<@285190493703503872> `faq [{id}] content {len(content) - 1024} too long`.")
             return
 
         embed = discord.Embed(title=title, description="** **", color=0x00ff00)
