@@ -76,7 +76,7 @@ class User(commands.Cog):
             await ctx.send(_ + "\n```" + '\n'.join(faq_list) + "```")
 
         if len(ctx.message.content.split(' ')) == 1: await fail(); return
-    
+
         SQL.execute("SELECT id, title, content, footer, inline FROM discord_faq WHERE topic = %s AND type = %s", [callback, command_type])
         result = SQL.fetchone()
 
@@ -85,7 +85,7 @@ class User(commands.Cog):
         id, title, content, footer, inline = result
 
         if len(content) > 1024:
-            await ctx.send(f"An error occurred while trying to print the faq.\n\n<@285190493703503872> `faq [{id}] content {len(content)} too long`.")
+            await ctx.send(f"An error occurred while trying to print the faq.\n\n<@285190493703503872> `faq [{id}] content {1024 - len(content)} too long`.")
             return
 
         embed = discord.Embed(title=title, description="** **", color=0x00ff00)
@@ -216,7 +216,7 @@ class User(commands.Cog):
 
         await ctx.send(f"Rounded value (decimal places: {ctx.message.content.split(' ')[2] if not fuckpy else fuckpy}): `{round(float(ctx.message.content.split(' ')[1]), int(ctx.message.content.split(' ')[2]))}`")
         return
-    
+
 
     @commands.command(
         name        = "roll",

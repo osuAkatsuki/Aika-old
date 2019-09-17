@@ -456,7 +456,7 @@ async def on_message(message):
 
                     try: await message.author.send(PROFANITY_WARNING)
                     except: print(f"{Fore.LIGHTRED_EX}Could not warn {message.author.name}.")
-
+                    
                     debug_print(f"Filtered message | '{message.author.name}: {message.content}'")
 
                     cnx.ping(reconnect=True, attempts=2, delay=1)
@@ -470,8 +470,8 @@ async def on_message(message):
             message_string = f"{message.created_at} [{message.guild} #{message.channel}] {message.author}: {message.content}"
 
             col = None
-            if not message.guild: col = Fore.YELLOW
-            elif "cmyui" in message.content.lower(): col = Fore.LIGHTRED_EX
+            if not message.guild:                         col = Fore.YELLOW
+            elif "cmyui" in message.content.lower():      col = Fore.LIGHTRED_EX
             elif message.guild.id == AKATSUKI_SERVER_ID:  col = Fore.CYAN
 
             print(col + message_string)
