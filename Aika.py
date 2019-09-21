@@ -46,7 +46,7 @@ else:
     del SQL_HOST, SQL_USER, SQL_PASS, SQL_DB
 
 # Subsystem versions.
-AIKA_VERSION = 4.29 # Aika (This bot).
+AIKA_VERSION = 4.30 # Aika (This bot).
 ABNS_VERSION = 2.16 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
 
 # Akatsuki's server/channel IDs.
@@ -254,18 +254,23 @@ async def on_message(message):
     # Don't bother doing anything with it.
     if not message.content: return
 
-    if message.author.id != discord_owner: # Regular user
-        if message.channel.id == AKATSUKI_VERIFY_ID and message.content.lower()[1] == 'v': # Verify command.
-            if not message.content.lower().split(' ')[-1].isdigit(): await message.author.add_roles(discord.utils.get(message.guild.roles, name="Members"))
+    # Regular user checks.
+    if message.author.id != discord_owner:
+
+        # Verification channel.
+        if message.channel.id == AKATSUKI_VERIFY_ID:
+            if message.content.lower()[1] == 'v' and not message.content.lower().split(' ')[-1].isdigit():
+                await message.author.add_roles(discord.utils.get(message.guild.roles, name="Members"))
+
+            await message.delete() # Delete all messages posted in #verify.
+            return
+
+        # If we have unicode in > 1k char message, it's probably with crashing intent?
+        if any(ord(char) > 127 for char in message.content) and len(message.content) >= 1000:
             await message.delete()
             return
 
-        # if we have unicode in > 1k char message, it's probably with crashing intent?
-        if not all(ord(char) < 128 for char in message.content) and len(message.content) >= 1000:
-            await message.delete()
-            return
-
-    else: # Owner
+    else: # Owner checks.
         if len(message.content) > 5 and message.content[1:7] == "reload":
             cog_name = message.content[9:].lower()
             if cog_name in ("staff", "user"):
@@ -276,6 +281,7 @@ async def on_message(message):
             return
 
 
+    # NSFW channel checks (deleting non-images from #nsfw).
     if message.channel.id == AKATSUKI_NSFW_ID:
         def check_content(m): # Don't delete links or images.
             if any(message.content.startswith(s) for s in ("http://", "https://")) or message.attachments: return False
@@ -295,7 +301,7 @@ async def on_message(message):
 
         # Support both links like "https://osu.ppy.sh/b/123" AND "osu.ppy.sh/b/123".
         # Also allow for /s/, /b/, and /beatmapset/setid/discussion/mapid links.
-        partitions = message.content.split("/")[3 if "://" in message.content else 1:]
+        partitions = message.content.split('/')[3 if "://" in message.content else 1:]
 
         # Yea thank you for sending something useless in #rank-request very cool.
         if partitions[0] not in ('s', 'b', "beatmapsets"): return
@@ -327,10 +333,10 @@ async def on_message(message):
 
         # Sort out mode to be used to check difficulty.
         # Also have a formatted one to be used for final post.
-        if mode == 0: mode, mode_formatted = "std", "osu!"
+        if   mode == 0: mode, mode_formatted = "std",   "osu!"
         elif mode == 1: mode, mode_formatted = "taiko", "osu!taiko"
-        elif mode == 2: mode, mode_formatted = "ctb", "osu!catch"
-        else: mode, mode_formatted = "mania", "osu!mania"
+        elif mode == 2: mode, mode_formatted = "ctb",   "osu!catch"
+        else:           mode, mode_formatted = "mania", "osu!mania"
 
         # Select map information.
         SQL.execute(f"SELECT song_name, ar, od, max_combo, bpm, difficulty_{mode} FROM beatmaps WHERE beatmapset_id = %s ORDER BY difficulty_{mode} DESC LIMIT 1", [map_id])
@@ -347,17 +353,17 @@ async def on_message(message):
             color       = 5516472 # Akatsuki purple.
         )
 
-        embed.set_image(url=f"https://assets.ppy.sh/beatmaps/{map_id}/covers/cover.jpg?1522396856")
-        embed.set_author(name=song_name, url=f"https://akatsuki.pw/d/{map_id}", icon_url=AKATSUKI_LOGO)
-        embed.set_footer(text="Akatsuki's beatmap nomination system v%.2f" % ABNS_VERSION, icon_url="https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg")
-        embed.add_field(name="Nominator", value=message.author.name)
-        embed.add_field(name="Mapper", value=artist)
-        embed.add_field(name="Gamemode", value=mode_formatted)
-        embed.add_field(name="Highest SR", value="%.2f*" % round(star_rating, 2))
-        embed.add_field(name="Highest AR", value=ar)
-        embed.add_field(name="Highest OD", value=od)
-        embed.add_field(name="Highest Max Combo", value=f"{max_combo}x")
-        embed.add_field(name="BPM", value=bpm)
+        embed.set_image (url  = f"https://assets.ppy.sh/beatmaps/{map_id}/covers/cover.jpg?1522396856")
+        embed.set_author(url  = f"https://akatsuki.pw/d/{map_id}",                           icon_url = AKATSUKI_LOGO, name = song_name)
+        embed.set_footer(text = "Akatsuki's beatmap nomination system v%.2f" % ABNS_VERSION, icon_url = "https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg")
+        embed.add_field (name = "Nominator",         value = message.author.name)
+        embed.add_field (name = "Mapper",            value = artist)
+        embed.add_field (name = "Gamemode",          value = mode_formatted)
+        embed.add_field (name = "Highest SR",        value = "%.2f*" % round(star_rating, 2))
+        embed.add_field (name = "Highest AR",        value = ar)
+        embed.add_field (name = "Highest OD",        value = od)
+        embed.add_field (name = "Highest Max Combo", value = f"{max_combo}x")
+        embed.add_field (name = "BPM",               value = bpm)
 
         # Prepare, and send the report to the reporter.
         embed_dm = discord.Embed(
@@ -366,9 +372,9 @@ async def on_message(message):
             color       = 0x00ff00 # Lime green.
         )
 
-        embed_dm.set_thumbnail(url=AKATSUKI_LOGO)
-        embed_dm.set_image(url=f"https://assets.ppy.sh/beatmaps/{map_id}/covers/cover.jpg?1522396856")
-        embed_dm.set_footer(text=f"Akatsuki's beatmap nomination system v{ABNS_VERSION}", icon_url="https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg")
+        embed_dm.set_thumbnail(url  = AKATSUKI_LOGO)
+        embed_dm.set_image    (url  = f"https://assets.ppy.sh/beatmaps/{map_id}/covers/cover.jpg?1522396856")
+        embed_dm.set_footer   (text = f"Akatsuki's beatmap nomination system v{ABNS_VERSION}", icon_url="https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg")
 
         # Send the embed to the #rank_requests channel.
         request_post = await bot.get_channel(AKATSUKI_RANK_REQUESTS_ID).send(embed=embed)
@@ -386,10 +392,10 @@ async def on_message(message):
         await message.delete() # Delete the message from #player-reporting.
 
         # Prepare, and send the report in #reports.
-        embed = discord.Embed(title="New report recieved.", description="** **", color=0x00ff00)
-        embed.set_thumbnail(url=AKATSUKI_LOGO)
-        embed.add_field(name="Report content", value=message.content, inline=True)
-        embed.add_field(name="Author", value=message.author.mention, inline=True)
+        embed = discord.Embed(title = "New report recieved.", description="** **", color=0x00ff00)
+        embed.set_thumbnail  (url   = AKATSUKI_LOGO)
+        embed.add_field      (name  = "Report content", value = message.content,        inline = True)
+        embed.add_field      (name  = "Author",         value = message.author.mention, inline = True)
 
         # Prepare, and send the report to the reporter.
         embed_pm = discord.Embed(title="Thank you for the player report.", description="We will review the report shortly.", color=0x00ff00)
@@ -450,7 +456,7 @@ async def on_message(message):
 
                     try: await message.author.send(PROFANITY_WARNING)
                     except: print(f"{Fore.LIGHTRED_EX}Could not warn {message.author.name}.")
-
+                    
                     debug_print(f"Filtered message | '{message.author.name}: {message.content}'")
 
                     cnx.ping(reconnect=True, attempts=2, delay=1)
@@ -464,9 +470,9 @@ async def on_message(message):
             message_string = f"{message.created_at} [{message.guild} #{message.channel}] {message.author}: {message.content}"
 
             col = None
-            if not message.guild: col = Fore.YELLOW
-            elif "cmyui" in message.content.lower(): col = Fore.CYAN
-            elif message.guild.id == AKATSUKI_SERVER_ID:  col = Fore.BLUE
+            if not message.guild:                         col = Fore.YELLOW
+            elif "cmyui" in message.content.lower():      col = Fore.LIGHTRED_EX
+            elif message.guild.id == AKATSUKI_SERVER_ID:  col = Fore.CYAN
 
             print(col + message_string)
             del col

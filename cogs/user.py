@@ -76,8 +76,7 @@ class User(commands.Cog):
             await ctx.send(_ + "\n```" + '\n'.join(faq_list) + "```")
 
         if len(ctx.message.content.split(' ')) == 1: await fail(); return
-        callback = ctx.message.content[len(ctx.prefix) + len(ctx.invoked_with) + 1:]
-    
+
         SQL.execute("SELECT id, title, content, footer, inline FROM discord_faq WHERE topic = %s AND type = %s", [callback, command_type])
         result = SQL.fetchone()
 
@@ -86,7 +85,7 @@ class User(commands.Cog):
         id, title, content, footer, inline = result
 
         if len(content) > 1024:
-            await ctx.send(f"An error occurred while trying to print the faq.\n\n<@285190493703503872> `faq [{id}] content {len(content)} too long`.")
+            await ctx.send(f"An error occurred while trying to print the faq.\n\n<@285190493703503872> `faq [{id}] content {len(content) - 1024} too long`.")
             return
 
         embed = discord.Embed(title=title, description="** **", color=0x00ff00)
@@ -94,7 +93,7 @@ class User(commands.Cog):
         embed.add_field(
             name   = "** **",
             value  = content
-                        .replace("{AKATSUKI_IP}", AKATSUKI_IP_ADDRESS)
+                        .replace("{AKATSUKI_IP}",    AKATSUKI_IP_ADDRESS)
                         .replace("{COMMAND_PREFIX}", ctx.prefix),
             inline = inline)
 
@@ -124,9 +123,10 @@ class User(commands.Cog):
     )
     async def nsfw_access(self, ctx): # TODO: toggle or check if already has access
         if not any(role.name in ["Supporter", "Premium"] for role in ctx.author.roles):
-            await ctx.send("This command requires atleast the Supporter role.")
+            #await ctx.send("This command requires atleast the Supporter role.")
             return
 
+        """
         def check(m):
             return m.channel == ctx.channel and m.author == ctx.author
 
@@ -135,9 +135,10 @@ class User(commands.Cog):
 
         msg = await self.bot.wait_for("message", check=check)
         resp = msg.content.lower() == "yes"
-        if resp:
-            await ctx.author.add_roles(discord.utils.get(ctx.message.guild.roles, name="NSFW Access"))
-            await ctx.send("You should now have access to the NSFW channels.")
+        if resp:"""
+        await ctx.author.add_roles(discord.utils.get(ctx.message.guild.roles, name="NSFW Access"))
+        await ctx.message.delete()
+        #await ctx.send("You should now have access to the NSFW channels.")
         return
 
 
@@ -157,12 +158,23 @@ class User(commands.Cog):
     )
     async def ft_to_cm(self, ctx): # TODO both inches and ft alone
         ft_in = ctx.message.content.split(' ')[1]
-        if any(i not in "1234567890'" for i in ft_in): await ctx.send("no"); return
+
+        if any(i not in "1234567890'" for i in ft_in):
+            await ctx.send("no")
+            return
+
         if "'" in ft_in:
-            if len(ft_in.split("'")) != 2: await ctx.send("no"); return
+            if len(ft_in.split("'")) != 2:
+                await ctx.send("no")
+                return
+
             feet, inches = [int(i) for i in ft_in.split("'")]
+
             await ctx.send(f"`{feet}ft {inches}in` -> `{'%.2f' % (((feet * 12) + inches) * 2.54)}cm`")
-        else: await ctx.send(f"`{int(ft_in)}ft` -> `{'%.2f' % (int(ft_in) * 30.48)}cm`")
+
+        else:
+            await ctx.send(f"`{int(ft_in)}ft` -> `{'%.2f' % (int(ft_in) * 30.48)}cm`")
+
         return
 
     @commands.command(
@@ -178,18 +190,12 @@ class User(commands.Cog):
 
         string = ''.join(ctx.message.content.split(' ')[2:]).encode("utf-8")
 
-        if hash_type == "md5":
-            r = hashlib.md5(string)
-        elif hash_type == "sha1":
-            r = hashlib.sha1(string)
-        elif hash_type == "sha224":
-            r = hashlib.sha224(string)
-        elif hash_type == "sha256":
-            r = hashlib.sha256(string)
-        elif hash_type == "sha384":
-            r = hashlib.sha384(string)
-        elif hash_type == "sha512":
-            r = hashlib.sha512(string)
+        if   hash_type == "md5":    r = hashlib.md5   (string)
+        elif hash_type == "sha1":   r = hashlib.sha1  (string)
+        elif hash_type == "sha224": r = hashlib.sha224(string)
+        elif hash_type == "sha256": r = hashlib.sha256(string)
+        elif hash_type == "sha384": r = hashlib.sha384(string)
+        elif hash_type == "sha512": r = hashlib.sha512(string)
 
         await ctx.send(f"{hash_type.upper()}: `{r.hexdigest()}`")
         return
@@ -210,7 +216,7 @@ class User(commands.Cog):
 
         await ctx.send(f"Rounded value (decimal places: {ctx.message.content.split(' ')[2] if not fuckpy else fuckpy}): `{round(float(ctx.message.content.split(' ')[1]), int(ctx.message.content.split(' ')[2]))}`")
         return
-    
+
 
     @commands.command(
         name        = "roll",
@@ -230,19 +236,15 @@ class User(commands.Cog):
             return m.channel == ctx.channel and m.author == ctx.author
 
         def ApplyModsToDifficulty(difficulty, hardRockFactor, mods):
-            if "EZ" in mods:
-                difficulty = max(0, difficulty / 2)
-            if "HR" in mods:
-                difficulty = min(10, difficulty * hardRockFactor)
+            if "EZ" in mods: difficulty = max(0, difficulty / 2)
+            if "HR" in mods: difficulty = min(10, difficulty * hardRockFactor)
             return difficulty
 
         def MapDifficultyRange(difficulty, min, mid, max, mods):
             difficulty = ApplyModsToDifficulty(difficulty, 1.4, mods)
 
-            if difficulty > 5:
-                return mid + (max - mid) * (difficulty - 5) / 5
-            if difficulty < 5:
-                return mid - (mid - min) * (5 - difficulty) / 5
+            if difficulty > 5: return mid + (max - mid) * (difficulty - 5) / 5
+            if difficulty < 5: return mid - (mid - min) * (5 - difficulty) / 5
             return mid
 
         await ctx.send("What AR would you like to calculate?")
@@ -274,8 +276,7 @@ class User(commands.Cog):
         ar_ms = round(MapDifficultyRange(ar, 1800.0, 1200.0, 450.0, mods))
 
         # Calculate ms with speed changing mods.
-        if "DT" in mods: ar_ms /= 1.5
-        if "HT" in mods: ar_ms /= 0.75
+        ar_ms /= 1.5 if "DT" in mods else 0.75
 
         # Calculate AR. Round to 3 decimal places.
         ar = "%.3f" % round(-(ar_ms - 1800.0) / 120.0 if ar_ms > 1200.0 else -(ar_ms - 1200.0) / 150.0 + 5.0, 3)
