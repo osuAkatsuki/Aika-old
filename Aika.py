@@ -5,73 +5,65 @@ from discord.ext import commands
 import mysql.connector
 from mysql.connector import errorcode
 from time import time
+from datetime import datetime
 from json import loads, dump
 from os import path
 from requests import get
+
+from colorama import init; init(autoreset=True)
 from colorama import Fore as Colour
 
-# Hardcoded version numbers.
-# These are to be updated on ACTUAL updates.
-global __version, __abns_version
-__version      = 4.35 # Aika (This bot).
-__abns_version = 2.19 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
-__config_path  = path.dirname(path.realpath(__file__)) + "/config.json"
+""" Configuration. """
 
-""" Prepare config. """
+# Hardcoded version numbers.
+global __version, __abns_version
+__version      = 4.39 # Aika (This bot).
+__abns_version = 2.19 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
+__config_path  = f"{path.dirname(path.realpath(__file__))}/config.json"
+
+# Check for mismatching hardcoded version - config version.
 global mismatch
 mismatch = 0
-with open(__config_path, "r+") as tmp_file:
+with open(__config_path, "r+", encoding="ascii") as tmp_file:
     tmp_config = loads(tmp_file.read())
 
-    if tmp_config["version"] != __version:
+    # TODO: check if server build, would not matter for a test env.
+
+    if tmp_config["version"] != __version: # If mismatch, update the old config but store the mismatched version for announce.
         mismatch = tmp_config["version"]
         tmp_config["version"] = __version
 
     tmp_file.seek(0)
 
-    dump(tmp_config, tmp_file, sort_keys=True, indent=4,)
+    dump(
+        obj       = tmp_config,
+        fp        = tmp_file,
+        sort_keys = True,
+        indent    = 4
+    )
     del tmp_config
 
     tmp_file.truncate()
 
-""" Read and assign values from config. """
-with open(__config_path, 'r') as f:
+# Now read the config file for real.
+with open(__config_path, 'r', encoding="ascii") as f:
     config = loads(f.read())
 
+# Version numbers from config.
+version              = config["version"]
+abns_version         = config["abns_version"]
+
+# Aika's discord token.
+discord_token        = config["discord_token"]
+
+# MySQL authentification from config.
 mysql_host           = config["mysql_host"]
 mysql_user           = config["mysql_user"]
 mysql_passwd         = config["mysql_passwd"]
 mysql_database       = config["mysql_database"]
 
-discord_token        = config["discord_token"]
-discord_owner_userid = config["discord_owner_userid"]
-
-server_build         = config["server_build"]
-version              = config["version"]
-abns_version         = config["abns_version"]
-
-try: cnx = mysql.connector.connect(
-        user       = mysql_user,
-        password   = mysql_passwd,
-        host       = mysql_host,
-        database   = mysql_database,
-        autocommit = True,
-        use_pure   = True)
-except mysql.connector.Error as err:
-    if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-        raise Exception("Something is wrong with your username or password.")
-    elif err.errno == errorcode.ER_BAD_DB_ERROR:
-        raise Exception("Database does not exist.")
-    else: raise Exception(err)
-except:   raise Exception("Something really died.")
-
-SQL = cnx.cursor()
-del mysql_host, mysql_user, mysql_passwd, mysql_database
-
 # Akatsuki's server/channel IDs.
-# [S] = Server.
-# [T] = Text channel.
-# [V] = Voice channel.
+# [S] = Server. [T] = Text channel. [V] = Voice channel.
 akatsuki_server_id           = config["akatsuki_server_id"]           # [S] | ID for osu!Akatsuki.
 akatsuki_general_id          = config["akatsuki_general_id"]          # [T] | ID for #general.
 akatsuki_help_id             = config["akatsuki_help_id"]             # [T] | ID for #help.
@@ -88,30 +80,42 @@ akatsuki_friends_only_voice  = config["akatsuki_friends_only_voice"]  # [V] | ID
 
 mirror_address = config["mirror_address"]       # Akatsuki's beatmap mirror (used in ABNS system).
 discord_owner  = config["discord_owner_userid"] # Assign discord owner value.
-command_prefix = config["command_prefix"]       # Aika's command prefix.
-akatsuki_logo  = config["akatsuki_logo"]        # Akatsuki's logo.
-crab_emoji     = config["crab_emoji"]           # Yeah?
-server_build   = config["server_build"]
-
-
-""" Chat Filters / Quality Standards. """
+server_build   = config["server_build"]         # If we're running a server build.
+command_prefix = config["command_prefix"]
+akatsuki_logo  = config["akatsuki_logo"]
+crab_emoji     = config["crab_emoji"]
 
 # A list of filters.
 # These are to be used to wipe messages that are deemed inappropriate,
 # or break rules. For the most part, these are of other private servers,
 # as required by rule #2 of the Akatsuki Discord & Chat Rules
 # (https://akatsuki.pw/doc/rules).
-filters = config["filters"]
-
-# Secondary filters.
-# These are the same idea as filters,
-# although they are *searched for within a string*, rather than compared against.
-substring_filters = config["substring_filters"]
+filters           = config["filters"]           # Direct word for word strcmp.
+substring_filters = config["substring_filters"] # Find string in message.
 
 # A list of message (sub)strings that we will use to deem
 # a quantifiable value for the "quality" of a message.
-profanity     = config["profanity"]
-high_quality  = config["high_quality"]
+low_quality   = config["low_quality"]    # Deemed a "low-quality" message  (usually profanity).
+high_quality  = config["high_quality"] # Deemed a "high-quality" message (usually professionality & proper grammar).
+
+
+""" Attempt to connect to MySQL. """
+try: cnx = mysql.connector.connect(
+        user       = mysql_user,
+        password   = mysql_passwd,
+        host       = mysql_host,
+        database   = mysql_database,
+        autocommit = True,
+        use_pure   = True)
+except mysql.connector.Error as err:
+    if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+        raise Exception("Something is wrong with your username or password.")
+    elif err.errno == errorcode.ER_BAD_DB_ERROR:
+        raise Exception("Database does not exist.")
+    else: raise Exception(err)
+
+SQL = cnx.cursor()
+del mysql_host, mysql_user, mysql_passwd, mysql_database
 
 
 """ Functions. """
@@ -121,19 +125,12 @@ def get_prefix(client, message): return commands.when_mentioned_or(*[config["com
 #bot.change_presence(activity=discord.Game(name="osu!Akatsuki", url="https://akatsuki.pw/", type=1))
 client = discord.Client(
     max_messages      = 2500,
-    status            = "1",
-    activity          = discord.Game(
-                            name = "osu!Akatsuki",
-                            url  = "https://akatsuki.pw/",
-                            type = 1
-                        ),
     heartbeat_timeout = 20
 )
 
 bot = commands.Bot(
     command_prefix   = get_prefix,
     case_insensitive = True,
-    #description      = "Aika - osu!Akatsuki's official Discord bot.",
     help_command     = None,
     self_bot         = False,
     owner_id         = discord_owner
@@ -186,8 +183,20 @@ async def on_voice_state_update(member, before, after): # TODO: check if they le
 
 @bot.event
 async def on_ready():
-    print(f"Logged in as {bot.user.name} - {bot.user.id}")
-    #await bot.change_presence(activity=discord.Game(name="osu!Akatsuki", url="https://akatsuki.pw/", type=1))
+
+    print("=" * 40,
+          f"Logged in as {bot.user.name} - {bot.user.id}\n",
+          f"UserID: {bot.user.id}",
+          f"Version: {version}",
+          f"ABNS Version: {abns_version}",
+          f"Owner: {discord_owner}",
+          f"Filters: {len(filters)} | {len(substring_filters)}",
+          "=" * 40,
+          end="\n\n",
+          sep="\n"
+    )
+
+    # Load cogs.
     [bot.load_extension(i) for i in ["cogs.staff", "cogs.user"]]
 
     if not server_build or not mismatch: return
@@ -387,7 +396,7 @@ async def on_message(message):
             properly_formatted = message.content[0].isupper() and message.content[len(message.content) - 1] in ('.', '?', '!') and not negative
 
             quality = 1
-            if any(x in message.content.lower() for x in profanity): quality = 0
+            if any(x in message.content.lower() for x in low_quality): quality = 0
             elif any(x in message.content.lower() for x in high_quality) or properly_formatted: quality = 2
 
             cnx.ping(reconnect=True, attempts=2, delay=1)
@@ -397,20 +406,18 @@ async def on_message(message):
             SQL.execute("INSERT INTO help_logs (id, user, content, datetime, quality) VALUES (NULL, %s, %s, %s, %s)",
                 [message.author.id, message.content.encode("ascii", errors="ignore"), time(), quality])
 
-        # Ignore moderators for the following flagging.
+        # Ignore any member with discord's "manage_messages" permissions.
+        # Filter messages with our filters & substring_filters.
         if not message.author.guild_permissions.manage_messages:
-            PROFANITY_WARNING = "Hello,\n\nYour message in osu!Akatsuki has been removed as it has been deemed "   \
-                                "unsuitable.\n\nIf you have any questions, please ask <@285190493703503872>. "     \
-                                "\n**Do not try to evade this filter as it is considered fair ground for a ban**." \
-                                f"\n\n```{safe_discord(message.author.name)}: {safe_discord(message.content)}```"
-
-            # Primary filters.
-            # These are looking for direct comparison results.
             for split in message.content.lower().split(' '):
                 if any(i == split for i in filters) or any(i in message.content.lower() for i in substring_filters):
                     await message.delete()
 
-                    try: await message.author.send(PROFANITY_WARNING)
+                    try: await message.author.send(
+                        "Hello,\n\nYour message in osu!Akatsuki has been removed as it has been deemed "   \
+                        f"unsuitable.\n\nIf you have any questions, please ask <@{discord_owner}>. "       \
+                        "\n**Do not try to evade this filter as it is considered fair ground for a ban**." \
+                        f"\n\n```{safe_discord(f'{message.author.name}: {message.content}')}```")
                     except: print(f"{Colour.LIGHTRED_EX}Could not warn {message.author.name}.")
 
                     cnx.ping(reconnect=True, attempts=2, delay=1)
@@ -421,14 +428,16 @@ async def on_message(message):
                     return
 
         if message.channel.id != akatsuki_botspam_id:
-            message_string = f"{message.created_at} [{message.guild} #{message.channel}] {message.author}: {message.content}"
+            message_string = f"{'{0:%Y-%m-%d %H:%M:%S}'.format(datetime.now())} [{message.guild} #{message.channel}] {message.author}: {message.content}\n"
+
+            with open(f"{path.dirname(path.realpath(__file__))}/discord.log", 'a') as log: log.write(message_string)
 
             col = None
             if not message.guild:                         col = Colour.YELLOW
             elif "cmyui" in message.content.lower():      col = Colour.LIGHTRED_EX
             elif message.guild.id == akatsuki_server_id:  col = Colour.CYAN
 
-            print(col + message_string)
+            print(col + message_string, end='')
             del col
 
         # Finally, process commands.
