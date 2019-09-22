@@ -2,7 +2,7 @@ import discord, time, hashlib, re, os, random, mysql.connector
 from discord.ext import commands
 from datetime import datetime as d
 from mysql.connector import errorcode
-from json import loads
+import json
 
 # Error response strings.
 INSUFFICIENT_PRIVILEGES  = "You do not have sufficient privileges for this command."
@@ -16,26 +16,23 @@ AKATSUKI_IP_ADDRESS      = "51.79.17.191"     # Akatsuki's osu! server IP.
 # To be used mostly for embed thumbnails.
 AKATSUKI_LOGO            = "https://akatsuki.pw/static/logos/logo.png"
 
-# Init memory and set values from config.json file.
-SQL, SQL_HOST, SQL_USER, SQL_PASS, SQL_DB = [None] * 5
+""" Read and assign values from config. """
 with open(os.path.dirname(os.path.realpath(__file__)) + "/../config.json", 'r') as f:
-    config = loads(f.read())
+    global config
+    config = json.loads(f.read())
 
-SQL_HOST = config["SQL_HOST"]
-SQL_USER = config["SQL_USER"]
-SQL_PASS = config["SQL_PASS"]
-SQL_DB   = config["SQL_DB"]
+mysql_host           = config["mysql_host"]
+mysql_user           = config["mysql_user"]
+mysql_passwd         = config["mysql_passwd"]
+mysql_database       = config["mysql_database"]
 del config
-
-if any(not i for i in [SQL_HOST, SQL_USER, SQL_PASS, SQL_DB]):
-    raise Exception("Not all required configuration values could be found (SQL_HOST, SQL_USER, SQL_PASS, SQL_DB).")
 
 try:
     cnx = mysql.connector.connect(
-        user       = SQL_USER,
-        password   = SQL_PASS,
-        host       = SQL_HOST,
-        database   = SQL_DB,
+        user       = mysql_user,
+        password   = mysql_passwd,
+        host       = mysql_host,
+        database   = mysql_database,
         autocommit = True)
 except mysql.connector.Error as err:
     if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
@@ -44,9 +41,10 @@ except mysql.connector.Error as err:
         raise Exception("Database does not exist.")
     else:
         raise Exception(err)
-else:
-    SQL = cnx.cursor()
-    del SQL_HOST, SQL_USER, SQL_PASS, SQL_DB
+except: raise Exception("Something really died.")
+
+SQL = cnx.cursor()
+del mysql_host, mysql_user, mysql_passwd, mysql_database
 
 class User(commands.Cog):
 

@@ -5,7 +5,7 @@ import mysql.connector
 from mysql.connector import errorcode
 
 from time import time
-from json import loads
+import json
 from requests import get
 
 # TODO: stop using these!
@@ -13,26 +13,36 @@ from colorama import init
 from colorama import Fore, Back, Style
 init(autoreset=True)
 
-# Init memory and set values from config.json file.
-SQL, SQL_HOST, SQL_USER, SQL_PASS, SQL_DB = [None] * 5
+# Hardcoded version numbers.
+global __version, __abns_version
+__version      = 4.30 # Aika (This bot).
+__abns_version = 2.19 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
+
+global config
+config = None
+""" Read and assign values from config. """
 with open(os.path.dirname(os.path.realpath(__file__)) + "/config.json", 'r') as f:
-    config = loads(f.read())
+    config = json.loads(f.read())
 
-SQL_HOST = config["SQL_HOST"]
-SQL_USER = config["SQL_USER"]
-SQL_PASS = config["SQL_PASS"]
-SQL_DB   = config["SQL_DB"]
-del config
+mysql_host           = config["mysql_host"]
+mysql_user           = config["mysql_user"]
+mysql_passwd         = config["mysql_passwd"]
+mysql_database       = config["mysql_database"]
 
-if any(not i for i in [SQL_HOST, SQL_USER, SQL_PASS, SQL_DB]):
-    raise Exception("Not all required configuration values could be found (SQL_HOST, SQL_USER, SQL_PASS, SQL_DB).")
+discord_token        = config["discord_token"]
+discord_owner_userid = config["discord_owner_userid"]
+
+debug                = config["debug"]
+server_build         = config["server_build"]
+version              = config["version"]
+abns_version         = config["abns_version"]
 
 try:
     cnx = mysql.connector.connect(
-        user       = SQL_USER,
-        password   = SQL_PASS,
-        host       = SQL_HOST,
-        database   = SQL_DB,
+        user       = mysql_user,
+        password   = mysql_passwd,
+        host       = mysql_host,
+        database   = mysql_database,
         autocommit = True)
 except mysql.connector.Error as err:
     if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
@@ -41,90 +51,63 @@ except mysql.connector.Error as err:
         raise Exception("Database does not exist.")
     else:
         raise Exception(err)
-else:
-    SQL = cnx.cursor()
-    del SQL_HOST, SQL_USER, SQL_PASS, SQL_DB
+except: raise Exception("Something really died.")
 
-# Subsystem versions.
-AIKA_VERSION = 4.30 # Aika (This bot).
-ABNS_VERSION = 2.16 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
+SQL = cnx.cursor()
+del mysql_host, mysql_user, mysql_passwd, mysql_database
 
 # Akatsuki's server/channel IDs.
 # [S] = Server.
 # [T] = Text channel.
 # [V] = Voice channel.
-AKATSUKI_SERVER_ID           = 365406575893938177 # [S] | ID for osu!Akatsuki.
-AKATSUKI_GENERAL_ID          = 592490140497084436 # [T] | ID for #general.
-AKATSUKI_HELP_ID             = 365413867167285249 # [T] | ID for #help.
-AKATSUKI_VERIFY_ID           = 596662084339761172 # [T] | ID for #verify.
-AKATSUKI_PLAYER_REPORTING_ID = 367068661837725706 # [T] | ID for #player_reporting.
-AKATSUKI_REPORTS_ID          = 367080772076568596 # [T] | ID for #reports.
-AKATSUKI_RANK_REQUEST_ID     = 597200076561055795 # [T] | ID for #rank-request (User).
-AKATSUKI_RANK_REQUESTS_ID    = 557095943602831371 # [T] | ID for #rank-requests (Staff).
-AKATSUKI_BOTSPAM_ID          = 369829943372152833 # [T] | ID for #botspam.
-AKATSUKI_NSFW_ID             = 564208623090139146 # [T] | ID for #nsfw.
+akatsuki_server_id           = config["akatsuki_server_id"]           # [S] | ID for osu!Akatsuki.
+akatsuki_general_id          = config["akatsuki_general_id"]          # [T] | ID for #general.
+akatsuki_help_id             = config["akatsuki_help_id"]             # [T] | ID for #help.
+akatsuki_verify_id           = config["akatsuki_verify_id"]           # [T] | ID for #verify.
+akatsuki_player_reporting_id = config["akatsuki_player_reporting_id"] # [T] | ID for #player_reporting.
+akatsuki_rank_request_id     = config["akatsuki_rank_request_id"]     # [T] | ID for #rank-request (User).
+akatsuki_reports_id          = config["akatsuki_reports_id"]          # [T] | ID for #reports.
+akatsuki_rank_requests_id    = config["akatsuki_rank_requests_id"]    # [T] | ID for #rank-requests (Staff).
+akatsuki_botspam_id          = config["akatsuki_botspam_id"]          # [T] | ID for #botspam.
+akatsuki_nsfw_id             = config["akatsuki_nsfw_id"]             # [T] | ID for #nsfw.
+akatsuki_friends_only        = config["akatsuki_friends_only"]        # [T] | ID for #friends-only.
+akatsuki_drag_me_in_voice    = config["akatsuki_drag_me_in_voice"]    # [V] | ID for Drag me in (VC).
+akatsuki_friends_only_voice  = config["akatsuki_friends_only_voice"]  # [V] | ID for ✨cmyui (VC).
 
-AKATSUKI_FRIENDS_ONLY        = 597948877621952533 # [T] | ID for #friends-only.
-AKATSUKI_DRAG_ME_IN_VOICE    = 597949535938936833 # [V] | ID for Drag me in (VC).
-AKATSUKI_FRIENDS_ONLY_VOICE  = 597948898421768192 # [V] | ID for ✨cmyui (VC).
 
-# Akatsuki's beatmap mirror.
-MIRROR_ADDRESS = "https://store.that.wtf"
+mirror_address = config["mirror_address"] # Akatsuki's beatmap mirror (used in ABNS system).
+command_prefix = config["command_prefix"] # Aika's command prefix.
+akatsuki_logo  = config["akatsuki_logo"]  # Akatsuki's logo.
+crab_emoji     = config["crab_emoji"]     # Yeah?
+server_build   = config["server_build"]
 
-# Aika's command prefix.
-COMMAND_PREFIX = '!'
 
-# Akatsuki's logo.
-# To be used mostly for embed thumbnails.
-AKATSUKI_LOGO = "https://akatsuki.pw/static/logos/logo.png"
-CRAB_EMOJI    = "https://cdn.discordapp.com/attachments/365406576548511745/591470256497754112/1f980.png"
-
+""" Chat Filters / Quality Standards. """
 
 # A list of filters.
 # These are to be used to wipe messages that are deemed inappropriate,
 # or break rules. For the most part, these are of other private servers,
 # as required by rule #2 of the Akatsuki Discord & Chat Rules
 # (https://akatsuki.pw/doc/rules).
-filters       = [
-                # osu! private servers
-                "yozora", "ainu", "okamura", "kotorikku", "kurikku", "kawata",
-                "ryusei", "ryu-sei", "enjuu", "verge", "katori", "osu-thailand",
-                "gatari", "hidesu", "hiragi", "asuki", "mikoto", "homaru", "awasu",
-                "vipsu", "xii", "xii.nz", "yarota", "silverosu", "sugoisu", "kono",
-                "zeltu", "karizuku", "koreasu", "asta", "tiller", # I really didn't want to block "tiller", but it seems like it keeps getting mentioned..
-
-                # osu! cheating programs
-                "aqn", "hq", "hqosu", "aquila",
-
-                # Bad boy substances
-                "lsd", "dmt", "shrooms"
-                ]
+filters = config["filters"]
 
 # Secondary filters.
 # These are the same idea as filters,
 # although they are *searched for within a string*, rather than compared against.
-substring_filters = [
-                    # PayPal
-                    "pp.me", "paypal.me",
-
-                    # Discord invite links
-                    "discord.gg/", "discordapp.com/channels"
-                    ]
-
+substring_filters = config["substring_filters"]
 
 # A list of message (sub)strings that we will use to deem
 # a quantifiable value for the "quality" of a message.
-profanity     = ["nigg", "n1gg", "retard", "idiot",
-                 "fuck off", "shut the fuck up", "??"]
-
-high_quality  = ["!faq", "!help", "welcome", "have a good", "enjoy", "no problem",
-                 "of course", "can help", "i can", "how can i help you"]
+profanity     = config["profanity"]
+high_quality  = config["high_quality"]
 
 
 # Assign discord owner value.
-SQL.execute("SELECT value_string FROM aika_settings WHERE name = %s", ["discord_owner"])
-discord_owner = int(SQL.fetchone()[0])
+discord_owner = config["discord_owner_userid"]
 
+#delete config
+
+""" Functions. """
 
 def debug_print(string):
     """
@@ -137,21 +120,14 @@ def debug_print(string):
 
     # Debug value
     SQL.execute("SELECT value_int FROM aika_settings WHERE name = %s", ["debug"])
-    debug = SQL.fetchone()[0]
+    debug = debug
 
     if debug:
         print(Fore.MAGENTA, string, '', sep='\n')
 
-
 def safe_discord(s): return str(s).replace('`', '') 
 
-
-def get_prefix(client, message):
-
-    prefixes = [COMMAND_PREFIX] # More prefixes can be added to this
-
-    # Users can also mention the bot.
-    return commands.when_mentioned_or(*prefixes)(client, message)
+def get_prefix(client, message): return commands.when_mentioned_or(*[config["command_prefix"]])(client, message)
 
 
 client = discord.Client()
@@ -162,7 +138,6 @@ bot = commands.Bot(
     case_insensitive = True # No case sensitivity on commands
 )
 
-
 cogs = ["cogs.staff", "cogs.user"]
 
 
@@ -172,7 +147,7 @@ async def on_voice_state_update(member, before, after): # TODO: check if they le
     await bot.wait_until_ready()
 
     # Only use this event for the "drag me in" voice channel.
-    if not after.channel or after.channel.id != AKATSUKI_DRAG_ME_IN_VOICE: return
+    if not after.channel or after.channel.id != akatsuki_drag_me_in_voice: return
 
     debug_print(f"on_voice_state_update event fired.\n\nData:\n\n{member}\n\n{before}\n\n{after}")
 
@@ -182,33 +157,33 @@ async def on_voice_state_update(member, before, after): # TODO: check if they le
         description = "Please add a reaction to determine their fate owo..",
         color       = 0x00ff00)
 
-    embed.set_footer(icon_url=CRAB_EMOJI, text="Only one vote is required.")
-    embed.set_thumbnail(url=AKATSUKI_LOGO)
+    embed.set_footer(icon_url=crab_emoji, text="Only one vote is required.")
+    embed.set_thumbnail(url=akatsuki_logo)
 
     # Assign friends-only chat and voice channel as constants.
-    FRIENDS_ONLY_TEXT  = bot.get_channel(AKATSUKI_FRIENDS_ONLY)
-    FRIENDS_ONLY_VOICE = bot.get_channel(AKATSUKI_FRIENDS_ONLY_VOICE)
+    friends_only_text  = bot.get_channel(akatsuki_friends_only)
+    friends_only_voice = bot.get_channel(akatsuki_friends_only_voice)
 
     # Send our embed, and add our base 👍.
-    msg = await FRIENDS_ONLY_TEXT.send(embed=embed)
+    msg = await friends_only_text.send(embed=embed)
     await msg.add_reaction('👍')
 
     def check(reaction, user): # TODO: safe
-        if user == bot.user: return False
-        return reaction.emoji == '👍' and user.voice.channel == FRIENDS_ONLY_VOICE
+        if user in [member, bot.user]: return False
+        return reaction.emoji == '👍' and user.voice.channel == friends_only_voice
 
     # Wait for a 👍 from a "friend". Timeout: 5 minutes.
     try: reaction, user = await bot.wait_for("reaction_add", timeout=5 * 60, check=check)
     except asyncio.TimeoutError: # Timed out. Remove the embed.
-        await FRIENDS_ONLY_TEXT.send(f"Timed out {member}'s join query.")
+        await friends_only_text.send(f"Timed out {member}'s join query.")
         await msg.delete()
         return
 
-    try: await member.move_to(channel=FRIENDS_ONLY_VOICE, reason="Voted in.")
+    try: await member.move_to(channel=friends_only_voice, reason="Voted in.")
     except discord.errors.HTTPException: await msg.delete(); return
 
     # Send our vote success, and delete the original embed.
-    await FRIENDS_ONLY_TEXT.send(f"{user} voted {member} in.")
+    await friends_only_text.send(f"{user} voted {member} in.")
     await msg.delete()
     return
 
@@ -218,30 +193,31 @@ async def on_ready():
     await bot.change_presence(activity=discord.Game(name="osu!Akatsuki", url="https://akatsuki.pw/", type=1))
     for cog in cogs: bot.load_extension(cog)
 
-    # Announce online status to #general if we're on a server build of Aika.
-    SQL.execute("SELECT value_int FROM aika_settings WHERE name = %s", ["server_build"])
-    server_build = bool(SQL.fetchone()[0])
+    if not server_build or __version == version: return
 
-    if server_build:
-        # Get the server's latest version of Aika run.
-        SQL.execute("SELECT value_int FROM aika_settings WHERE name = %s", ["version_latest"])
-        version_latest = SQL.fetchone()[0]
+    # Get config value of latest run.
+    with open("config.json", "r+") as _config:
+        data = json.load(_config)
 
-        # If the server version mismatches the version of the code, display the update in a #general webhook.
-        if version_latest == AIKA_VERSION: return
+        data["version"] = __version
+        config["version"] = __version
 
-        SQL.execute("UPDATE aika_settings SET value_int = %s WHERE name = %s", [AIKA_VERSION, "version_latest"])
+        _config.seek(0)
+        json.dump(data, _config)
+        _config.truncate()
 
-        # Configure, and send the embed to #general.
-        announce_online = discord.Embed(
-            title       = "Aika has been updated to v%.2f. (Previous: v%.2f)" % (AIKA_VERSION, version_latest),
-            description = "Ready for commands <3\n\nAika is osu!Akatsuki's [open source](https://github.com/osuAkatsuki/Aika) "
-                          "discord bot.\n\n[Akatsuki](https://akatsuki.pw)\n[Support Akatsuki](https://akatsuki.pw/support)",
-            color       = 0x00ff00)
+        del _config
 
-        announce_online.set_footer(icon_url=CRAB_EMOJI, text="Thank you for playing!")
-        announce_online.set_thumbnail(url=AKATSUKI_LOGO)
-        await bot.get_channel(AKATSUKI_GENERAL_ID).send(embed=announce_online)
+    # Configure, and send the embed to #general.
+    announce_online = discord.Embed(
+        title       = "Aika has been updated to v%.2f. (Previous: v%.2f)" % (__version, version),
+        description = "Ready for commands <3\n\nAika is osu!Akatsuki's [open source](https://github.com/osuAkatsuki/Aika) "
+                      "discord bot.\n\n[Akatsuki](https://akatsuki.pw)\n[Support Akatsuki](https://akatsuki.pw/support)",
+        color       = 0x00ff00)
+
+    announce_online.set_footer(icon_url=crab_emoji, text="Thank you for playing!")
+    announce_online.set_thumbnail(url=akatsuki_logo)
+    await bot.get_channel(akatsuki_general_id).send(embed=announce_online)
     return
 
 
@@ -258,7 +234,7 @@ async def on_message(message):
     if message.author.id != discord_owner:
 
         # Verification channel.
-        if message.channel.id == AKATSUKI_VERIFY_ID:
+        if message.channel.id == akatsuki_verify_id:
             if message.content.lower()[1] == 'v' and not message.content.lower().split(' ')[-1].isdigit():
                 await message.author.add_roles(discord.utils.get(message.guild.roles, name="Members"))
 
@@ -282,7 +258,7 @@ async def on_message(message):
 
 
     # NSFW channel checks (deleting non-images from #nsfw).
-    if message.channel.id == AKATSUKI_NSFW_ID:
+    if message.channel.id == akatsuki_nsfw_id:
         def check_content(m): # Don't delete links or images.
             if any(message.content.startswith(s) for s in ("http://", "https://")) or message.attachments: return False
             return True
@@ -292,7 +268,7 @@ async def on_message(message):
 
 
     # Message sent in #rank-request, move to #rank-requests.
-    if message.channel.id == AKATSUKI_RANK_REQUEST_ID:
+    if message.channel.id == akatsuki_rank_request_id:
         await message.delete()
 
         if not any(required in message.content for required in ("akatsuki.pw", "osu.ppy.sh")) or len(message.content) > 58: # Should not EVER be over 58 characters. (57 but safe)
@@ -344,7 +320,7 @@ async def on_message(message):
 
         # Return values from web request/DB query.
         # TODO: either use the API for everything, or dont use it at all.
-        artist = loads(get(f"{MIRROR_ADDRESS}/s/{map_id}").text)["Creator"]
+        artist = json.loads(get(f"{mirror_address}/s/{map_id}").text)["Creator"]
 
         # Create embeds.
         embed = discord.Embed(
@@ -354,8 +330,8 @@ async def on_message(message):
         )
 
         embed.set_image (url  = f"https://assets.ppy.sh/beatmaps/{map_id}/covers/cover.jpg?1522396856")
-        embed.set_author(url  = f"https://akatsuki.pw/d/{map_id}",                           icon_url = AKATSUKI_LOGO, name = song_name)
-        embed.set_footer(text = "Akatsuki's beatmap nomination system v%.2f" % ABNS_VERSION, icon_url = "https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg")
+        embed.set_author(url  = f"https://akatsuki.pw/d/{map_id}",                           icon_url = akatsuki_logo, name = song_name)
+        embed.set_footer(text = "Akatsuki's beatmap nomination system v%.2f" % abns_version, icon_url = "https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg")
         embed.add_field (name = "Nominator",         value = message.author.name)
         embed.add_field (name = "Mapper",            value = artist)
         embed.add_field (name = "Gamemode",          value = mode_formatted)
@@ -372,12 +348,12 @@ async def on_message(message):
             color       = 0x00ff00 # Lime green.
         )
 
-        embed_dm.set_thumbnail(url  = AKATSUKI_LOGO)
+        embed_dm.set_thumbnail(url  = akatsuki_logo)
         embed_dm.set_image    (url  = f"https://assets.ppy.sh/beatmaps/{map_id}/covers/cover.jpg?1522396856")
-        embed_dm.set_footer   (text = f"Akatsuki's beatmap nomination system v{ABNS_VERSION}", icon_url="https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg")
+        embed_dm.set_footer   (text = f"Akatsuki's beatmap nomination system v{abns_version}", icon_url="https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg")
 
         # Send the embed to the #rank_requests channel.
-        request_post = await bot.get_channel(AKATSUKI_RANK_REQUESTS_ID).send(embed=embed)
+        request_post = await bot.get_channel(akatsuki_rank_requests_id).send(embed=embed)
 
         # Send the embed to the nominator by DM. TODO: check if we can message the user rather than abusing try-except? that might just be slower lul
         try: await message.author.send(embed=embed_dm)
@@ -388,12 +364,12 @@ async def on_message(message):
 
 
     # Message sent in #player-reporting, move to #reports.
-    if message.channel.id == AKATSUKI_PLAYER_REPORTING_ID:
+    if message.channel.id == akatsuki_player_reporting_id:
         await message.delete() # Delete the message from #player-reporting.
 
         # Prepare, and send the report in #reports.
         embed = discord.Embed(title = "New report recieved.", description="** **", color=0x00ff00)
-        embed.set_thumbnail  (url   = AKATSUKI_LOGO)
+        embed.set_thumbnail  (url   = akatsuki_logo)
         embed.add_field      (name  = "Report content", value = message.content,        inline = True)
         embed.add_field      (name  = "Author",         value = message.author.mention, inline = True)
 
@@ -401,16 +377,16 @@ async def on_message(message):
         embed_pm = discord.Embed(title="Thank you for the player report.", description="We will review the report shortly.", color=0x00ff00)
 
         embed_pm.add_field(name="Report content", value=message.content, inline=True)
-        embed_pm.set_thumbnail(url=AKATSUKI_LOGO)
+        embed_pm.set_thumbnail(url=akatsuki_logo)
 
-        if not message.content.startswith(COMMAND_PREFIX): # Do not pm or link to #reports if it is a command.
+        if not message.content.startswith(command_prefix): # Do not pm or link to #reports if it is a command.
             await message.author.send(embed=embed_pm)
-            await bot.get_channel(AKATSUKI_REPORTS_ID).send(embed=embed)
+            await bot.get_channel(akatsuki_reports_id).send(embed=embed)
         return
 
     elif message.author != bot.user and message.guild:
         # Message sent in #help, log to db.
-        if message.channel.id == AKATSUKI_HELP_ID:
+        if message.channel.id == akatsuki_help_id:
             # Split the content into sentences by periods.
             # TODO: Other punctuation marks!
             sentence_split = message.content.split('.')
@@ -444,7 +420,7 @@ async def on_message(message):
         # Ignore moderators for the following flagging.
         if not message.author.guild_permissions.manage_messages:
             PROFANITY_WARNING = "Hello,\n\nYour message in osu!Akatsuki has been removed as it has been deemed "   \
-                               "unsuitable.\n\nIf you have any questions, please ask <@285190493703503872>. "      \
+                                "unsuitable.\n\nIf you have any questions, please ask <@285190493703503872>. "     \
                                 "\n**Do not try to evade this filter as it is considered fair ground for a ban**." \
                                 "\n\n```" + safe_discord(message.author.name) + ': ' +  safe_discord(message.content) + "```"
 
@@ -466,13 +442,13 @@ async def on_message(message):
 
                     return
 
-        if message.channel.id != AKATSUKI_BOTSPAM_ID:
+        if message.channel.id != akatsuki_botspam_id:
             message_string = f"{message.created_at} [{message.guild} #{message.channel}] {message.author}: {message.content}"
 
             col = None
             if not message.guild:                         col = Fore.YELLOW
             elif "cmyui" in message.content.lower():      col = Fore.LIGHTRED_EX
-            elif message.guild.id == AKATSUKI_SERVER_ID:  col = Fore.CYAN
+            elif message.guild.id == akatsuki_server_id:  col = Fore.CYAN
 
             print(col + message_string)
             del col
@@ -481,8 +457,7 @@ async def on_message(message):
         await bot.process_commands(message)
     return
 
-SQL.execute("SELECT value_string FROM aika_settings WHERE name = %s", ["rewrite_token"])
-bot.run(SQL.fetchone()[0], bot=True, reconnect=True)
+bot.run(discord_token, bot=True, reconnect=True)
 
 # Clean up
 print('', "Force-quit detected. Cleaning up Aika before shutdown..", "Cleaning up MySQL variables..", sep='\n')
