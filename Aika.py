@@ -125,7 +125,7 @@ def debug_print(string):
     if debug:
         print(Fore.MAGENTA, string, '', sep='\n')
 
-def safe_discord(s): return str(s).replace('`', '') 
+def safe_discord(s): return str(s).replace('`', '')
 
 def get_prefix(client, message): return commands.when_mentioned_or(*[config["command_prefix"]])(client, message)
 
@@ -412,7 +412,7 @@ async def on_message(message):
 
             cnx.ping(reconnect=True, attempts=2, delay=1)
 
-            # TODO: Store the whole bitch in a single number. 
+            # TODO: Store the whole bitch in a single number.
             # Maybe even do some bitwise black magic shit.
             SQL.execute("INSERT INTO help_logs (id, user, content, datetime, quality) VALUES (NULL, %s, %s, %s, %s)",
                 [message.author.id, message.content.encode("ascii", errors="ignore"), time(), quality])
@@ -422,7 +422,7 @@ async def on_message(message):
             PROFANITY_WARNING = "Hello,\n\nYour message in osu!Akatsuki has been removed as it has been deemed "   \
                                 "unsuitable.\n\nIf you have any questions, please ask <@285190493703503872>. "     \
                                 "\n**Do not try to evade this filter as it is considered fair ground for a ban**." \
-                                "\n\n```" + safe_discord(message.author.name) + ': ' +  safe_discord(message.content) + "```"
+                                f"\n\n```{safe_discord(message.author.name)}: {safe_discord(message.content)}```"
 
             # Primary filters.
             # These are looking for direct comparison results.
@@ -432,7 +432,7 @@ async def on_message(message):
 
                     try: await message.author.send(PROFANITY_WARNING)
                     except: print(f"{Fore.LIGHTRED_EX}Could not warn {message.author.name}.")
-                    
+
                     debug_print(f"Filtered message | '{message.author.name}: {message.content}'")
 
                     cnx.ping(reconnect=True, attempts=2, delay=1)
