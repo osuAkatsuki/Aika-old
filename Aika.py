@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import discord, asyncio, os
 from discord.ext import commands
 
@@ -276,7 +278,7 @@ async def on_message(message):
 
         if status in (2, 5): # Map is already ranked/loved
             await message.author.send(f"Some (or all) of the difficulties in the beatmap you requested already seem to be {'ranked' if status == 2 else 'loved'}"
-                                       " on the Akatsuki server!\n\nIf this is false, please contact a QAT directly to proceed.")
+                                       " on the Akatsuki server!\n\nIf this is false, please contact a BN directly to proceed.")
             return
 
         # Sort out mode to be used to check difficulty.
@@ -315,7 +317,7 @@ async def on_message(message):
 
         # Prepare, and send the report to the reporter.
         embed_dm = discord.Embed(
-            title       = "Your beatmap nomination request has been sent to Akatsuki's Quality Assurance Team for review.",
+            title       = "Your beatmap nomination request has been sent to Akatsuki's Beatmap Nomination Team for review.",
             description = "We will review it shortly.",
             color       = 0x00ff00 # Lime green.
         )
