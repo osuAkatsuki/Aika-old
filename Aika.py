@@ -1,42 +1,42 @@
 # -*- coding: utf-8 -*-
 
-import discord, asyncio, os
+import discord, asyncio
 from discord.ext import commands
-
 import mysql.connector
 from mysql.connector import errorcode
-
 from time import time
-import json
+from json import loads, dump
+from os import path
 from requests import get
-
-# TODO: stop using these!
-from colorama import init
-from colorama import Fore, Back, Style
-init(autoreset=True)
+from colorama import Fore as Colour
 
 # Hardcoded version numbers.
 # These are to be updated on ACTUAL updates.
 global __version, __abns_version
 __version      = 4.35 # Aika (This bot).
 __abns_version = 2.19 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
+__config_path  = path.dirname(path.realpath(__file__)) + "/config.json"
 
 """ Prepare config. """
 global mismatch
 mismatch = 0
-with open(os.path.dirname(os.path.realpath(__file__)) + "/config.json", "r+") as _tmp_file:
-    _tmp_config = json.loads(_tmp_file.read())
-    if _tmp_config["version"] != __version:
-        mismatch = _tmp_config["version"]
-        _tmp_config["version"] = __version
-    _tmp_file.seek(0)
-    json.dump(_tmp_config, _tmp_file, sort_keys=True, indent=4)
-    del _tmp_config
-    _tmp_file.truncate()
+with open(__config_path, "r+") as tmp_file:
+    tmp_config = loads(tmp_file.read())
+
+    if tmp_config["version"] != __version:
+        mismatch = tmp_config["version"]
+        tmp_config["version"] = __version
+
+    tmp_file.seek(0)
+
+    dump(tmp_config, tmp_file, sort_keys=True, indent=4,)
+    del tmp_config
+
+    tmp_file.truncate()
 
 """ Read and assign values from config. """
-with open(os.path.dirname(os.path.realpath(__file__)) + "/config.json", 'r') as f:
-    config = json.loads(f.read())
+with open(__config_path, 'r') as f:
+    config = loads(f.read())
 
 mysql_host           = config["mysql_host"]
 mysql_user           = config["mysql_user"]
@@ -55,15 +55,15 @@ try: cnx = mysql.connector.connect(
         password   = mysql_passwd,
         host       = mysql_host,
         database   = mysql_database,
-        autocommit = True)
+        autocommit = True,
+        use_pure   = True)
 except mysql.connector.Error as err:
     if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
         raise Exception("Something is wrong with your username or password.")
     elif err.errno == errorcode.ER_BAD_DB_ERROR:
         raise Exception("Database does not exist.")
-    else:
-        raise Exception(err)
-except: raise Exception("Something really died.")
+    else: raise Exception(err)
+except:   raise Exception("Something really died.")
 
 SQL = cnx.cursor()
 del mysql_host, mysql_user, mysql_passwd, mysql_database
@@ -118,16 +118,26 @@ high_quality  = config["high_quality"]
 def safe_discord(s): return str(s).replace('`', '')
 def get_prefix(client, message): return commands.when_mentioned_or(*[config["command_prefix"]])(client, message)
 
-
-client = discord.Client()
-bot = commands.Bot(
-    command_prefix   = get_prefix,
-    description      = "Aika - osu!Akatsuki's official Discord bot.",
-    owner_id         = discord_owner,
-    case_insensitive = True # No case sensitivity on commands
+#bot.change_presence(activity=discord.Game(name="osu!Akatsuki", url="https://akatsuki.pw/", type=1))
+client = discord.Client(
+    max_messages      = 2500,
+    status            = "1",
+    activity          = discord.Game(
+                            name = "osu!Akatsuki",
+                            url  = "https://akatsuki.pw/",
+                            type = 1
+                        ),
+    heartbeat_timeout = 20
 )
 
-cogs = ["cogs.staff", "cogs.user"]
+bot = commands.Bot(
+    command_prefix   = get_prefix,
+    case_insensitive = True,
+    #description      = "Aika - osu!Akatsuki's official Discord bot.",
+    help_command     = None,
+    self_bot         = False,
+    owner_id         = discord_owner
+)
 
 
 @bot.event
@@ -177,8 +187,8 @@ async def on_voice_state_update(member, before, after): # TODO: check if they le
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user.name} - {bot.user.id}")
-    await bot.change_presence(activity=discord.Game(name="osu!Akatsuki", url="https://akatsuki.pw/", type=1))
-    for cog in cogs: bot.load_extension(cog)
+    #await bot.change_presence(activity=discord.Game(name="osu!Akatsuki", url="https://akatsuki.pw/", type=1))
+    [bot.load_extension(i) for i in ["cogs.staff", "cogs.user"]]
 
     if not server_build or not mismatch: return
 
@@ -294,7 +304,7 @@ async def on_message(message):
 
         # Return values from web request/DB query.
         # TODO: either use the API for everything, or dont use it at all.
-        artist = json.loads(get(f"{mirror_address}/s/{map_id}").text)["Creator"]
+        artist = loads(get(f"{mirror_address}/s/{map_id}").text)["Creator"]
 
         # Create embeds.
         embed = discord.Embed(
@@ -401,7 +411,7 @@ async def on_message(message):
                     await message.delete()
 
                     try: await message.author.send(PROFANITY_WARNING)
-                    except: print(f"{Fore.LIGHTRED_EX}Could not warn {message.author.name}.")
+                    except: print(f"{Colour.LIGHTRED_EX}Could not warn {message.author.name}.")
 
                     cnx.ping(reconnect=True, attempts=2, delay=1)
 
@@ -414,9 +424,9 @@ async def on_message(message):
             message_string = f"{message.created_at} [{message.guild} #{message.channel}] {message.author}: {message.content}"
 
             col = None
-            if not message.guild:                         col = Fore.YELLOW
-            elif "cmyui" in message.content.lower():      col = Fore.LIGHTRED_EX
-            elif message.guild.id == akatsuki_server_id:  col = Fore.CYAN
+            if not message.guild:                         col = Colour.YELLOW
+            elif "cmyui" in message.content.lower():      col = Colour.LIGHTRED_EX
+            elif message.guild.id == akatsuki_server_id:  col = Colour.CYAN
 
             print(col + message_string)
             del col
