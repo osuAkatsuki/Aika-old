@@ -14,12 +14,24 @@ from colorama import Fore, Back, Style
 init(autoreset=True)
 
 # Hardcoded version numbers.
+# These are to be updated on ACTUAL updates.
 global __version, __abns_version
-__version      = 4.30 # Aika (This bot).
+__version      = 4.35 # Aika (This bot).
 __abns_version = 2.19 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
 
-global config
-config = None
+""" Prepare config. """
+global mismatch
+mismatch = 0
+with open(os.path.dirname(os.path.realpath(__file__)) + "/config.json", "r+") as _tmp_file:
+    _tmp_config = json.loads(_tmp_file.read())
+    if _tmp_config["version"] != __version:
+        mismatch = _tmp_config["version"]
+        _tmp_config["version"] = __version
+    _tmp_file.seek(0)
+    json.dump(_tmp_config, _tmp_file, sort_keys=True, indent=4)
+    del _tmp_config
+    _tmp_file.truncate()
+
 """ Read and assign values from config. """
 with open(os.path.dirname(os.path.realpath(__file__)) + "/config.json", 'r') as f:
     config = json.loads(f.read())
@@ -32,13 +44,11 @@ mysql_database       = config["mysql_database"]
 discord_token        = config["discord_token"]
 discord_owner_userid = config["discord_owner_userid"]
 
-debug                = config["debug"]
 server_build         = config["server_build"]
 version              = config["version"]
 abns_version         = config["abns_version"]
 
-try:
-    cnx = mysql.connector.connect(
+try: cnx = mysql.connector.connect(
         user       = mysql_user,
         password   = mysql_passwd,
         host       = mysql_host,
@@ -74,11 +84,11 @@ akatsuki_friends_only        = config["akatsuki_friends_only"]        # [T] | ID
 akatsuki_drag_me_in_voice    = config["akatsuki_drag_me_in_voice"]    # [V] | ID for Drag me in (VC).
 akatsuki_friends_only_voice  = config["akatsuki_friends_only_voice"]  # [V] | ID for ✨cmyui (VC).
 
-
-mirror_address = config["mirror_address"] # Akatsuki's beatmap mirror (used in ABNS system).
-command_prefix = config["command_prefix"] # Aika's command prefix.
-akatsuki_logo  = config["akatsuki_logo"]  # Akatsuki's logo.
-crab_emoji     = config["crab_emoji"]     # Yeah?
+mirror_address = config["mirror_address"]       # Akatsuki's beatmap mirror (used in ABNS system).
+discord_owner  = config["discord_owner_userid"] # Assign discord owner value.
+command_prefix = config["command_prefix"]       # Aika's command prefix.
+akatsuki_logo  = config["akatsuki_logo"]        # Akatsuki's logo.
+crab_emoji     = config["crab_emoji"]           # Yeah?
 server_build   = config["server_build"]
 
 
@@ -102,31 +112,8 @@ profanity     = config["profanity"]
 high_quality  = config["high_quality"]
 
 
-# Assign discord owner value.
-discord_owner = config["discord_owner_userid"]
-
-#delete config
-
 """ Functions. """
-
-def debug_print(string):
-    """
-    Print a debug message to the console.
-
-    Example in use:      https://nanahira.life/dOgXljmmKW336gro3Ts5gJmU7P4hNDZz.png
-
-    :param string:       The message to be printed to the console.
-    """
-
-    # Debug value
-    SQL.execute("SELECT value_int FROM aika_settings WHERE name = %s", ["debug"])
-    debug = debug
-
-    if debug:
-        print(Fore.MAGENTA, string, '', sep='\n')
-
 def safe_discord(s): return str(s).replace('`', '')
-
 def get_prefix(client, message): return commands.when_mentioned_or(*[config["command_prefix"]])(client, message)
 
 
@@ -148,8 +135,6 @@ async def on_voice_state_update(member, before, after): # TODO: check if they le
 
     # Only use this event for the "drag me in" voice channel.
     if not after.channel or after.channel.id != akatsuki_drag_me_in_voice: return
-
-    debug_print(f"on_voice_state_update event fired.\n\nData:\n\n{member}\n\n{before}\n\n{after}")
 
     # Create our vote embed.
     embed = discord.Embed(
@@ -193,24 +178,11 @@ async def on_ready():
     await bot.change_presence(activity=discord.Game(name="osu!Akatsuki", url="https://akatsuki.pw/", type=1))
     for cog in cogs: bot.load_extension(cog)
 
-    if not server_build or __version == version: return
-
-    # Get config value of latest run.
-    with open("config.json", "r+") as _config:
-        data = json.load(_config)
-
-        data["version"] = __version
-        config["version"] = __version
-
-        _config.seek(0)
-        json.dump(data, _config)
-        _config.truncate()
-
-        del _config
+    if not server_build or not mismatch: return
 
     # Configure, and send the embed to #general.
     announce_online = discord.Embed(
-        title       = "Aika has been updated to v%.2f. (Previous: v%.2f)" % (__version, version),
+        title       = "Aika has been updated to v%.2f. (Previous: v%.2f)" % (__version, mismatch),
         description = "Ready for commands <3\n\nAika is osu!Akatsuki's [open source](https://github.com/osuAkatsuki/Aika) "
                       "discord bot.\n\n[Akatsuki](https://akatsuki.pw)\n[Support Akatsuki](https://akatsuki.pw/support)",
         color       = 0x00ff00)
@@ -394,8 +366,6 @@ async def on_message(message):
             # Default values for properly formatted messages / negative messages.
             properly_formatted, negative = [False] * 2
 
-            debug_print(f"Sentence split: {sentence_split}")
-
             # After every period, check they have a space and the next sentence starts with a capital letter (ignore things like "...").
             for idx, sentence in enumerate(sentence_split):
                 if len(sentence) > 1 and idx:
@@ -407,8 +377,6 @@ async def on_message(message):
             quality = 1
             if any(x in message.content.lower() for x in profanity): quality = 0
             elif any(x in message.content.lower() for x in high_quality) or properly_formatted: quality = 2
-
-            debug_print(f"Quality of message\n\n{message.author}: {message.content} - {quality}")
 
             cnx.ping(reconnect=True, attempts=2, delay=1)
 
@@ -432,8 +400,6 @@ async def on_message(message):
 
                     try: await message.author.send(PROFANITY_WARNING)
                     except: print(f"{Fore.LIGHTRED_EX}Could not warn {message.author.name}.")
-
-                    debug_print(f"Filtered message | '{message.author.name}: {message.content}'")
 
                     cnx.ping(reconnect=True, attempts=2, delay=1)
 
