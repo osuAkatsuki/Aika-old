@@ -56,12 +56,6 @@ abns_version         = config["abns_version"]
 # Aika's discord token.
 discord_token        = config["discord_token"]
 
-# MySQL authentification from config.
-mysql_host           = config["mysql_host"]
-mysql_user           = config["mysql_user"]
-mysql_passwd         = config["mysql_passwd"]
-mysql_database       = config["mysql_database"]
-
 # Akatsuki's server/channel IDs.
 # [S] = Server. [T] = Text channel. [V] = Voice channel.
 akatsuki_server_id           = config["akatsuki_server_id"]           # [S] | ID for osu!Akatsuki.
@@ -101,10 +95,10 @@ high_quality  = config["high_quality"] # Deemed a "high-quality" message (usuall
 
 """ Attempt to connect to MySQL. """
 try: cnx = mysql.connector.connect(
-        user       = mysql_user,
-        password   = mysql_passwd,
-        host       = mysql_host,
-        database   = mysql_database,
+        user       = config["mysql_user"],
+        password   = config["mysql_passwd"],
+        host       = config["mysql_host"],
+        database   = config["mysql_database"],
         autocommit = True,
         use_pure   = True)
 except mysql.connector.Error as err:
@@ -113,14 +107,15 @@ except mysql.connector.Error as err:
     elif err.errno == errorcode.ER_BAD_DB_ERROR:
         raise Exception("Database does not exist.")
     else: raise Exception(err)
-
-SQL = cnx.cursor()
-del mysql_host, mysql_user, mysql_passwd, mysql_database
+else: SQL = cnx.cursor()
 
 
 """ Functions. """
-def safe_discord(s): return str(s).replace('`', '')
-def get_prefix(client, message): return commands.when_mentioned_or(*[config["command_prefix"]])(client, message)
+def safe_discord(s):
+    return str(s).replace('`', '')
+
+def get_prefix(client, message):
+    return commands.when_mentioned_or(*[config["command_prefix"]])(client, message)
 
 #bot.change_presence(activity=discord.Game(name="osu!Akatsuki", url="https://akatsuki.pw/", type=1))
 client = discord.Client(
@@ -204,8 +199,10 @@ async def on_ready():
     # Configure, and send the embed to #general.
     announce_online = discord.Embed(
         title       = "Aika has been updated to v%.2f. (Previous: v%.2f)" % (__version, mismatch),
-        description = "Ready for commands <3\n\nAika is osu!Akatsuki's [open source](https://github.com/osuAkatsuki/Aika) "
-                      "discord bot.\n\n[Akatsuki](https://akatsuki.pw)\n[Support Akatsuki](https://akatsuki.pw/support)",
+        description = "Ready for commands <3\n\n"
+                      "Aika is osu!Akatsuki's [open source](https://github.com/osuAkatsuki/Aika) discord bot.\n\n"
+                      "[Akatsuki](https://akatsuki.pw)\n"
+                      "[Support Akatsuki](https://akatsuki.pw/support)",
         color       = 0x00ff00)
 
     announce_online.set_footer(icon_url=crab_emoji, text="Thank you for playing!")
@@ -413,11 +410,14 @@ async def on_message(message):
                 if any(i == split for i in filters) or any(i in message.content.lower() for i in substring_filters):
                     await message.delete()
 
-                    try: await message.author.send(
-                        "Hello,\n\nYour message in osu!Akatsuki has been removed as it has been deemed "   \
-                        f"unsuitable.\n\nIf you have any questions, please ask <@{discord_owner}>. "       \
-                        "\n**Do not try to evade this filter as it is considered fair ground for a ban**." \
-                        f"\n\n```{safe_discord(f'{message.author.name}: {message.content}')}```")
+                    try:
+                        await message.author.send(
+                            "Hello,\n\n"
+                            "Your message in osu!Akatsuki has been removed as it has been deemed unsuitable.\n\n"
+                            f"If you have any questions, please ask <@{discord_owner}>.\n"
+                            "**Do not try to evade this filter as it is considered fair ground for a ban**.\n\n"
+                            f"```{safe_discord(f'{message.author.name}: {message.content}')}```"
+                        )
                     except: print(f"{Colour.LIGHTRED_EX}Could not warn {message.author.name}.")
 
                     cnx.ping(reconnect=True, attempts=2, delay=1)
@@ -447,7 +447,7 @@ async def on_message(message):
 bot.run(discord_token, bot=True, reconnect=True)
 
 # Clean up
-print('', "Force-quit detected. Cleaning up Aika before shutdown..", "Cleaning up MySQL variables..", sep='\n')
+print("\nKeyboardInterrupt detected. Powering down Aika..")
 SQL.close()
 cnx.close()
 print("Cleaning complete.")
