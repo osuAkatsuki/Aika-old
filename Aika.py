@@ -185,7 +185,7 @@ async def on_voice_state_update(member, before, after): # TODO: check if they le
 async def on_ready():
 
     print("=" * 40,
-          f"Logged in as {bot.user.name} - {bot.user.id}\n",
+          f"Logged in as {bot.user.name}\n",
           f"UserID: {bot.user.id}",
           f"Version: {version}",
           f"ABNS Version: {abns_version}",
