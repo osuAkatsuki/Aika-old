@@ -227,6 +227,7 @@ async def on_message(message):
         if message.channel.id == akatsuki_verify_id:
             if message.content.lower()[1] == 'v' and not message.content.lower().split(' ')[-1].isdigit():
                 await message.author.add_roles(discord.utils.get(message.guild.roles, name="Members"))
+                await bot.get_channel(akatsuki_general_id).send(f"Welcome to osu!Akatsuki <@{message.author.id}>!")
 
             await message.delete() # Delete all messages posted in #verify.
             return
