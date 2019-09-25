@@ -438,7 +438,7 @@ async def on_message(message):
             elif "cmyui" in message.content.lower():      col = Colour.LIGHTRED_EX
             elif message.guild.id == akatsuki_server_id:  col = Colour.CYAN
 
-            print(col + message_string, end='')
+            print(col + message_string)
             del col
 
         # Finally, process commands.
