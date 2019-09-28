@@ -162,7 +162,7 @@ async def on_voice_state_update(member, before, after): # TODO: check if they le
         return reaction.emoji == '👍' and user.voice.channel == friends_only_voice
 
     # Wait for a 👍 from a "friend". Timeout: 5 minutes.
-    try: reaction, user = await bot.wait_for("reaction_add", timeout=5 * 60, check=check)
+    try: _, user = await bot.wait_for("reaction_add", timeout=5 * 60, check=check)
     except asyncio.TimeoutError: # Timed out. Remove the embed.
         await friends_only_text.send(f"Timed out {member}'s join query.")
         await msg.delete()
@@ -178,7 +178,6 @@ async def on_voice_state_update(member, before, after): # TODO: check if they le
 
 @bot.event
 async def on_ready():
-
     print("=" * 40,
           f"Logged in as {bot.user.name}\n",
           f"UserID: {bot.user.id}",
@@ -321,16 +320,16 @@ async def on_message(message):
         )
 
         embed.set_image (url  = f"https://assets.ppy.sh/beatmaps/{map_id}/covers/cover.jpg?1522396856")
-        embed.set_author(url  = f"https://akatsuki.pw/d/{map_id}",                           icon_url = akatsuki_logo, name = song_name)
-        embed.set_footer(text = "Akatsuki's beatmap nomination system v%.2f" % abns_version, icon_url = "https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg")
-        embed.add_field (name = "Nominator",         value = message.author.name)
-        embed.add_field (name = "Mapper",            value = artist)
-        embed.add_field (name = "Gamemode",          value = mode_formatted)
-        embed.add_field (name = "Highest SR",        value = "%.2f*" % round(star_rating, 2))
-        embed.add_field (name = "Highest AR",        value = ar)
-        embed.add_field (name = "Highest OD",        value = od)
-        embed.add_field (name = "Highest Max Combo", value = f"{max_combo}x")
-        embed.add_field (name = "BPM",               value = bpm)
+        embed.set_author(url  = f"https://akatsuki.pw/d/{map_id}",                            icon_url = akatsuki_logo, name = song_name)
+        embed.set_footer(text =  "Akatsuki's beatmap nomination system v%.2f" % abns_version, icon_url = "https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg")
+        embed.add_field (name =  "Nominator",         value = message.author.name)
+        embed.add_field (name =  "Mapper",            value = artist)
+        embed.add_field (name =  "Gamemode",          value = mode_formatted)
+        embed.add_field (name =  "Highest SR",        value = "%.2f*" % round(star_rating, 2))
+        embed.add_field (name =  "Highest AR",        value = ar)
+        embed.add_field (name =  "Highest OD",        value = od)
+        embed.add_field (name =  "Highest Max Combo", value = f"{max_combo}x")
+        embed.add_field (name =  "BPM",               value = bpm)
 
         # Prepare, and send the report to the reporter.
         embed_dm = discord.Embed(
