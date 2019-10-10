@@ -403,6 +403,19 @@ async def on_message(message):
             SQL.execute("INSERT INTO help_logs (id, user, content, datetime, quality) VALUES (NULL, %s, %s, %s, %s)",
                 [message.author.id, message.content.encode("ascii", errors="ignore"), time(), quality])
 
+        if message.channel.id != akatsuki_botspam_id:
+            message_string = f"\n{'{0:%Y-%m-%d %H:%M:%S}'.format(datetime.now())} [{message.guild} #{message.channel}] {message.author}: {message.content}"
+
+            with open(f"{path.dirname(path.realpath(__file__))}/discord.log", 'a') as log: log.write(message_string)
+
+            col = None
+            if not message.guild:                         col = Colour.YELLOW
+            elif "cmyui" in message.content.lower():      col = Colour.LIGHTRED_EX
+            elif message.guild.id == akatsuki_server_id:  col = Colour.CYAN
+
+            print(col + message_string)
+            del col
+
         # Ignore any member with discord's "manage_messages" permissions.
         # Filter messages with our filters & substring_filters.
         if not message.author.guild_permissions.manage_messages:
@@ -410,6 +423,7 @@ async def on_message(message):
                 if any(i == split for i in filters) or any(i in message.content.lower() for i in substring_filters):
                     await message.delete()
 
+                    print(f"{Colour.LIGHTYELLOW_EX}^ Autoremoved message ^")
                     try:
                         await message.author.send(
                             "Hello,\n\n"
@@ -426,19 +440,6 @@ async def on_message(message):
                         [message.author.id, message.content.encode("ascii", errors="ignore"), time()])
 
                     return
-
-        if message.channel.id != akatsuki_botspam_id:
-            message_string = f"{'{0:%Y-%m-%d %H:%M:%S}'.format(datetime.now())} [{message.guild} #{message.channel}] {message.author}: {message.content}\n"
-
-            with open(f"{path.dirname(path.realpath(__file__))}/discord.log", 'a') as log: log.write(message_string)
-
-            col = None
-            if not message.guild:                         col = Colour.YELLOW
-            elif "cmyui" in message.content.lower():      col = Colour.LIGHTRED_EX
-            elif message.guild.id == akatsuki_server_id:  col = Colour.CYAN
-
-            print(col + message_string)
-            del col
 
         # Finally, process commands.
         await bot.process_commands(message)
