@@ -219,18 +219,21 @@ async def on_message(message):
     # Don't bother doing anything with it.
     if not message.content: return
 
+    # Verification channel.
+    if message.channel.id == akatsuki_verify_id \
+        and len(message.content) > 1            \
+        and message.content.lower()[1] == 'v'   \
+        and not message.content.split(' ')[-1].isdigit():
+        print("here")
+
+        await message.author.add_roles(discord.utils.get(message.guild.roles, name="Members"))
+        await bot.get_channel(akatsuki_general_id).send(f"Welcome to osu!Akatsuki <@{message.author.id}>!")
+
+        await message.delete() # Delete all messages posted in #verify.
+        return
+
     # Regular user checks.
     if message.author.id != discord_owner:
-
-        # Verification channel.
-        if message.channel.id == akatsuki_verify_id:
-            if message.content.lower()[1] == 'v' and not message.content.lower().split(' ')[-1].isdigit():
-                await message.author.add_roles(discord.utils.get(message.guild.roles, name="Members"))
-                await bot.get_channel(akatsuki_general_id).send(f"Welcome to osu!Akatsuki <@{message.author.id}>!")
-
-            await message.delete() # Delete all messages posted in #verify.
-            return
-
         # If we have unicode in > 1k char message, it's probably with crashing intent?
         if any(ord(char) > 127 for char in message.content) and len(message.content) >= 1000:
             await message.delete()
@@ -404,13 +407,13 @@ async def on_message(message):
                 [message.author.id, message.content.encode("ascii", errors="ignore"), time(), quality])
 
         if message.channel.id != akatsuki_botspam_id:
-            message_string = f"\n{'{0:%Y-%m-%d %H:%M:%S}'.format(datetime.now())} [{message.guild} #{message.channel}] {message.author}: {message.content}"
+            message_string = f"{'{0:%Y-%m-%d %H:%M:%S}'.format(datetime.now())} [{message.guild} #{message.channel}] {message.author}: {message.content}"
 
             with open(f"{path.dirname(path.realpath(__file__))}/discord.log", 'a') as log: log.write(message_string)
 
             col = None
-            if not message.guild:                         col = Colour.YELLOW
-            elif "cmyui" in message.content.lower():      col = Colour.LIGHTRED_EX
+            if not message.guild:                         col = Colour.GREEN
+            elif "cmyui" in message.content.lower():      col = Colour.YELLOW
             elif message.guild.id == akatsuki_server_id:  col = Colour.CYAN
 
             print(col + message_string)
