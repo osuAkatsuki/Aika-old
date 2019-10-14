@@ -221,10 +221,9 @@ async def on_message(message):
 
     # Verification channel.
     if message.channel.id == akatsuki_verify_id \
-        and len(message.content) > 1            \
-        and message.content.lower()[1] == 'v'   \
-        and not message.content.split(' ')[-1].isdigit():
-        print("here")
+    and len(message.content) > 1            \
+    and message.content.lower()[1] == 'v'   \
+    and not message.content.split(' ')[-1].isdigit():
 
         await message.author.add_roles(discord.utils.get(message.guild.roles, name="Members"))
         await bot.get_channel(akatsuki_general_id).send(f"Welcome to osu!Akatsuki <@{message.author.id}>!")
