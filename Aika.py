@@ -17,7 +17,7 @@ from colorama import Fore as __colour
 
 # Hardcoded version numbers.
 global __version, __abns_version
-__version      = 4.42 # Aika (This bot).
+__version      = 4.43 # Aika (This bot).
 __abns_version = 2.20 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
 __config_path  = f"{path.dirname(path.realpath(__file__))}/config.json"
 
