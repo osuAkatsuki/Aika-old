@@ -11,7 +11,7 @@ from os import path
 from requests import get
 
 from colorama import init; init(autoreset=True)
-from colorama import Fore as Colour
+from colorama import Fore as __colour
 
 """ Configuration. """
 
@@ -145,10 +145,9 @@ async def on_voice_state_update(member, before, after): # TODO: check if they le
     embed = discord.Embed(
         title       = f"{member} wants to be dragged in.",
         description = "Please add a reaction to determine their fate owo..",
-        color       = 0x00ff00)
-
-    embed.set_footer(icon_url=crab_emoji, text="Only one vote is required.")
-    embed.set_thumbnail(url=akatsuki_logo)
+        color       = 0x00ff00)                                             \
+    .set_footer(icon_url = crab_emoji, text = "Only one vote is required.") \
+    .set_thumbnail(url   = akatsuki_logo)
 
     # Assign friends-only chat and voice channel as constants.
     friends_only_text  = bot.get_channel(akatsuki_friends_only)
@@ -203,10 +202,10 @@ async def on_ready():
                       "Aika is osu!Akatsuki's [open source](https://github.com/osuAkatsuki/Aika) discord bot.\n\n"
                       "[Akatsuki](https://akatsuki.pw)\n"
                       "[Support Akatsuki](https://akatsuki.pw/support)",
-        color       = 0x00ff00)
+        color       = 0x00ff00)                                     \
+    .set_footer(icon_url=crab_emoji, text="Thank you for playing!") \
+    .set_thumbnail(url=akatsuki_logo)\
 
-    announce_online.set_footer(icon_url=crab_emoji, text="Thank you for playing!")
-    announce_online.set_thumbnail(url=akatsuki_logo)
     await bot.get_channel(akatsuki_general_id).send(embed=announce_online)
     return
 
@@ -315,37 +314,35 @@ async def on_message(message):
 
         # Return values from web request/DB query.
         # TODO: either use the API for everything, or dont use it at all.
-        artist = loads(get(f"{mirror_address}/api/s/{map_id}", timeout=1).text)["Creator"]
+        artist = loads(get(f"{mirror_address}/api/s/{map_id}", timeout=1.5).text)["Creator"]
 
         # Create embeds.
         embed = discord.Embed(
-            title       = "A new beatmap request has been recieved.",
+            title = "A new beatmap request has been recieved.",
             description = "** **",
             color       = embed_colour
-        )
-
-        embed.set_image (url  = f"https://assets.ppy.sh/beatmaps/{map_id}/covers/cover.jpg?1522396856")
-        embed.set_author(url  = f"https://akatsuki.pw/d/{map_id}",                            icon_url = akatsuki_logo, name = song_name)
-        embed.set_footer(text =  "Akatsuki's beatmap nomination system v%.2f" % abns_version, icon_url = "https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg")
-        embed.add_field (name =  "Nominator",         value = message.author.name)
-        embed.add_field (name =  "Mapper",            value = artist)
-        embed.add_field (name =  "Gamemode",          value = mode_formatted)
-        embed.add_field (name =  "Highest SR",        value = "%.2f*" % round(star_rating, 2))
-        embed.add_field (name =  "Highest AR",        value = ar)
-        embed.add_field (name =  "Highest OD",        value = od)
-        embed.add_field (name =  "Highest Max Combo", value = f"{max_combo}x")
-        embed.add_field (name =  "BPM",               value = bpm)
+            )                                                                                             \
+        .set_image (url  = f"https://assets.ppy.sh/beatmaps/{map_id}/covers/cover.jpg?1522396856")        \
+        .set_author(url  = f"https://akatsuki.pw/d/{map_id}", name = song_name, icon_url = akatsuki_logo) \
+        .set_footer(text = "Akatsuki's beatmap nomination system v%.2f" % abns_version, icon_url = "https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg") \
+        .add_field (name = "Nominator",         value = message.author.name)             \
+        .add_field (name = "Mapper",            value = artist)                          \
+        .add_field (name = "Gamemode",          value = mode_formatted)                  \
+        .add_field (name = "Highest SR",        value = "%.2f*" % round(star_rating, 2)) \
+        .add_field (name = "Highest AR",        value = ar)                              \
+        .add_field (name = "Highest OD",        value = od)                              \
+        .add_field (name = "Highest Max Combo", value = f"{max_combo}x")                 \
+        .add_field (name = "BPM",               value = bpm)
 
         # Prepare, and send the report to the reporter.
         embed_dm = discord.Embed(
             title       = "Your beatmap nomination request has been sent to Akatsuki's Beatmap Nomination Team for review.",
             description = "We will review it shortly.",
             color       = 0x00ff00
-        )
-
-        embed_dm.set_thumbnail(url  = akatsuki_logo)
-        embed_dm.set_image    (url  = f"https://assets.ppy.sh/beatmaps/{map_id}/covers/cover.jpg?1522396856")
-        embed_dm.set_footer   (text = f"Akatsuki's beatmap nomination system v{abns_version}", icon_url="https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg")
+        )                                                                                                   \
+        .set_thumbnail(url  = akatsuki_logo)                                                                \
+        .set_image    (url  = f"https://assets.ppy.sh/beatmaps/{map_id}/covers/cover.jpg?1522396856")       \
+        .set_footer   (text = f"Akatsuki's beatmap nomination system v{abns_version}", icon_url = crab_emoji)
 
         # Send the embed to the #rank_requests channel.
         request_post = await bot.get_channel(akatsuki_rank_requests_id).send(embed=embed)
@@ -363,16 +360,18 @@ async def on_message(message):
         await message.delete() # Delete the message from #player-reporting.
 
         # Prepare, and send the report in #reports.
-        embed = discord.Embed(title = "New report recieved.", description="** **", color=0x00ff00)
-        embed.set_thumbnail  (url   = akatsuki_logo)
-        embed.add_field      (name  = "Report content", value = message.content,        inline = True)
-        embed.add_field      (name  = "Author",         value = message.author.mention, inline = True)
+        embed = discord.Embed(title = "New report recieved.", description="** **", color=0x00ff00)     \
+        .set_thumbnail       (url   = akatsuki_logo)                                                   \
+        .add_field           (name  = "Report content", value = message.content,        inline = True) \
+        .add_field           (name  = "Author",         value = message.author.mention, inline = True)
 
         # Prepare, and send the report to the reporter.
-        embed_pm = discord.Embed(title="Thank you for the player report.", description="We will review the report shortly.", color=0x00ff00)
-
-        embed_pm.add_field(name="Report content", value=message.content, inline=True)
-        embed_pm.set_thumbnail(url=akatsuki_logo)
+        embed_pm = discord.Embed(
+            title       = "Thank you for the player report.",
+            description = "We will review the report shortly.",
+            color       = 0x00ff00)                                                     \
+        .add_field    (name = "Report content", value = message.content, inline = True) \
+        .set_thumbnail(url  = akatsuki_logo)
 
         if not message.content.startswith(command_prefix): # Do not pm or link to #reports if it is a command.
             await message.author.send(embed=embed_pm)
@@ -398,8 +397,9 @@ async def on_message(message):
             properly_formatted = message.content[0].isupper() and message.content[len(message.content) - 1] in ('.', '?', '!') and not negative
 
             quality = 1
-            if any(x in message.content.lower() for x in low_quality): quality = 0
-            elif any(x in message.content.lower() for x in high_quality) or properly_formatted: quality = 2
+
+            if any(x in message.content.lower() for x in low_quality):                          quality -= 1
+            elif any(x in message.content.lower() for x in high_quality) or properly_formatted: quality += 1
 
             cnx.ping(reconnect=True, attempts=2, delay=1)
 
@@ -409,16 +409,22 @@ async def on_message(message):
                 [message.author.id, message.content.encode("ascii", errors="ignore"), time(), quality])
 
         if message.channel.id != akatsuki_botspam_id:
-            message_string = f"{'{0:%Y-%m-%d %H:%M:%S}'.format(datetime.now())} [{message.guild} #{message.channel}] {message.author}: {message.content}"
-
-            with open(f"{path.dirname(path.realpath(__file__))}/discord.log", 'a') as log: log.write(message_string)
-
             col = None
-            if not message.guild:                         col = Colour.GREEN
-            elif "cmyui" in message.content.lower():      col = Colour.YELLOW
-            elif message.guild.id == akatsuki_server_id:  col = Colour.CYAN
+            if not message.guild:                         col = __colour.GREEN
+            elif "cmyui" in message.content.lower():      col = __colour.YELLOW
+            elif message.guild.id == akatsuki_server_id:  col = __colour.CYAN
 
-            print(col + message_string)
+            m_start = f"{col}{'{0:%Y-%m-%d %H:%M:%S}'.format(datetime.now())} [{message.guild} #{message.channel}] {message.author}:{__colour.RESET}\n"
+
+            m_end = ''
+            for line in message.content.split('\n'):
+                m_end += f"{4 * ' '}{line}\n" # I know theres a better way to do this in py, I just can't remember it.
+
+            m_final = f"{m_start}{m_end}"
+
+            with open(f"{path.dirname(path.realpath(__file__))}/discord.log", 'a') as log: log.write(f"\n{m_final}")
+
+            print(f"{m_final}")
             del col
 
         # Ignore any member with discord's "manage_messages" permissions.
@@ -428,7 +434,7 @@ async def on_message(message):
                 if any(i == split for i in filters) or any(i in message.content.lower() for i in substring_filters):
                     await message.delete()
 
-                    print(f"{Colour.LIGHTYELLOW_EX}^ Autoremoved message ^")
+                    print(f"{__colour.LIGHTYELLOW_EX}^ Autoremoved message ^")
                     try:
                         await message.author.send(
                             "Hello,\n\n"
@@ -437,7 +443,7 @@ async def on_message(message):
                             "**Do not try to evade this filter as it is considered fair ground for a ban**.\n\n"
                            f"```{safe_discord(f'{message.author.name}: {message.content}')}```"
                         )
-                    except: print(f"{Colour.LIGHTRED_EX}Could not warn {message.author.name}.")
+                    except: print(f"{__colour.LIGHTRED_EX}Could not warn {message.author.name}.")
 
                     cnx.ping(reconnect=True, attempts=2, delay=1)
 
