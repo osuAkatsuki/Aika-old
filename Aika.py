@@ -17,8 +17,8 @@ from colorama import Fore as Colour
 
 # Hardcoded version numbers.
 global __version, __abns_version
-__version      = 4.41 # Aika (This bot).
-__abns_version = 2.19 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
+__version      = 4.42 # Aika (This bot).
+__abns_version = 2.20 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
 __config_path  = f"{path.dirname(path.realpath(__file__))}/config.json"
 
 # Check for mismatching hardcoded version - config version.
@@ -72,10 +72,11 @@ akatsuki_friends_only        = config["akatsuki_friends_only"]        # [T] | ID
 akatsuki_drag_me_in_voice    = config["akatsuki_drag_me_in_voice"]    # [V] | ID for Drag me in (VC).
 akatsuki_friends_only_voice  = config["akatsuki_friends_only_voice"]  # [V] | ID for ✨cmyui (VC).
 
-mirror_address = config["mirror_address"]       # Akatsuki's beatmap mirror (used in ABNS system).
-discord_owner  = config["discord_owner_userid"] # Assign discord owner value.
-server_build   = config["server_build"]         # If we're running a server build.
+mirror_address = config["mirror_address"]        # Akatsuki's beatmap mirror (used in ABNS system).
+discord_owner  = config["discord_owner_userid"]  # Assign discord owner value.
+server_build   = config["server_build"]          # If we're running a server build.
 command_prefix = config["command_prefix"]
+embed_colour   = int(config["embed_colour"], 16) # Must be casted to int because JSON does not support hex format.
 akatsuki_logo  = config["akatsuki_logo"]
 crab_emoji     = config["crab_emoji"]
 
@@ -221,8 +222,8 @@ async def on_message(message):
 
     # Verification channel.
     if message.channel.id == akatsuki_verify_id \
-    and len(message.content) > 1            \
-    and message.content.lower()[1] == 'v'   \
+    and len(message.content) > 1                \
+    and message.content.lower()[1] == 'v'       \
     and not message.content.split(' ')[-1].isdigit():
 
         await message.author.add_roles(discord.utils.get(message.guild.roles, name="Members"))
@@ -263,7 +264,9 @@ async def on_message(message):
     if message.channel.id == akatsuki_rank_request_id:
         await message.delete()
 
-        if not any(required in message.content for required in ("akatsuki.pw", "osu.ppy.sh")) or len(message.content) > 58: # Should not EVER be over 58 characters. (57 but safe)
+        if not any(required in message.content for required in ("akatsuki.pw", "osu.ppy.sh")) \
+        or len(message.content) > 60                                                          \
+        or len(message.content) < 20:
             await message.author.send("Your beatmap request was incorrectly formatted, and thus has not been submitted.")
             return
 
@@ -312,13 +315,13 @@ async def on_message(message):
 
         # Return values from web request/DB query.
         # TODO: either use the API for everything, or dont use it at all.
-        artist = loads(get(f"{mirror_address}/s/{map_id}").text)["Creator"]
+        artist = loads(get(f"{mirror_address}/api/s/{map_id}", timeout=1).text)["Creator"]
 
         # Create embeds.
         embed = discord.Embed(
             title       = "A new beatmap request has been recieved.",
             description = "** **",
-            color       = 5516472 # Akatsuki purple.
+            color       = embed_colour
         )
 
         embed.set_image (url  = f"https://assets.ppy.sh/beatmaps/{map_id}/covers/cover.jpg?1522396856")
@@ -337,7 +340,7 @@ async def on_message(message):
         embed_dm = discord.Embed(
             title       = "Your beatmap nomination request has been sent to Akatsuki's Beatmap Nomination Team for review.",
             description = "We will review it shortly.",
-            color       = 0x00ff00 # Lime green.
+            color       = 0x00ff00
         )
 
         embed_dm.set_thumbnail(url  = akatsuki_logo)
@@ -430,9 +433,9 @@ async def on_message(message):
                         await message.author.send(
                             "Hello,\n\n"
                             "Your message in osu!Akatsuki has been removed as it has been deemed unsuitable.\n\n"
-                            f"If you have any questions, please ask <@{discord_owner}>.\n"
+                           f"If you have any questions, please ask <@{discord_owner}>.\n"
                             "**Do not try to evade this filter as it is considered fair ground for a ban**.\n\n"
-                            f"```{safe_discord(f'{message.author.name}: {message.content}')}```"
+                           f"```{safe_discord(f'{message.author.name}: {message.content}')}```"
                         )
                     except: print(f"{Colour.LIGHTRED_EX}Could not warn {message.author.name}.")
 
