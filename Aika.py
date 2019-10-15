@@ -414,17 +414,15 @@ async def on_message(message):
             elif "cmyui" in message.content.lower():      col = __colour.YELLOW
             elif message.guild.id == akatsuki_server_id:  col = __colour.CYAN
 
-            m_start = f"{col}{'{0:%Y-%m-%d %H:%M:%S}'.format(datetime.now())} [{message.guild} #{message.channel}] {message.author}:{__colour.RESET}\n"
+            m_start = f"{'{0:%Y-%m-%d %H:%M:%S}'.format(datetime.now())} [{message.guild} #{message.channel}] {message.author}:\n"
 
             m_end = ''
             for line in message.content.split('\n'):
                 m_end += f"{4 * ' '}{line}\n" # I know theres a better way to do this in py, I just can't remember it.
 
-            m_final = f"{m_start}{m_end}"
+            with open(f"{path.dirname(path.realpath(__file__))}/discord.log", 'a+') as log: log.write(f"\n{m_start}{m_end}")
 
-            with open(f"{path.dirname(path.realpath(__file__))}/discord.log", 'a') as log: log.write(f"\n{m_final}")
-
-            print(f"{m_final}")
+            print(f"{col}{m_start}{__colour.RESET}{m_end}")
             del col
 
         # Ignore any member with discord's "manage_messages" permissions.
