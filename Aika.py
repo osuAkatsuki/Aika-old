@@ -234,12 +234,14 @@ async def on_message(message):
     # Regular user checks.
     if message.author.id != discord_owner:
         # If we have unicode in > 1k char message, it's probably with crashing intent?
-        if any(ord(char) > 127 for char in message.content) and len(message.content) >= 1000:
+        if  any(ord(char) > 127 for char in message.content) \
+        and len(message.content) >= 1000:
             await message.delete()
             return
 
     else: # Owner checks.
-        if len(message.content) > 5 and message.content[1:7] == "reload":
+        if  len(message.content) > 5 \
+        and message.content[1:7] == "reload":
             cog_name = message.content[9:].lower()
             if cog_name in ("staff", "user"):
                 bot.reload_extension(f"cogs.{cog_name}")
@@ -394,7 +396,9 @@ async def on_message(message):
                     if sentence[0] == ' ' and sentence[1].isupper(): continue
                     negative = True
 
-            properly_formatted = message.content[0].isupper() and message.content[len(message.content) - 1] in ('.', '?', '!') and not negative
+            properly_formatted = message.content[0].isupper()                                 \
+                             and message.content[len(message.content) - 1] in ('.', '?', '!') \
+                             and not negative
 
             quality = 1
 
@@ -423,7 +427,6 @@ async def on_message(message):
             with open(f"{path.dirname(path.realpath(__file__))}/discord.log", 'a+') as log: log.write(f"\n{m_start}{m_end}")
 
             print(f"{col}{m_start}{__colour.RESET}{m_end}")
-            del col
 
         # Ignore any member with discord's "manage_messages" permissions.
         # Filter messages with our filters & substring_filters.
