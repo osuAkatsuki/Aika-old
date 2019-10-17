@@ -431,7 +431,7 @@ async def on_message(message):
 
         # Ignore any member with discord's "manage_messages" permissions.
         # Filter messages with our filters & substring_filters.
-        if is_admin(message.author):
+        if not is_admin(message.author):
             for split in message.content.lower().split(' '):
                 if any(i == split for i in filters) or any(i in message.content.lower() for i in substring_filters):
                     await message.delete()
