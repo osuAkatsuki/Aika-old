@@ -35,12 +35,7 @@ with open(__config_path, "r+", encoding="ascii") as tmp_file:
 
     tmp_file.seek(0)
 
-    dump(
-        obj       = tmp_config,
-        fp        = tmp_file,
-        sort_keys = True,
-        indent    = 4
-    )
+    dump(obj=tmp_config, fp=tmp_file, sort_keys=True, indent=4)
     del tmp_config
 
     tmp_file.truncate()
@@ -88,9 +83,13 @@ crab_emoji     = config["crab_emoji"]
 filters           = config["filters"]           # Direct word for word strcmp.
 substring_filters = config["substring_filters"] # Find string in message.
 
+# Max amt of characters where if combined with unicode,
+# the user is probably trying to crash Discord clients.
+crashing_intent_length = config["crashing_intent_length"]
+
 # A list of message (sub)strings that we will use to deem
 # a quantifiable value for the "quality" of a message.
-low_quality   = config["low_quality"]    # Deemed a "low-quality" message  (usually profanity).
+low_quality   = config["low_quality"]  # Deemed a "low-quality" message  (usually profanity).
 high_quality  = config["high_quality"] # Deemed a "high-quality" message (usually professionality & proper grammar).
 
 
@@ -117,6 +116,9 @@ def safe_discord(s):
 
 def get_prefix(client, message):
     return commands.when_mentioned_or(*[config["command_prefix"]])(client, message)
+
+def is_admin(author):
+    return True if author.guild_permissions.manage_messages else False
 
 #bot.change_presence(activity=discord.Game(name="osu!Akatsuki", url="https://akatsuki.pw/", type=1))
 client = discord.Client(
@@ -220,22 +222,21 @@ async def on_message(message):
     if not message.content: return
 
     # Verification channel.
-    if message.channel.id == akatsuki_verify_id \
-    and len(message.content) > 1                \
-    and message.content.lower()[1] == 'v'       \
-    and not message.content.split(' ')[-1].isdigit():
-
-        await message.author.add_roles(discord.utils.get(message.guild.roles, name="Members"))
-        await bot.get_channel(akatsuki_general_id).send(f"Welcome to osu!Akatsuki <@{message.author.id}>!")
+    if message.channel.id == akatsuki_verify_id:
+        if not message.content.split(' ')[-1].isdigit(): # bot
+            await message.author.add_roles(discord.utils.get(message.guild.roles, name="Members"))
+            await bot.get_channel(akatsuki_general_id).send(f"Welcome to osu!Akatsuki <@{message.author.id}>!")
 
         await message.delete() # Delete all messages posted in #verify.
         return
 
     # Regular user checks.
     if message.author.id != discord_owner:
-        # If we have unicode in > 1k char message, it's probably with crashing intent?
+        # If we have unicode in a long message,
+        # it's probably either with crashing intent,
+        # or is just low quality to begin with?
         if  any(ord(char) > 127 for char in message.content) \
-        and len(message.content) >= 1000:
+        and len(message.content) >= crashing_intent_length:
             await message.delete()
             return
 
@@ -430,7 +431,7 @@ async def on_message(message):
 
         # Ignore any member with discord's "manage_messages" permissions.
         # Filter messages with our filters & substring_filters.
-        if not message.author.guild_permissions.manage_messages:
+        if is_admin(message.author):
             for split in message.content.lower().split(' '):
                 if any(i == split for i in filters) or any(i in message.content.lower() for i in substring_filters):
                     await message.delete()
