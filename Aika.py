@@ -221,17 +221,18 @@ async def on_message(message):
     # Don't bother doing anything with it.
     if not message.content: return
 
-    # Verification channel.
-    if message.channel.id == akatsuki_verify_id:
-        if not message.content.split(' ')[-1].isdigit(): # bot
-            await message.author.add_roles(discord.utils.get(message.guild.roles, name="Members"))
-            await bot.get_channel(akatsuki_general_id).send(f"Welcome to osu!Akatsuki <@{message.author.id}>!")
-
-        await message.delete() # Delete all messages posted in #verify.
-        return
-
     # Regular user checks.
     if message.author.id != discord_owner:
+
+        # Verification channel.
+        if message.channel.id == akatsuki_verify_id:
+            if not message.content.split(' ')[-1].isdigit(): # bot
+                await message.author.add_roles(discord.utils.get(message.guild.roles, name="Members"))
+                await bot.get_channel(akatsuki_general_id).send(f"Welcome to osu!Akatsuki <@{message.author.id}>!")
+
+            await message.delete() # Delete all messages posted in #verify.
+            return
+
         # If we have unicode in a long message,
         # it's probably either with crashing intent,
         # or is just low quality to begin with?
