@@ -70,7 +70,7 @@ class User(commands.Cog):
         if len(ctx.message.content.split(' ')) == 1: await fail(); return
 
         SQL.execute('SELECT id, title, content, footer, inline FROM discord_faq WHERE topic = %s AND type = %s', [callback, command_type])
-        result = SQL.fetchone()
+        result = dict(zip(SQL.column_names ,SQL.fetchone()))
 
         if not result: await fail(); return
 
@@ -83,10 +83,10 @@ class User(commands.Cog):
         embed.set_thumbnail(url=AKATSUKI_LOGO)
         embed.add_field(
             name   = '** **',
-            value  = result['content']
-                        .format(
-                            AKATSUKI_IP    = AKATSUKI_IP_ADDRESS,
-                            COMMAND_PREFIX = ctx.prefix),
+            value  = result['content'].format(
+                        AKATSUKI_IP    = AKATSUKI_IP_ADDRESS,
+                        COMMAND_PREFIX = ctx.prefix
+                    ),
             inline = result['inline'])
 
         if result['footer']:
