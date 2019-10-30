@@ -137,51 +137,6 @@ bot = commands.Bot(
 # Load cogs.
 [bot.load_extension(i) for i in ['cogs.staff', 'cogs.user']]
 
-
-@bot.event
-async def on_voice_state_update(member, before, after): # TODO: check if they left dragmein, and delete embed.. if that's even possible..
-    # Await for the bot to be ready before processing voice state updates whatsoever.
-    await bot.wait_until_ready()
-
-    # Only use this event for the "drag me in" voice channel.
-    if not after.channel or after.channel.id != akatsuki_drag_me_in_voice: return
-
-    # Create our vote embed.
-    embed = discord.Embed(
-        title       = f'{member} wants to be dragged in.',
-        description = 'Please add a reaction to determine their fate owo..',
-        color       = 0x00ff00)                                             \
-    .set_footer(icon_url = crab_emoji, text = 'Only one vote is required.') \
-    .set_thumbnail(url   = akatsuki_logo)
-
-    # Assign friends-only chat and voice channel as constants.
-    friends_only_text  = bot.get_channel(akatsuki_friends_only)
-    friends_only_voice = bot.get_channel(akatsuki_friends_only_voice)
-
-    # Send our embed, and add our base 👍.
-    msg = await friends_only_text.send(embed=embed)
-    await msg.add_reaction('👍')
-
-    def check(reaction, user): # TODO: safe
-        if user in [member, bot.user]: return False
-        return reaction.emoji == '👍' and user.voice.channel == friends_only_voice
-
-    # Wait for a 👍 from a "friend". Timeout: 5 minutes.
-    try:
-        _, user = await bot.wait_for('reaction_add', timeout=5 * 60, check=check)
-    except asyncio.TimeoutError: # Timed out. Remove the embed.
-        await friends_only_text.send(f"Timed out {member}'s join query.")
-        await msg.delete()
-        return
-
-    try: await member.move_to(channel=friends_only_voice, reason='Voted in.')
-    except discord.errors.HTTPException: await msg.delete(); return
-
-    # Send our vote success, and delete the original embed.
-    await friends_only_text.send(f'{user} voted {member} in.')
-    await msg.delete()
-    return
-
 @bot.event
 async def on_ready():
     print('=' * 40,
@@ -244,6 +199,94 @@ async def on_member_update(before, after):
         # Perhaps send the user a message if changed?
     except discord.errors.Forbidden:
         print(f"{colour.LIGHTRED_EX}Insufficient permissions to change new nickname '{after.nick}'.")
+
+
+@bot.event
+async def on_message_edit(before, after):
+    if after.channel.id != akatsuki_botspam_id:
+        col = None
+        if not after.guild:                         col = colour.GREEN
+        elif 'cmyui' in after.content.lower():      col = colour.YELLOW
+        elif after.guild.id == akatsuki_server_id:  col = colour.CYAN
+
+        m_start = f'[EDIT] {datetime.now():%Y-%m-%d %H:%M:%S} [{after.guild} #{after.channel}] {after.author}:\n'
+
+        m_end = []
+        for line in after.content.split('\n'): m_end.append(f'{4 * " "}{line}') # I know theres a better way to do this in py, I just can't remember it.
+        m_end = '\n'.join(m_end)
+
+        with open(f'{path.dirname(path.realpath(__file__))}/discord.log', 'a+') as log: log.write(f'\n{m_start}{m_end}')
+
+        print(f'{col}{m_start}{colour.RESET}{m_end}')
+
+    # Ignore any member with discord's "manage_messages" permissions.
+    # Filter messages with our filters & substring_filters.
+    if is_admin(after.author):
+        for split in after.content.lower().split(' '):
+            if any(i == split for i in filters) or any(i in after.content.lower() for i in substring_filters):
+                await after.delete()
+
+                print(f'{colour.LIGHTYELLOW_EX}^ Autoremoved message ^')
+                try:
+                    await after.author.send(
+                        'Hello,\n\n'
+                        'Your message in osu!Akatsuki has been removed as it has been deemed unsuitable.\n\n'
+                        f'If you have any questions, please ask <@{discord_owner}>.\n'
+                        '**Do not try to evade this filter as it is considered fair ground for a ban**.\n\n'
+                        f'```{safe_discord(f"{after.author.name}: {after.content}")}```'
+                    )
+                except: print(f'{colour.LIGHTRED_EX}Could not warn {after.author.name}.')
+
+                cnx.ping(reconnect=True, attempts=2, delay=1)
+
+                SQL.execute('INSERT INTO profanity_logs (id, user, content, datetime) VALUES (NULL, %s, %s, %s)',
+                    [after.author.id, after.content.encode('ascii', errors='ignore'), time()])
+
+                return
+
+
+@bot.event
+async def on_voice_state_update(member, before, after): # TODO: check if they left dragmein, and delete embed.. if that's even possible..
+
+    # Only use this event for the "drag me in" voice channel.
+    if not after.channel or after.channel.id != akatsuki_drag_me_in_voice: return
+
+    # Create our vote embed.
+    embed = discord.Embed(
+        title       = f'{member} wants to be dragged in.',
+        description = 'Please add a reaction to determine their fate owo..',
+        color       = 0x00ff00)                                             \
+    .set_footer(icon_url = crab_emoji, text = 'Only one vote is required.') \
+    .set_thumbnail(url   = akatsuki_logo)
+
+    # Assign friends-only chat and voice channel as constants.
+    friends_only_text  = bot.get_channel(akatsuki_friends_only)
+    friends_only_voice = bot.get_channel(akatsuki_friends_only_voice)
+
+    # Send our embed, and add our base 👍.
+    msg = await friends_only_text.send(embed=embed)
+    await msg.add_reaction('👍')
+
+    def check(reaction, user): # TODO: safe
+        print(reaction, reaction.emoji, user, user.voice, friends_only_voice,sep='\n\n')
+        if user in [member, bot.user]: return False
+        return reaction.emoji == '👍' and user.voice.channel == friends_only_voice
+
+    # Wait for a 👍 from a "friend". Timeout: 5 minutes.
+    try:
+        _, user = await bot.wait_for('reaction_add', timeout=5 * 60, check=check)
+    except asyncio.TimeoutError: # Timed out. Remove the embed.
+        await friends_only_text.send(f"Timed out {member}'s join query.")
+        await msg.delete()
+        return
+
+    try: await member.move_to(channel=friends_only_voice, reason='Voted in.')
+    except discord.errors.HTTPException: await msg.delete(); return
+
+    # Send our vote success, and delete the original embed.
+    await friends_only_text.send(f'{user} voted {member} in.')
+    await msg.delete()
+    return
 
 
 @bot.event
