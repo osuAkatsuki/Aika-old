@@ -221,7 +221,7 @@ async def on_message_edit(before, after):
 
     # Ignore any member with discord's "manage_messages" permissions.
     # Filter messages with our filters & substring_filters.
-    if is_admin(after.author):
+    if not is_admin(after.author):
         for split in after.content.lower().split(' '):
             if any(i == split for i in filters) or any(i in after.content.lower() for i in substring_filters):
                 await after.delete()
