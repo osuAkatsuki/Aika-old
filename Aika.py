@@ -10,8 +10,8 @@ from json import loads, dump
 from os import path
 from requests import get
 
-from colorama import init; init(autoreset=True)
-from colorama import Fore as colour
+from colorama import init, Fore as colour
+init(autoreset=True)
 
 """ Configuration. """
 
@@ -391,9 +391,9 @@ async def on_message(message):
         SQL.execute(f'SELECT song_name, ar, od, max_combo, bpm, difficulty_{mode} FROM beatmaps WHERE beatmapset_id = %s ORDER BY difficulty_{mode} DESC LIMIT 1', [map_id])
         song_name, ar, od, max_combo, bpm, star_rating = SQL.fetchone()
 
-        # Return values from web request/DB query.
-        # TODO: either use the API for everything, or dont use it at all.
-        artist = loads(get(f'{mirror_address}/api/s/{map_id}', timeout=1.5).text)['Creator']
+        # Temp disabled
+        #artist = loads(get(f'{mirror_address}/api/s/{map_id}', timeout=1.5).text)['Creator']
+        #.add_field (name = "Mapper",            value = artist)                          \
 
         # Create embeds.
         embed = discord.Embed(
@@ -405,7 +405,6 @@ async def on_message(message):
         .set_author(url  = f"https://akatsuki.pw/d/{map_id}", name = song_name, icon_url = akatsuki_logo) \
         .set_footer(text = f"Akatsuki's beatmap nomination system v{abns_version:.2f}", icon_url = "https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg") \
         .add_field (name = "Nominator",         value = message.author.name)             \
-        .add_field (name = "Mapper",            value = artist)                          \
         .add_field (name = "Gamemode",          value = mode_formatted)                  \
         .add_field (name = "Highest SR",        value = f"{star_rating:.2f}*")           \
         .add_field (name = "Highest AR",        value = ar)                              \
