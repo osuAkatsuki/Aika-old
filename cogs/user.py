@@ -70,7 +70,7 @@ class User(commands.Cog):
         if len(ctx.message.content.split(' ')) == 1: await fail(); return
 
         SQL.execute('SELECT id, title, content, footer, inline FROM discord_faq WHERE topic = %s AND type = %s', [callback, command_type])
-        result = dict(zip(SQL.column_names ,SQL.fetchone()))
+        result = dict(zip(SQL.column_names, SQL.fetchone()))
 
         if not result: await fail(); return
 
@@ -98,7 +98,7 @@ class User(commands.Cog):
     @commands.command(
         name        = 'rewrite',
         description = "Aika's rewrite information.",
-        aliases     = ['recent', 'stats', 'linkosu', 'botinfo', 'aika', 'cmyui', 'apply', 'akatsuki']
+        aliases     = ['recent', 'stats', 'botinfo', 'aika', 'cmyui', 'apply', 'akatsuki']
     )
     async def rewrite_info(self, ctx):
         await ctx.send(f'**Aika is currently undergoing a rewrite, and the {ctx.invoked_with} command has not yet been implemented.**\n'
@@ -212,11 +212,54 @@ class User(commands.Cog):
 
     @commands.command(
         name        = 'roll',
-        description = 'Rolls a random number between 1-100'
+        description = 'Rolls a random number between 1-100.'
     )
     async def roll(self, ctx):
         await ctx.send(f'{ctx.author} rolled a {(str(random.randint(1, 100)))}!')
         return
+
+
+    @commands.command(
+        name        = 'linkosu',
+        description = 'Links your discord account to your osu!Akatsuki account.',
+        aliases     = ['linkdiscord']
+    )
+    async def link_osu_account(self, ctx):
+        SQL.execute('SELECT userid FROM discord WHERE discordid = %s', [ctx.author.id])
+        result = SQL.fetchone()
+        if result and result[0]:
+            await ctx.send(f"Your account is already linked to https://akatsuki.pw/u/{result[0]}.\nIf you'd like to link your Discord to another account, please contact @cmyui#0425.")
+            return
+        elif result:
+            s = "It seems as if you've already initiated the linking process."
+        else:
+            SQL.execute('INSERT INTO discord (id, userid, discordid) VALUES (NULL, 0, %s)', [ctx.author.id])
+            s = 'Linking process initiated.'
+
+        await ctx.send(f'{s}\nPlease enter the following command on the osu!Akatsuki server to `Aika`, or in #osu to complete verification.\n> `!linkdiscord {ctx.author.id}`')
+        return
+
+
+    @commands.command(
+        name        = 'syncroles',
+        description = 'Syncs your roles from the osu!Akatsuki server to the Discord.'
+    )
+    async def sync_osu_roles(self, ctx):
+        SQL.execute('SELECT userid FROM discord WHERE discordid = %s', [ctx.author.id])
+        result = SQL.fetchone()
+        if result and result[0]:
+            SQL.execute('SELECT privileges FROM users WHERE id = %s', [result[0]])
+            privileges = SQL.fetchone()[0]
+
+            if privileges & 8388608: # Premium
+                role = discord.utils.get(ctx.message.guild.roles, name='Premium')
+            elif privileges & 4: # Supporter
+                role = discord.utils.get(ctx.message.guild.roles, name='Supporter')
+            #else: print('?')
+
+            await ctx.author.add_roles(role)
+            await ctx.send('Your roles have been synced.')
+        else: await ctx.send("It doesn't seem like your Discord is linked to an osu!Akatsuki account.\nYou can link one by using the `!linkosu` command.")
 
 
     @commands.command(
