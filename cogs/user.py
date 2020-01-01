@@ -165,7 +165,7 @@ class User(commands.Cog):
             await ctx.send(f'`{feet}ft {inches}in` -> `{((feet * 12) + inches) * 2.54:.2f}cm`')
 
         else:
-            await ctx.send(f'`{ft_in:d}ft` -> `{int(ft_in) * 30.48:.2f}cm`')
+            await ctx.send(f'`{int(ft_in)}ft` -> `{int(ft_in) * 30.48:.2f}cm`')
 
         return
 
