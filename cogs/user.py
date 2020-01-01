@@ -17,7 +17,7 @@ AKATSUKI_IP_ADDRESS      = '51.79.17.191'     # Akatsuki's osu! server IP.
 AKATSUKI_LOGO            = 'https://akatsuki.pw/static/logos/logo.png'
 
 """ Read and assign values from config. """
-with open(os.path.dirname(os.path.realpath(__file__)) + '/../config.json', 'r') as f:
+with open(f'{os.path.dirname(os.path.realpath(__file__))}/../config.json', 'r') as f:
     global config
     config = json.loads(f.read())
 
@@ -119,7 +119,7 @@ class User(commands.Cog):
             return
 
         """
-        def check(m):
+        def check(m: discord.Message):
             return m.channel == ctx.channel and m.author == ctx.author
 
         await ctx.send('Please type `Yes` to confirm you are over the age of 18.\n'
@@ -199,7 +199,7 @@ class User(commands.Cog):
     )
     async def round_number(self, ctx):
         fuckpy = None
-        if not re.match('^\d+?\.\d+?$', ctx.message.content.split(' ')[1]):
+        if not re.match(r'^\d+?\.\d+?$', ctx.message.content.split(' ')[1]):
             await ctx.send('Why are your trying to round that?')
             return
 
@@ -267,15 +267,15 @@ class User(commands.Cog):
         description = 'Returns AR with the specified AR and mods.'
     )
     async def calculate_ar(self, ctx):
-        def check(m):
+        def check(m: discord.Message):
             return m.channel == ctx.channel and m.author == ctx.author
 
-        def ApplyModsToDifficulty(difficulty, hardRockFactor, mods):
+        def ApplyModsToDifficulty(difficulty: float, hardRockFactor: float, mods: int):
             if 'EZ' in mods: difficulty = max(0, difficulty / 2)
             if 'HR' in mods: difficulty = min(10, difficulty * hardRockFactor)
             return difficulty
 
-        def MapDifficultyRange(difficulty, min, mid, max, mods):
+        def MapDifficultyRange(difficulty: float, min: float, mid: float, max: float, mods: int):
             difficulty = ApplyModsToDifficulty(difficulty, 1.4, mods)
 
             if difficulty > 5: return mid + (max - mid) * (difficulty - 5) / 5
@@ -319,5 +319,5 @@ class User(commands.Cog):
         return
 
 
-def setup(bot):
+def setup(bot: commands.Bot):
     bot.add_cog(User(bot))

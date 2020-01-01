@@ -114,7 +114,7 @@ else: SQL = cnx.cursor()
 def safe_discord(s):
     return str(s).replace('`', '')
 
-def get_prefix(client, message):
+def get_prefix(client, message: discord.Message):
     return commands.when_mentioned_or(*[config['command_prefix']])(client, message)
 
 def is_admin(author):
@@ -168,7 +168,7 @@ async def on_ready():
 
 
 @bot.event
-async def on_member_update(before, after):
+async def on_member_update(before: discord.Member, after: discord.Member):
     """
     Called when a Member updates their profile.
 
@@ -202,7 +202,7 @@ async def on_member_update(before, after):
 
 
 @bot.event
-async def on_message_edit(before, after):
+async def on_message_edit(before: discord.Message, after: discord.Message):
     if after.channel.id != akatsuki_botspam_id:
         col = None
         if not after.guild:                         col = colour.GREEN
@@ -246,7 +246,7 @@ async def on_message_edit(before, after):
 
 
 @bot.event
-async def on_voice_state_update(member, before, after): # TODO: check if they left dragmein, and delete embed.. if that's even possible..
+async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState): # TODO: check if they left dragmein, and delete embed.. if that's even possible..
 
     # Only use this event for the "drag me in" voice channel.
     if not after.channel or after.channel.id != akatsuki_drag_me_in_voice: return
@@ -290,7 +290,7 @@ async def on_voice_state_update(member, before, after): # TODO: check if they le
 
 
 @bot.event
-async def on_message(message):
+async def on_message(message: discord.Message):
 
     # The message has no content.
     # Don't bother doing anything with it.
