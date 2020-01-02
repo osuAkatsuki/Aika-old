@@ -52,7 +52,7 @@ class User(commands.Cog):
         aliases     = ['info', 'information'],
         usage       = '<callback>'
     )
-    async def faq_command(self, ctx):
+    async def faq_command(self, ctx) -> None:
         cnx.ping(reconnect=True, attempts=2, delay=1)
         command_type = 0 if ctx.invoked_with.startswith('info') else 1
         callback = ctx.message.content[len(ctx.prefix) + len(ctx.invoked_with) + 1:]
@@ -100,7 +100,7 @@ class User(commands.Cog):
         description = "Aika's rewrite information.",
         aliases     = ['recent', 'stats', 'botinfo', 'aika', 'cmyui', 'apply', 'akatsuki']
     )
-    async def rewrite_info(self, ctx):
+    async def rewrite_info(self, ctx) -> None:
         await ctx.send(f'**Aika is currently undergoing a rewrite, and the {ctx.invoked_with} command has not yet been implemented.**\n'
                         '\n'
                         'Repository: https://github.com/osuAkatsuki/Aika.\n'
@@ -113,7 +113,7 @@ class User(commands.Cog):
         description = 'Grants access to the NSFW channels of Akatsuki.',
         aliases     = ['nsfwaccess']
     )
-    async def nsfw_access(self, ctx): # TODO: toggle or check if already has access
+    async def nsfw_access(self, ctx) -> None: # TODO: toggle or check if already has access
         if not any(role.name in ['Supporter', 'Premium'] for role in ctx.author.roles):
             #await ctx.send('This command requires atleast the Supporter role.')
             return
@@ -139,7 +139,7 @@ class User(commands.Cog):
         description = 'Returns the current UNIX time.',
         aliases     = ['unix', 'unixtime']
     )
-    async def current_unixtime(self, ctx):
+    async def current_unixtime(self, ctx) -> None:
         await ctx.send(f'Current UNIX timestamp: `{int(time.time())}`') # int cast to round lol
         return
 
@@ -148,7 +148,7 @@ class User(commands.Cog):
         description = 'Feet & inches > cm. So all our Americans can understand us metric boys.',
         aliases     = ['fttocm', 'america']
     )
-    async def ft_to_cm(self, ctx): # TODO both inches and ft alone
+    async def ft_to_cm(self, ctx) -> None: # TODO both inches and ft alone
         ft_in = ctx.message.content.split(' ')[1]
 
         if any(i not in '1234567890' for i in ft_in):
@@ -174,7 +174,7 @@ class User(commands.Cog):
         description = 'Returns the current MD5 of the input string.',
         aliases     = ['encrypt']
     )
-    async def hash_string(self, ctx):
+    async def hash_string(self, ctx) -> None:
         hash_type = ctx.message.content.split(' ')[1].lower()
         if hash_type not in ('md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512'):
             await ctx.send(f'{hash_type} is not a supported algorithm.')
@@ -197,7 +197,7 @@ class User(commands.Cog):
         name        = 'round',
         description = 'Returns arg0 rounded to arg1 decimal places.'
     )
-    async def round_number(self, ctx):
+    async def round_number(self, ctx) -> None:
         fuckpy = None
         if not re.match(r'^\d+?\.\d+?$', ctx.message.content.split(' ')[1]):
             await ctx.send('Why are your trying to round that?')
@@ -214,7 +214,7 @@ class User(commands.Cog):
         name        = 'roll',
         description = 'Rolls a random number between 1-100.'
     )
-    async def roll(self, ctx):
+    async def roll(self, ctx) -> None:
         await ctx.send(f'{ctx.author} rolled a {(str(random.randint(1, 100)))}!')
         return
 
@@ -224,7 +224,7 @@ class User(commands.Cog):
         description = 'Links your discord account to your osu!Akatsuki account.',
         aliases     = ['linkdiscord']
     )
-    async def link_osu_account(self, ctx):
+    async def link_osu_account(self, ctx) -> None:
         SQL.execute('SELECT userid FROM discord WHERE discordid = %s', [ctx.author.id])
         result = SQL.fetchone()
         if result and result[0]:
@@ -244,7 +244,7 @@ class User(commands.Cog):
         name        = 'syncroles',
         description = 'Syncs your roles from the osu!Akatsuki server to the Discord.'
     )
-    async def sync_osu_roles(self, ctx):
+    async def sync_osu_roles(self, ctx) -> None:
         SQL.execute('SELECT userid FROM discord WHERE discordid = %s', [ctx.author.id])
         result = SQL.fetchone()
         if result and result[0]:
@@ -266,16 +266,16 @@ class User(commands.Cog):
         name        = 'ar',
         description = 'Returns AR with the specified AR and mods.'
     )
-    async def calculate_ar(self, ctx):
-        def check(m: discord.Message):
+    async def calculate_ar(self, ctx) -> None:
+        def check(m: discord.Message) -> bool:
             return m.channel == ctx.channel and m.author == ctx.author
 
-        def ApplyModsToDifficulty(difficulty: float, hardRockFactor: float, mods: int):
+        def ApplyModsToDifficulty(difficulty: float, hardRockFactor: float, mods: int) -> float:
             if 'EZ' in mods: difficulty = max(0, difficulty / 2)
             if 'HR' in mods: difficulty = min(10, difficulty * hardRockFactor)
             return difficulty
 
-        def MapDifficultyRange(difficulty: float, min: float, mid: float, max: float, mods: int):
+        def MapDifficultyRange(difficulty: float, min: float, mid: float, max: float, mods: int) -> float:
             difficulty = ApplyModsToDifficulty(difficulty, 1.4, mods)
 
             if difficulty > 5: return mid + (max - mid) * (difficulty - 5) / 5

@@ -17,7 +17,7 @@ init(autoreset=True)
 
 # Hardcoded version numbers.
 global __version, __abns_version
-__version      = 4.60 # Aika (This bot).
+__version      = 4.61 # Aika (This bot).
 __abns_version = 2.20 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
 __config_path  = f'{path.dirname(path.realpath(__file__))}/config.json'
 
@@ -111,13 +111,13 @@ else: SQL = cnx.cursor()
 
 
 """ Functions. """
-def safe_discord(s):
-    return str(s).replace('`', '')
+def safe_discord(s: str) -> str:
+    return s.replace('`', '')
 
 def get_prefix(client, message: discord.Message):
     return commands.when_mentioned_or(*[config['command_prefix']])(client, message)
 
-def is_admin(author):
+def is_admin(author: discord.User) -> bool:
     return True if author.guild_permissions.manage_messages else False
 
 #bot.change_presence(activity=discord.Game(name="osu!Akatsuki", url="https://akatsuki.pw/", type=1))
@@ -138,7 +138,7 @@ bot = commands.Bot(
 [bot.load_extension(i) for i in ['cogs.staff', 'cogs.user']]
 
 @bot.event
-async def on_ready():
+async def on_ready() -> None:
     print('=' * 40,
           f'Logged in as {bot.user.name}\n',
           f'UserID: {bot.user.id}',
@@ -168,7 +168,7 @@ async def on_ready():
 
 
 @bot.event
-async def on_member_update(before: discord.Member, after: discord.Member):
+async def on_member_update(before: discord.Member, after: discord.Member) -> None:
     """
     Called when a Member updates their profile.
 
@@ -202,7 +202,7 @@ async def on_member_update(before: discord.Member, after: discord.Member):
 
 
 @bot.event
-async def on_message_edit(before: discord.Message, after: discord.Message):
+async def on_message_edit(before: discord.Message, after: discord.Message) -> None:
     if after.channel.id != akatsuki_botspam_id:
         col = None
         if not after.guild:                         col = colour.GREEN
@@ -246,7 +246,7 @@ async def on_message_edit(before: discord.Message, after: discord.Message):
 
 
 @bot.event
-async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState): # TODO: check if they left dragmein, and delete embed.. if that's even possible..
+async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState) -> None: # TODO: check if they left dragmein, and delete embed.. if that's even possible..
 
     # Only use this event for the "drag me in" voice channel.
     if not after.channel or after.channel.id != akatsuki_drag_me_in_voice: return
@@ -267,7 +267,7 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
     msg = await friends_only_text.send(embed=embed)
     await msg.add_reaction('👍')
 
-    def check(reaction, user): # TODO: safe
+    def check(reaction: discord.Reaction, user: discord.User) -> bool: # TODO: safe
         print(reaction, reaction.emoji, user, user.voice, friends_only_voice,sep='\n\n')
         if user in [member, bot.user]: return False
         return reaction.emoji == '👍' and user.voice.channel == friends_only_voice
@@ -290,7 +290,7 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
 
 
 @bot.event
-async def on_message(message: discord.Message):
+async def on_message(message: discord.Message) -> None:
 
     # The message has no content.
     # Don't bother doing anything with it.
@@ -330,7 +330,7 @@ async def on_message(message: discord.Message):
 
     # NSFW channel checks (deleting non-images from #nsfw).
     if message.channel.id == akatsuki_nsfw_id:
-        def check_content(m): # Don't delete links or images.
+        def check_content(m: discord.Message) -> bool: # Don't delete links or images.
             if any(message.content.startswith(s) for s in ('http://', 'https://')) or message.attachments: return False
             return True
 

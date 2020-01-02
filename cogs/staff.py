@@ -17,7 +17,7 @@ class Staff(commands.Cog):
         aliases     = ['p'],
         usage       = '<message-count> (Max 1000)'
     )
-    async def prune_command(self, ctx):
+    async def prune_command(self, ctx) -> None:
         if not ctx.author.guild_permissions.manage_messages:
             await ctx.send(content=INSUFFICIENT_PRIVILEGES)
             return
