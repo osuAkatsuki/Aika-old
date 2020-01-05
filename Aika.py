@@ -20,13 +20,13 @@ init(autoreset=True)
 
 # Hardcoded version numbers.
 global __version, __abns_version
-__version:      float = 4.65 # Aika (This bot).
-__abns_version: float = 2.20 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
-__config_path:    str = f'{path.dirname(path.realpath(__file__))}/config.json'
+__version          = 4.65 # Aika (This bot).
+__abns_version     = 2.20 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
+__config_path: str = f'{path.dirname(path.realpath(__file__))}/config.json'
 
 # Check for mismatching hardcoded version - config version.
 global mismatch
-mismatch: int = 0
+mismatch = 0
 with open(__config_path, 'r+', encoding='ascii') as tmp_file:
     tmp_config = loads(tmp_file.read())
 

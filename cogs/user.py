@@ -20,7 +20,6 @@ with open(f'{os.path.dirname(os.path.realpath(__file__))}/../config.json', 'r') 
     global config
     config = loads(f.read())
 
-
 version: float = config['version']
 
 try:
@@ -186,7 +185,7 @@ class User(commands.Cog):
             return
 
         SQL.execute('SELECT id, title, content, footer, inline FROM discord_faq WHERE topic = %s AND type = %s', [callback, int(_faq)])
-        result = dict(zip(SQL.column_names, SQL.fetchone()))
+        result: Dict[str, Union[int, str, bool]] = dict(zip(SQL.column_names, SQL.fetchone()))
 
         if not result:
             await fail()
@@ -302,7 +301,7 @@ class User(commands.Cog):
             await ctx.send(f'{hash_type} is not a supported algorithm.')
             return
 
-        string = ''.join(ctx.message.content.split(' ')[2:]).encode('utf-8')
+        string = ' '.join(ctx.message.content.split(' ')[2:]).encode('utf-8')
 
         if   hash_type == 'md5':    r = hashlib.md5   (string)
         elif hash_type == 'sha1':   r = hashlib.sha1  (string)
@@ -320,7 +319,7 @@ class User(commands.Cog):
         description = 'Rolls a random number between 1-100.'
     )
     async def roll(self, ctx) -> None:
-        await ctx.send(f'{ctx.author} rolled a {(str(random.randint(1, 100)))}!')
+        await ctx.send(f'{ctx.author} rolled a {random.randint(1, 100)}!')
         return
 
 
@@ -354,7 +353,7 @@ class User(commands.Cog):
         result = SQL.fetchone()
         if result and result[0]:
             SQL.execute('SELECT privileges FROM users WHERE id = %s', [result[0]])
-            privileges = SQL.fetchone()[0]
+            privileges: int = SQL.fetchone()[0]
 
             if privileges & 8388608: # Premium
                 role = discord.utils.get(ctx.message.guild.roles, name='Premium')
@@ -390,7 +389,7 @@ class User(commands.Cog):
             return mid
 
         await ctx.send('What AR would you like to calculate?')
-        ar = await self.bot.wait_for('message', check=check)
+        ar: Union[discord.Message, float, str] = await self.bot.wait_for('message', check=check)
 
         try:
             ar = float(ar.content)
@@ -400,14 +399,14 @@ class User(commands.Cog):
             return
 
         await ctx.send('What mod(s) would you like to calculate with? (None is fine!)')
-        _mods = await self.bot.wait_for('message', check=check)
+        _mods: Union[discord.Message, str] = await self.bot.wait_for('message', check=check)
         _mods = _mods.content.lower()
 
         if ('ht' in _mods and 'dt' in _mods) or ('hr' in _mods and 'ez' in _mods):
             await ctx.send('Please use valid mods (EZ/HR/DT/HT).')
             return
 
-        mods = []
+        mods: List[str] = []
 
         if 'ez' in _mods: mods.append('EZ') # Add EZ to mods.
         if 'hr' in _mods: mods.append('HR') # Add HR to mods.
@@ -421,7 +420,7 @@ class User(commands.Cog):
         ar_ms /= 1.5 if 'DT' in mods else 0.75
 
         # Calculate AR. Round to 3 decimal places.
-        ar = '%.3f' % round(-(ar_ms - 1800.0) / 120.0 if ar_ms > 1200.0 else -(ar_ms - 1200.0) / 150.0 + 5.0, 3)
+        ar = f'{round(-(ar_ms - 1800.0) / 120.0 if ar_ms > 1200.0 else -(ar_ms - 1200.0) / 150.0 + 5.0, 3):.3f}'
         await ctx.send(f'AR{ar} ({ar_ms}ms) | Mods: {", ".join(mods) if mods else "None"}')
         return
 
