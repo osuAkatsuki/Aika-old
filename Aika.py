@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from typing import Union, Optional, List
 import discord, asyncio
 from discord.ext import commands
 import mysql.connector
@@ -10,6 +11,8 @@ from json import loads, dump
 from os import path
 from requests import get
 
+from helpers import osuHelper
+
 from colorama import init, Fore as colour
 init(autoreset=True)
 
@@ -17,20 +20,20 @@ init(autoreset=True)
 
 # Hardcoded version numbers.
 global __version, __abns_version
-__version      = 4.61 # Aika (This bot).
-__abns_version = 2.20 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
-__config_path  = f'{path.dirname(path.realpath(__file__))}/config.json'
+__version:      float = 4.65 # Aika (This bot).
+__abns_version: float = 2.20 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
+__config_path:    str = f'{path.dirname(path.realpath(__file__))}/config.json'
 
 # Check for mismatching hardcoded version - config version.
 global mismatch
-mismatch = 0
+mismatch: int = 0
 with open(__config_path, 'r+', encoding='ascii') as tmp_file:
     tmp_config = loads(tmp_file.read())
 
     # TODO: check if server build, would not matter for a test env.
 
     if tmp_config['version'] != __version: # If mismatch, update the old config but store the mismatched version for announce.
-        mismatch = tmp_config['version']
+        mismatch: float = tmp_config['version']
         tmp_config['version'] = __version
 
     tmp_file.seek(0)
@@ -45,52 +48,54 @@ with open(__config_path, 'r', encoding='ascii') as f:
     config = loads(f.read())
 
 # Version numbers from config.
-version      = config['version']
-abns_version = config['abns_version']
+version:      float = config['version']
+abns_version: float = config['abns_version']
 
 # Aika's discord token.
-discord_token = config['discord_token']
+discord_token: str = config['discord_token']
 
 # Akatsuki's server/channel IDs.
 # [S] = Server. [T] = Text channel. [V] = Voice channel.
-akatsuki_server_id           = config['akatsuki_server_id']           # [S] | ID for osu!Akatsuki.
-akatsuki_general_id          = config['akatsuki_general_id']          # [T] | ID for #general.
-akatsuki_help_id             = config['akatsuki_help_id']             # [T] | ID for #help.
-akatsuki_verify_id           = config['akatsuki_verify_id']           # [T] | ID for #verify.
-akatsuki_player_reporting_id = config['akatsuki_player_reporting_id'] # [T] | ID for #player_reporting.
-akatsuki_rank_request_id     = config['akatsuki_rank_request_id']     # [T] | ID for #rank-request (User).
-akatsuki_reports_id          = config['akatsuki_reports_id']          # [T] | ID for #reports.
-akatsuki_rank_requests_id    = config['akatsuki_rank_requests_id']    # [T] | ID for #rank-requests (Staff).
-akatsuki_botspam_id          = config['akatsuki_botspam_id']          # [T] | ID for #botspam.
-akatsuki_nsfw_id             = config['akatsuki_nsfw_id']             # [T] | ID for #nsfw.
-akatsuki_friends_only        = config['akatsuki_friends_only']        # [T] | ID for #friends-only.
-akatsuki_drag_me_in_voice    = config['akatsuki_drag_me_in_voice']    # [V] | ID for Drag me in (VC).
-akatsuki_friends_only_voice  = config['akatsuki_friends_only_voice']  # [V] | ID for ✨cmyui (VC).
+akatsuki_server_id:           int = config['akatsuki_server_id']           # [S] | ID for osu!Akatsuki.
+akatsuki_general_id:          int = config['akatsuki_general_id']          # [T] | ID for #general.
+akatsuki_help_id:             int = config['akatsuki_help_id']             # [T] | ID for #help.
+akatsuki_verify_id:           int = config['akatsuki_verify_id']           # [T] | ID for #verify.
+akatsuki_player_reporting_id: int = config['akatsuki_player_reporting_id'] # [T] | ID for #player_reporting.
+akatsuki_rank_request_id:     int = config['akatsuki_rank_request_id']     # [T] | ID for #rank-request (User).
+akatsuki_reports_id:          int = config['akatsuki_reports_id']          # [T] | ID for #reports.
+akatsuki_rank_requests_id:    int = config['akatsuki_rank_requests_id']    # [T] | ID for #rank-requests (Staff).
+akatsuki_botspam_id:          int = config['akatsuki_botspam_id']          # [T] | ID for #botspam.
+akatsuki_nsfw_id:             int = config['akatsuki_nsfw_id']             # [T] | ID for #nsfw.
 
-mirror_address = config['mirror_address']        # Akatsuki's beatmap mirror (used in ABNS system).
-discord_owner  = config['discord_owner_userid']  # Assign discord owner value.
-server_build   = config['server_build']          # If we're running a server build.
-command_prefix = config['command_prefix']
-embed_colour   = int(config['embed_colour'], 16) # Must be casted to int because JSON does not support hex format.
-akatsuki_logo  = config['akatsuki_logo']
-crab_emoji     = config['crab_emoji']
+akatsuki_friends_only:        int = config['akatsuki_friends_only']        # [T] | ID for #friends-only.
+akatsuki_drag_me_in_voice:    int = config['akatsuki_drag_me_in_voice']    # [V] | ID for Drag me in (VC).
+akatsuki_friends_only_voice:  int = config['akatsuki_friends_only_voice']  # [V] | ID for ✨cmyui (VC).
+
+
+mirror_address: str = config['mirror_address']        # Akatsuki's beatmap mirror (used in ABNS system).
+discord_owner:  int = config['discord_owner_userid']  # Assign discord owner value.
+server_build:  bool = config['server_build']          # If we're running a server build.
+command_prefix: str = config['command_prefix']
+embed_colour:   int = int(config['embed_colour'], 16) # Must be casted to int because JSON does not support hex format.
+akatsuki_logo:  str = config['akatsuki_logo']
+crab_emoji:     str = config['crab_emoji']
 
 # A list of filters.
 # These are to be used to wipe messages that are deemed inappropriate,
 # or break rules. For the most part, these are of other private servers,
 # as required by rule #2 of the Akatsuki Discord & Chat Rules
 # (https://akatsuki.pw/doc/rules).
-filters           = config['filters']           # Direct word for word strcmp.
-substring_filters = config['substring_filters'] # Find string in message.
+filters:           List[str] = config['filters']           # Direct word for word strcmp.
+substring_filters: List[str] = config['substring_filters'] # Find string in message.
 
 # Max amt of characters where if combined with unicode,
 # the user is probably trying to crash Discord clients.
-crashing_intent_length = config['crashing_intent_length']
+crashing_intent_length: int = config['crashing_intent_length']
 
 # A list of message (sub)strings that we will use to deem
 # a quantifiable value for the "quality" of a message.
-low_quality   = config['low_quality']  # Deemed a "low-quality" message  (usually profanity).
-high_quality  = config['high_quality'] # Deemed a "high-quality" message (usually professionality & proper grammar).
+low_quality:  List[str] = config['low_quality']  # Deemed a "low-quality" message  (usually profanity).
+high_quality: List[str] = config['high_quality'] # Deemed a "high-quality" message (usually professionality & proper grammar).
 
 
 """ Attempt to connect to MySQL. """
@@ -111,16 +116,12 @@ else: SQL = cnx.cursor()
 
 
 """ Functions. """
-def safe_discord(s: str) -> str:
-    return s.replace('`', '')
-
 def get_prefix(client, message: discord.Message):
     return commands.when_mentioned_or(*[config['command_prefix']])(client, message)
 
 def is_admin(author: discord.User) -> bool:
-    return True if author.guild_permissions.manage_messages else False
+    return author.guild_permissions.manage_messages
 
-#bot.change_presence(activity=discord.Game(name="osu!Akatsuki", url="https://akatsuki.pw/", type=1))
 client = discord.Client(
     max_messages      = 2500,
     heartbeat_timeout = 20
@@ -129,12 +130,11 @@ client = discord.Client(
 bot = commands.Bot(
     command_prefix   = get_prefix,
     case_insensitive = True,
-    help_command     = None,
+    help_command     = 'help',
     self_bot         = False,
     owner_id         = discord_owner
 )
 
-# Load cogs.
 [bot.load_extension(i) for i in ['cogs.staff', 'cogs.user']]
 
 @bot.event
@@ -147,8 +147,8 @@ async def on_ready() -> None:
           f'Owner: {discord_owner}',
           f'Filters: {len(filters)} | {len(substring_filters)}',
           '=' * 40,
-          end='\n\n',
-          sep='\n'
+          end = '\n\n',
+          sep = '\n'
     )
 
     if server_build and mismatch:
@@ -185,8 +185,7 @@ async def on_member_update(before: discord.Member, after: discord.Member) -> Non
     if before.nick == after.nick or not after.nick:
         return
 
-    non_ascii = 0
-
+    non_ascii: int = 0
     for i in after.nick:
         if ord(i) > 127:
             non_ascii += 1
@@ -199,19 +198,20 @@ async def on_member_update(before: discord.Member, after: discord.Member) -> Non
         # Perhaps send the user a message if changed?
     except discord.errors.Forbidden:
         print(f"{colour.LIGHTRED_EX}Insufficient permissions to change new nickname '{after.nick}'.")
+    return
 
 
 @bot.event
 async def on_message_edit(before: discord.Message, after: discord.Message) -> None:
     if after.channel.id != akatsuki_botspam_id:
-        col = None
+        col: Optional[int] = None
         if not after.guild:                         col = colour.GREEN
         elif 'cmyui' in after.content.lower():      col = colour.YELLOW
         elif after.guild.id == akatsuki_server_id:  col = colour.CYAN
 
-        m_start = f'[EDIT] {datetime.now():%Y-%m-%d %H:%M:%S} [{after.guild} #{after.channel}] {after.author}:\n'
+        m_start: str = f'[EDIT] {datetime.now():%Y-%m-%d %H:%M:%S} [{after.guild} #{after.channel}] {after.author}:\n'
 
-        m_end = []
+        m_end: Union[List[str], str] = []
         for line in after.content.split('\n'): m_end.append(f'{4 * " "}{line}') # I know theres a better way to do this in py, I just can't remember it.
         m_end = '\n'.join(m_end)
 
@@ -233,7 +233,7 @@ async def on_message_edit(before: discord.Message, after: discord.Message) -> No
                         'Your message in osu!Akatsuki has been removed as it has been deemed unsuitable.\n\n'
                         f'If you have any questions, please ask <@{discord_owner}>.\n'
                         '**Do not try to evade this filter as it is considered fair ground for a ban**.\n\n'
-                        f'```{safe_discord(f"{after.author.name}: {after.content}")}```'
+                        f'```{f"{after.author.name}: {after.content}".replace("`", "")}```'
                     )
                 except: print(f'{colour.LIGHTRED_EX}Could not warn {after.author.name}.')
 
@@ -264,11 +264,10 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
     friends_only_voice = bot.get_channel(akatsuki_friends_only_voice)
 
     # Send our embed, and add our base 👍.
-    msg = await friends_only_text.send(embed=embed)
+    msg: Optional[discord.Message] = await friends_only_text.send(embed=embed)
     await msg.add_reaction('👍')
 
     def check(reaction: discord.Reaction, user: discord.User) -> bool: # TODO: safe
-        print(reaction, reaction.emoji, user, user.voice, friends_only_voice,sep='\n\n')
         if user in [member, bot.user]: return False
         return reaction.emoji == '👍' and user.voice.channel == friends_only_voice
 
@@ -301,7 +300,7 @@ async def on_message(message: discord.Message) -> None:
 
         # Verification channel.
         if message.channel.id == akatsuki_verify_id:
-            if not message.content.split(' ')[-1].isdigit(): # bot
+            if not message.content.split()[-1].isdigit(): # bot
                 await message.author.add_roles(discord.utils.get(message.guild.roles, name='Members'))
                 await bot.get_channel(akatsuki_general_id).send(f'Welcome to osu!Akatsuki <@{message.author.id}>!')
 
@@ -319,7 +318,7 @@ async def on_message(message: discord.Message) -> None:
     else: # Owner checks.
         if  len(message.content) > 5 \
         and message.content[1:7] == 'reload':
-            cog_name = message.content[9:].lower()
+            cog_name: str = message.content[9:].lower()
             if cog_name in ('staff', 'user'):
                 bot.reload_extension(f'cogs.{cog_name}')
                 await message.channel.send(f'Reloaded extension {cog_name}.')
@@ -331,8 +330,7 @@ async def on_message(message: discord.Message) -> None:
     # NSFW channel checks (deleting non-images from #nsfw).
     if message.channel.id == akatsuki_nsfw_id:
         def check_content(m: discord.Message) -> bool: # Don't delete links or images.
-            if any(message.content.startswith(s) for s in ('http://', 'https://')) or message.attachments: return False
-            return True
+            return not (any(message.content.startswith(s) for s in ('http://', 'https://')) or message.attachments)
 
         if check_content(message): await message.delete()
         return
@@ -350,13 +348,13 @@ async def on_message(message: discord.Message) -> None:
 
         # Support both links like "https://osu.ppy.sh/b/123" AND "osu.ppy.sh/b/123".
         # Also allow for /s/, /b/, and /beatmapset/setid/discussion/mapid links.
-        partitions = message.content.split('/')[3 if '://' in message.content else 1:]
+        partitions: List[str] = message.content.split('/')[3 if '://' in message.content else 1:]
 
         # Yea thank you for sending something useless in #rank-request very cool.
         if partitions[0] not in ('s', 'b', 'beatmapsets'): return
 
-        beatmapset = partitions[0] in ('s', 'beatmapsets') # Link is a beatmapset_id link, not a beatmap_id link.
-        map_id = partitions[1] # Can be SetID or MapID.
+        beatmapset: bool = partitions[0] in ('s', 'beatmapsets') # Link is a beatmapset_id link, not a beatmap_id link.
+        map_id: str = partitions[1] # Can be SetID or MapID.
 
         cnx.ping(reconnect=True, attempts=2, delay=1)
 
@@ -382,14 +380,11 @@ async def on_message(message: discord.Message) -> None:
 
         # Sort out mode to be used to check difficulty.
         # Also have a formatted one to be used for final post.
-        if   mode == 0: mode, mode_formatted = 'std',   'osu!'
-        elif mode == 1: mode, mode_formatted = 'taiko', 'osu!taiko'
-        elif mode == 2: mode, mode_formatted = 'ctb',   'osu!catch'
-        else:           mode, mode_formatted = 'mania', 'osu!mania'
+        mode, mode_formatted = osuHelper.mode_to_readable(mode)
 
         # Select map information.
         SQL.execute(f'SELECT song_name, ar, od, max_combo, bpm, difficulty_{mode} FROM beatmaps WHERE beatmapset_id = %s ORDER BY difficulty_{mode} DESC LIMIT 1', [map_id])
-        song_name, ar, od, max_combo, bpm, star_rating = SQL.fetchone()
+        bData: Dict[str, Union[float, int, str]] = dict(zip(SQL.column_names, SQL.fetchone()))
 
         # Temp disabled
         #artist = loads(get(f'{mirror_address}/api/s/{map_id}', timeout=1.5).text)['Creator']
@@ -400,17 +395,17 @@ async def on_message(message: discord.Message) -> None:
             title = 'A new beatmap request has been recieved.',
             description = '** **',
             color       = embed_colour
-            )                                                                                             \
-        .set_image (url  = f"https://assets.ppy.sh/beatmaps/{map_id}/covers/cover.jpg?1522396856")        \
-        .set_author(url  = f"https://akatsuki.pw/d/{map_id}", name = song_name, icon_url = akatsuki_logo) \
+            ) \
+        .set_image (url  = f"https://assets.ppy.sh/beatmaps/{map_id}/covers/cover.jpg?1522396856") \
+        .set_author(url  = f"https://akatsuki.pw/d/{map_id}", name = bData["song_name"], icon_url = akatsuki_logo) \
         .set_footer(text = f"Akatsuki's beatmap nomination system v{abns_version:.2f}", icon_url = "https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg") \
-        .add_field (name = "Nominator",         value = message.author.name)             \
-        .add_field (name = "Gamemode",          value = mode_formatted)                  \
-        .add_field (name = "Highest SR",        value = f"{star_rating:.2f}*")           \
-        .add_field (name = "Highest AR",        value = ar)                              \
-        .add_field (name = "Highest OD",        value = od)                              \
-        .add_field (name = "Highest Max Combo", value = f"{max_combo}x")                 \
-        .add_field (name = "BPM",               value = bpm)
+        .add_field (name = "Nominator",         value = message.author.name) \
+        .add_field (name = "Gamemode",          value = mode_formatted)      \
+        .add_field (name = "Highest SR",        value = f'{bData[f"difficulty_{mode}"]:.2f}*') \
+        .add_field (name = "Highest AR",        value = bData["ar"])                           \
+        .add_field (name = "Highest OD",        value = bData["od"])                           \
+        .add_field (name = "Highest Max Combo", value = f'{bData["max_combo"]}x')              \
+        .add_field (name = "BPM",               value = bData["bpm"])
 
         # Prepare, and send the report to the reporter.
         embed_dm = discord.Embed(
@@ -429,7 +424,7 @@ async def on_message(message: discord.Message) -> None:
         try: await message.author.send(embed=embed_dm)
         except: print(f'Could not DM ({message.author.name}).')
 
-        for i in ['👎', '👍']: await request_post.add_reaction(i)
+        for i in ['👍', '👎']: await request_post.add_reaction(i)
         return
 
 
@@ -461,7 +456,7 @@ async def on_message(message: discord.Message) -> None:
         if message.channel.id == akatsuki_help_id:
             # Split the content into sentences by periods.
             # TODO: Other punctuation marks!
-            sentence_split = message.content.split('.')
+            sentence_split: List[str] = message.content.split('.')
 
             # Default values for properly formatted messages / negative messages.
             properly_formatted, negative = [False] * 2
@@ -477,8 +472,7 @@ async def on_message(message: discord.Message) -> None:
                 and message.content[len(message.content) - 1] in ('.', '?', '!') \
                 and not negative
 
-            quality = 1
-
+            quality: int = 1
             if any(i in message.content.lower() for i in low_quality):                          quality -= 1
             elif any(i in message.content.lower() for i in high_quality) or properly_formatted: quality += 1
 
@@ -490,14 +484,14 @@ async def on_message(message: discord.Message) -> None:
                 [message.author.id, message.content.encode('ascii', errors='ignore'), time(), quality])
 
         if message.channel.id != akatsuki_botspam_id:
-            col = None
+            col: Optional[int] = None
             if not message.guild:                         col = colour.GREEN
             elif 'cmyui' in message.content.lower():      col = colour.YELLOW
             elif message.guild.id == akatsuki_server_id:  col = colour.CYAN
 
-            m_start = f'{datetime.now():%Y-%m-%d %H:%M:%S} [{message.guild} #{message.channel}] {message.author}:\n'
+            m_start: str = f'{datetime.now():%Y-%m-%d %H:%M:%S} [{message.guild} #{message.channel}] {message.author}:\n'
 
-            m_end = []
+            m_end: Union[List[str], str] = []
             for line in message.content.split('\n'): m_end.append(f'{4 * " "}{line}') # I know theres a better way to do this in py, I just can't remember it.
             m_end = '\n'.join(m_end)
 
@@ -519,7 +513,7 @@ async def on_message(message: discord.Message) -> None:
                             'Your message in osu!Akatsuki has been removed as it has been deemed unsuitable.\n\n'
                            f'If you have any questions, please ask <@{discord_owner}>.\n'
                             '**Do not try to evade this filter as it is considered fair ground for a ban**.\n\n'
-                           f'```{safe_discord(f"{message.author.name}: {message.content}")}```'
+                           f'```{f"{message.author.name}: {message.content}".replace("`", "")}```'
                         )
                     except: print(f'{colour.LIGHTRED_EX}Could not warn {message.author.name}.')
 

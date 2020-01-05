@@ -1,25 +1,27 @@
+from typing import Dict, List, Optional, Union
 import discord, time, hashlib, re, os, random, mysql.connector
 from discord.ext import commands
 from datetime import datetime as d
 from mysql.connector import errorcode
-import json
+from requests import get
+from json import loads
 
-# Error response strings.
-INSUFFICIENT_PRIVILEGES  = 'You do not have sufficient privileges for this command.'
-INCORRECT_SYNTAX         = 'You have used the incorrect syntax for this command.'
-INCORRECT_NUMBER_OF_ARGS = 'You have specified an invalid number of arguments for this command.'
+from helpers import osuHelper
 
 # For FAQ
-AKATSUKI_IP_ADDRESS      = '51.79.17.191'     # Akatsuki's osu! server IP.
+akatsuki_ip_address = '51.79.17.191'     # Akatsuki's osu! server IP.
 
 # Akatsuki's logo.
 # To be used mostly for embed thumbnails.
-AKATSUKI_LOGO            = 'https://akatsuki.pw/static/logos/logo.png'
+akatsuki_logo = 'https://akatsuki.pw/static/logos/logo.png'
 
 """ Read and assign values from config. """
 with open(f'{os.path.dirname(os.path.realpath(__file__))}/../config.json', 'r') as f:
     global config
-    config = json.loads(f.read())
+    config = loads(f.read())
+
+
+version: float = config['version']
 
 try:
     cnx = mysql.connector.connect(
@@ -47,6 +49,110 @@ class User(commands.Cog):
 
 
     @commands.command(
+        name        = 'recent',
+        description = "Displays information about a user's most recent score.",
+        aliases     = ['recentscore'],
+        usage       = '<username (default: linked osu!Akatsuki account)> <-rx>',
+    )
+    async def recent_score_command(self, ctx) -> None:
+        cnx.ping(reconnect=True, attempts=2, delay=1)
+        messages: List[str] = ctx.message.content.split(' ')[1:]
+        username_safe: Optional[str] = None
+        rx: bool = False
+
+        if len(messages) > 2: # Should never have more than a username and possibly -rx flag.
+            await ctx.send('Invalid syntax. Please use the following syntax:\n>> `!recent <username (default: linked osu!Akatsuki account)> <-rx>`')
+            return
+
+        for m in messages:
+            if m == '-rx': rx = True
+            else: username_safe = m
+
+        if rx:
+            await ctx.send('Relax is not yet supported.\nThis command is still very much a work in progress. :)')
+            return
+
+        if not username_safe: # User didn't specify a username; use their connected osu!Akatsuki account if their Discord is linked..
+            SQL.execute('SELECT users.username, users.username_safe, users.id FROM discord LEFT JOIN users ON discord.userid = users.id WHERE discord.discordid = %s', [ctx.author.id])
+            res = SQL.fetchone()
+            if not res:
+                await ctx.send('Please either specify a username, or connect your osu!Akatsuki account with the !linkosu command.\n\n>> `!recent <username (default: linked osu!Akatsuki account)> <-rx>`')
+                return
+            else:
+                username:      str = res[0]
+                username_safe: str = res[1]
+                user_id:       int = res[2]
+        else:
+            SQL.execute('SELECT username, id FROM users WHERE username_safe = %s', [username])
+            res = SQL.fetchone()
+            if not res:
+                await ctx.send(f'Sorry, but I could not find a user by that name.\nIf you believe this is a bug, please report it to cmyui(#0425).')
+                return
+
+            username: str = res[0]
+            user_id:  int = res[1]
+
+        # Do API request to akatsuki-api.
+        r = get(f'http://akatsuki.pw/api/v1/users/scores/recent?id={user_id}&l=1', timeout=1.50).json()
+        if not r or int(r['code']) != 200: await ctx.send('An error occured while attempting to fetch data from the API.\n\nPlease try again later.')
+        if not r['scores']: await ctx.send("That user doesn't seem to have any scores!")
+
+        # Get some player information for our embed.
+        _table = 'rx_stats' if rx else 'users_stats'
+        SQL.execute(f'SELECT pp_std, ranked_score_std, total_score_std, level_std, avg_accuracy_std, playtime_std, total_playtime_std, country FROM {_table} WHERE id = %s', [user_id])
+        res = SQL.fetchone()
+        if not res:
+            await ctx.send('<@285190493703503872> HOW')
+            return
+        else: pdata: Dict[str, Union[float, int, str]] = dict(zip(SQL.column_names, res))
+
+        score = r['scores'][0] # sanity > a few bytes
+
+        embed = discord.Embed(
+            title = score['beatmap']['song_name'],
+            description = f'This score was submitted on osu!Akatsuki at {score["time"]}',
+            url = f"https://akatsuki.pw/b/{score['beatmap']['beatmap_id']}")                                                    \
+        .set_image(url = f"https://assets.ppy.sh/beatmaps/{score['beatmap']['beatmapset_id']}/covers/cover.jpg?1522396856")     \
+        .set_footer(text = f'This command is still a work-in-progress. Please send any ideas to cmyui(#0425)! Aika v{version}') \
+        .set_thumbnail(url = akatsuki_logo)                                                                                     \
+        .set_author(
+            url      = f"https://akatsuki.pw/u/{user_id}",
+            name     = username,
+            icon_url = f'https://a.akatsuki.pw/{user_id}') \
+        .add_field(
+            name  = 'Play Information',
+            value = '\n'.join((
+                f'**PP**: {score["pp"]:,.2f}pp',
+                f'**Accuracy**: {score["accuracy"]:.2f}%',
+                f'**Combo**: {score["max_combo"]}x',
+                f'**Mods**: {osuHelper.mods_to_readable(score["mods"])}',
+                f'**Passed**: {"True" if score["completed"] > 1 else "False"}'
+            )), inline = True) \
+        .add_field(
+            name  = 'Beatmap Information',
+            value = '\n'.join((
+                f'**AR**: {score["beatmap"]["ar"]}',
+                f'**OD**: {score["beatmap"]["od"]}',
+                f'**Status**: {osuHelper.ranked_status_to_readable(score["beatmap"]["ranked"])}',
+                f'**Max combo**: {score["beatmap"]["max_combo"]}x',
+                f'**Length**: {osuHelper.hitlength_to_readable(score["beatmap"]["hit_length"])}'
+                )), inline = True)# \
+        #.add_field(
+        #    name  ='Player Information',
+        #    value = '\n'.join((
+        #        f'**PP**: {pdata["pp_std"]:,.2f}pp',
+        #        f'**Ranked score**: {pdata["ranked_score_std"]:,}',
+        #        f'**Total score**: {pdata["total_score_std"]:,}',
+        #        f'**Level**: {pdata["level_std"]:,}',
+        #        f'**Accuracy**: {pdata["avg_accuracy_std"]:,.2f}%',
+        #        f'**Playtime**: {osuHelper.playtime_to_readable(pdata["playtime_std"])}',
+        #        f'**Total playtime**: {osuHelper.playtime_to_readable(pdata["total_playtime_std"])}',
+        #        f'**Country**: {pdata["country"]}'
+        #    )), inline = False)
+        await ctx.send(embed=embed)
+        return
+
+    @commands.command(
         name        = 'faq',
         description = 'Frequently asked questions.',
         aliases     = ['info', 'information'],
@@ -54,43 +160,59 @@ class User(commands.Cog):
     )
     async def faq_command(self, ctx) -> None:
         cnx.ping(reconnect=True, attempts=2, delay=1)
-        command_type = 0 if ctx.invoked_with.startswith('info') else 1
+        _faq: bool = not ctx.invoked_with.startswith('info')
         callback = ctx.message.content[len(ctx.prefix) + len(ctx.invoked_with) + 1:]
 
-        async def fail():
-            faq_list = []
-            SQL.execute('SELECT id, topic, title FROM discord_faq WHERE type = %s', [command_type])
+        async def fail() -> None: # Send the available FAQ topics.
+            SQL.execute('SELECT topic, title FROM discord_faq WHERE type = %s', [int(_faq)])
 
-            for idx, val in enumerate(SQL.fetchall()):
-                faq_list.append(f'{idx + 1}. {val[1]}{" " * (12 - len(val[1]))}|| {val[2]}')
+            embed = discord.Embed(
+                title = f"Available FAQ topics",
+                description = 'The following are the currently available FAQ topics.',
+                color = 0x00ff00)
 
-            _ = 'I could not find a topic by that name.' if len(callback) else ''
-            await ctx.send(_ + '\n```' + '\n'.join(faq_list) + '```')
+            embed.set_footer(
+                icon_url = akatsuki_logo,
+                text = "For any additional help required, please use the #help channel.")
 
-        if len(ctx.message.content.split(' ')) == 1: await fail(); return
+            for i, v in enumerate(SQL.fetchall()):
+                embed.add_field(name=f'{i + 1}) {v[0]}', value=v[1], inline=False)
 
-        SQL.execute('SELECT id, title, content, footer, inline FROM discord_faq WHERE topic = %s AND type = %s', [callback, command_type])
+            await ctx.send(embed=embed)
+            return
+
+        if len(ctx.message.content.split(' ')) == 1:
+            await fail()
+            return
+
+        SQL.execute('SELECT id, title, content, footer, inline FROM discord_faq WHERE topic = %s AND type = %s', [callback, int(_faq)])
         result = dict(zip(SQL.column_names, SQL.fetchone()))
 
-        if not result: await fail(); return
+        if not result:
+            await fail()
+            return
 
         content_len = len(result['content'])
         if content_len > 1024:
             await ctx.send(f'An error occurred while trying to print the faq.\n\n<@285190493703503872> `faq [{result["id"]}] content {content_len - 1024} too long`.')
             return
 
-        embed = discord.Embed(title=result['title'], description='** **', color=0x00ff00)
-        embed.set_thumbnail(url=AKATSUKI_LOGO)
-        embed.add_field(
-            name   = '** **',
-            value  = result['content'].format(
-                        AKATSUKI_IP    = AKATSUKI_IP_ADDRESS,
+        embed = discord.Embed(
+            title = result['title'],
+            description = '** **',
+            color = 0x00ff00
+        ).add_field(
+            name = '** **',
+            value = result['content'].format(
+                        AKATSUKI_IP    = akatsuki_ip_address,
                         COMMAND_PREFIX = ctx.prefix
                     ),
-            inline = result['inline'])
+            inline = result['inline']
+        ).set_thumbnail(url=akatsuki_logo)
 
         if result['footer']:
             embed.set_footer(icon_url='', text=result['footer'])
+
         await ctx.send(embed=embed)
         return
 
@@ -98,7 +220,7 @@ class User(commands.Cog):
     @commands.command(
         name        = 'rewrite',
         description = "Aika's rewrite information.",
-        aliases     = ['recent', 'stats', 'botinfo', 'aika', 'cmyui', 'apply', 'akatsuki']
+        aliases     = ['stats', 'botinfo', 'aika', 'cmyui', 'apply', 'akatsuki']
     )
     async def rewrite_info(self, ctx) -> None:
         await ctx.send(f'**Aika is currently undergoing a rewrite, and the {ctx.invoked_with} command has not yet been implemented.**\n'
@@ -114,23 +236,23 @@ class User(commands.Cog):
         aliases     = ['nsfwaccess']
     )
     async def nsfw_access(self, ctx) -> None: # TODO: toggle or check if already has access
-        if not any(role.name in ['Supporter', 'Premium'] for role in ctx.author.roles):
-            #await ctx.send('This command requires atleast the Supporter role.')
+        # Check if user already has NSFW Access.
+        if any(i.name == 'NSFW Access' for i in ctx.author.roles):
             return
 
-        """
-        def check(m: discord.Message):
-            return m.channel == ctx.channel and m.author == ctx.author
+        # Story time!
+        # We had the NSFW channel public for a long time, and with that came a lot
+        # of issues, even some resulting in emails from the discord team warning us
+        # that we had to delete specific images or the server itself would be deleted
+        # within 24 hours. Our solution was to make the NSFW channels a donation perk,
+        # not only to reduce the amount of members or possible offenders who may break
+        # discord TOS, but also because the server grew to an extent that I personally
+        # don't think we should have a public NSFW channel; it seems quite unprofessional.
+        if not any(i.name in ['Supporter', 'Premium'] for i in ctx.author.roles):
+            return
 
-        await ctx.send('Please type `Yes` to confirm you are over the age of 18.\n'
-                       'If you falsely accept this, you will be permanently banned from the discord.')
-
-        msg = await self.bot.wait_for('message', check=check)
-        resp = msg.content.lower() == 'yes'
-        if resp:"""
         await ctx.author.add_roles(discord.utils.get(ctx.message.guild.roles, name='NSFW Access'))
         await ctx.message.delete()
-        #await ctx.send('You should now have access to the NSFW channels.')
         return
 
 
@@ -151,13 +273,13 @@ class User(commands.Cog):
     async def ft_to_cm(self, ctx) -> None: # TODO both inches and ft alone
         ft_in = ctx.message.content.split(' ')[1]
 
-        if any(i not in '1234567890' for i in ft_in):
-            await ctx.send('no')
+        if any(i not in "1234567890'" for i in ft_in):
+            await ctx.send("Invalid characters.\nValid: `1234567890'`")
             return
 
         if "'" in ft_in:
             if len(ft_in.split("'")) != 2:
-                await ctx.send('no')
+                await ctx.send('Invalid format.')
                 return
 
             feet, inches = [int(i) for i in ft_in.split("'")]
@@ -190,23 +312,6 @@ class User(commands.Cog):
         elif hash_type == 'sha512': r = hashlib.sha512(string)
 
         await ctx.send(f'{hash_type.upper()}: `{r.hexdigest()}`')
-        return
-
-
-    @commands.command(
-        name        = 'round',
-        description = 'Returns arg0 rounded to arg1 decimal places.'
-    )
-    async def round_number(self, ctx) -> None:
-        fuckpy = None
-        if not re.match(r'^\d+?\.\d+?$', ctx.message.content.split(' ')[1]):
-            await ctx.send('Why are your trying to round that?')
-            return
-
-        if len(ctx.message.content.split(' ')[1].split('.')[1]) < int(ctx.message.content.split(' ')[2]): # User specified sig digits > actual amt of sig digits
-            fuckpy = len(ctx.message.content.split(' ')[1].split('.')[1]) # use actual amt of sig digits
-
-        await ctx.send(f'Rounded value (decimal places: {ctx.message.content.split(" ")[2] if not fuckpy else fuckpy}): `{round(float(ctx.message.content.split(" ")[1]), int(ctx.message.content.split(" ")[2]))}`')
         return
 
 
@@ -255,7 +360,9 @@ class User(commands.Cog):
                 role = discord.utils.get(ctx.message.guild.roles, name='Premium')
             elif privileges & 4: # Supporter
                 role = discord.utils.get(ctx.message.guild.roles, name='Supporter')
-            #else: print('?')
+            else:
+                await ctx.send("I couldn't find any roles to sync!\n\nIf you have recently donated and are trying to claim your discord perks, please contact <@285190493703503872> directly.")
+                return
 
             await ctx.author.add_roles(role)
             await ctx.send('Your roles have been synced.')
