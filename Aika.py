@@ -33,7 +33,7 @@ with open(__config_path, 'r+', encoding='ascii') as tmp_file:
     # TODO: check if server build, would not matter for a test env.
 
     if tmp_config['version'] != __version: # If mismatch, update the old config but store the mismatched version for announce.
-        mismatch: float = tmp_config['version']
+        mismatch = tmp_config['version']
         tmp_config['version'] = __version
 
     tmp_file.seek(0)
