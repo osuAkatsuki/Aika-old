@@ -130,7 +130,7 @@ client = discord.Client(
 bot = commands.Bot(
     command_prefix   = get_prefix,
     case_insensitive = True,
-    help_command     = 'help',
+    help_command     = None,
     self_bot         = False,
     owner_id         = discord_owner
 )
@@ -534,4 +534,5 @@ bot.run(discord_token, bot=True, reconnect=True)
 print('\nKeyboardInterrupt detected. Powering down Aika..')
 SQL.close()
 cnx.close()
+bot.logout()
 print('Cleaning complete.')
