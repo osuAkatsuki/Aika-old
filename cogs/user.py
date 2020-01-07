@@ -60,7 +60,7 @@ class User(commands.Cog):
         rx: bool = False
 
         if len(messages) > 2: # Should never have more than a username and possibly -rx flag.
-            await ctx.send('Invalid syntax. Please use the following syntax:\n>> `!recent <username (default: linked osu!Akatsuki account)> <-rx>`')
+            await ctx.send('Invalid syntax. Please use the following syntax:\n> `!recent <username (default: linked osu!Akatsuki account)> <-rx>`')
             return
 
         for m in messages:
@@ -75,7 +75,7 @@ class User(commands.Cog):
             SQL.execute('SELECT users.username, users.username_safe, users.id FROM discord LEFT JOIN users ON discord.userid = users.id WHERE discord.discordid = %s', [ctx.author.id])
             res = SQL.fetchone()
             if not res:
-                await ctx.send('Please either specify a username, or connect your osu!Akatsuki account with the !linkosu command.\n\n>> `!recent <username (default: linked osu!Akatsuki account)> <-rx>`')
+                await ctx.send('Please either specify a username, or connect your osu!Akatsuki account with the !linkosu command.\n\n> `!recent <username (default: linked osu!Akatsuki account)> <-rx>`')
                 return
             else:
                 username:      str = res[0]
