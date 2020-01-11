@@ -218,7 +218,7 @@ async def on_message_edit(before: discord.Message, after: discord.Message) -> No
 
         m_start: str = f'[EDIT] [{datetime.now():%H:%M%p} #{after.channel}]  {after.author}:\n'
 
-        m_end: Union[List[str], str]
+        m_end: Union[List[str], str] = []
         for line in after.content.split('\n'): m_end.append(f'{4 * " "}{line}') # I know theres a better way to do this in py, I just can't remember it.
         m_end = '\n'.join(m_end)
 
@@ -499,7 +499,7 @@ async def on_message(message: discord.Message) -> None:
 
             m_start: str = f'[{datetime.now():%H:%M%p} #{message.channel}] {message.author}:\n'
 
-            m_end: Union[List[str], str]
+            m_end: Union[List[str], str] = []
             for line in message.content.split('\n'): m_end.append(f'{4 * " "}{line}') # I know theres a better way to do this in py, I just can't remember it.
             m_end = '\n'.join(m_end)
 
