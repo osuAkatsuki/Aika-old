@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from typing import Union, Optional, List
+from typing import Union, Optional, List, Tuple, Dict
 import discord, asyncio
 from discord.ext import commands
 import mysql.connector
@@ -10,6 +10,7 @@ from datetime import datetime
 from json import loads, dump
 from os import path
 from requests import get
+import re
 
 from helpers import osuHelper
 
@@ -21,7 +22,7 @@ init(autoreset=True)
 # Hardcoded version numbers.
 global __version, __abns_version
 __version          = 4.65 # Aika (This bot).
-__abns_version     = 2.20 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
+__abns_version     = 3.00 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
 __config_path: str = f'{path.dirname(path.realpath(__file__))}/config.json'
 
 # Check for mismatching hardcoded version - config version.
@@ -114,6 +115,12 @@ except mysql.connector.Error as err:
     else: raise Exception(err)
 else: SQL = cnx.cursor()
 
+""" Compile regex patterns. """
+regex = {
+    'beatmap': re.compile(r'^((http)?s?://)?(www\.)?((gatari|akatsuki)\.pw|(old|osu)\.ppy\.sh|ripple\.moe)/b/(?P<beatmap_id>[0-9])*(/|\?mode=[0-9])?$'),
+    'beatmapset': re.compile(r'^((http)?s?://)?(www\.)?((gatari|akatsuki)\.pw|(old|osu)\.ppy\.sh|ripple\.moe)/s/(?P<beatmapset_id>[0-9])*(/|\?mode=[0-9])?$'),
+    'discussion': re.compile(r'^((http)?s?://)?(www\.)?((gatari|akatsuki)\.pw|(old|osu)\.ppy\.sh|ripple\.moe)/beatmapset/(?P<beatmapset_id>[0-9])*/discussion/(?P<beatmap_id>[0-9])*/?$')
+}
 
 """ Functions. """
 def get_prefix(client, message: discord.Message):
@@ -340,51 +347,52 @@ async def on_message(message: discord.Message) -> None:
     if message.channel.id == akatsuki_rank_request_id:
         await message.delete()
 
-        if not any(required in message.content for required in ('akatsuki.pw', 'osu.ppy.sh')) \
-        or len(message.content) > 60                                                          \
-        or len(message.content) < 20:
-            await message.author.send('Your beatmap request was incorrectly formatted, and thus has not been submitted.')
-            return
-
-        # Support both links like "https://osu.ppy.sh/b/123" AND "osu.ppy.sh/b/123".
-        # Also allow for /s/, /b/, and /beatmapset/setid/discussion/mapid links.
-        partitions: List[str] = message.content.split('/')[3 if '://' in message.content else 1:]
-
-        # Yea thank you for sending something useless in #rank-request very cool.
-        if partitions[0] not in ('s', 'b', 'beatmapsets'): return
-
-        beatmapset: bool = partitions[0] in ('s', 'beatmapsets') # Link is a beatmapset_id link, not a beatmap_id link.
-        map_id: str = partitions[1] # Can be SetID or MapID.
-
+        input_id: int
+        res: Optional[Tuple[float, int, str]]
         cnx.ping(reconnect=True, attempts=2, delay=1)
 
-        if not beatmapset: # If the user used a /b/ link, let's turn it into a set id.
-            SQL.execute('SELECT beatmapset_id FROM beatmaps WHERE beatmap_id = %s LIMIT 1', [map_id])
-            map_id = SQL.fetchone()[0]
+        if regex['beatmap'].match(message.content):
+            input_id = regex['beatmap'].match(message.content).group('beatmap_id')
+            SQL.execute('SELECT beatmap_id AS id, mode, ranked, song_name, ar, od, max_combo, bpm FROM beatmaps WHERE beatmap_id = %s', [input_id])
+            res = SQL.fetchone()
 
-        # Do this so we can check if any maps in the set are ranked or loved.
-        # If they are, the QAT have most likely already determined statuses of the map.
-        SQL.execute('SELECT mode, ranked FROM beatmaps WHERE beatmapset_id = %s ORDER BY ranked DESC LIMIT 1', [map_id])
-        sel = SQL.fetchone()
+            if not res:
+                await message.author.send('The beatmap could not be found in our database.')
+                return
 
-        if not sel: # We could not find any matching rows with the map_id.
-            await message.author.send('The beatmap could not be found in our database.')
+        elif regex['beatmapset'].match(message.content):
+            input_id = int(regex['beatmapset'].match(message.content).group('beatmapset_id'))
+            SQL.execute('SELECT beatmap_id AS id, mode, ranked, song_name, ar, od, max_combo, bpm FROM beatmaps WHERE beatmap_id = (SELECT beatmap_id FROM beatmaps WHERE beatmapset_id = %s)', [input_id])
+
+        elif regex['discussion'].match(message.content):
+            input_id = regex['discussion'].match(message.content).group('beatmap_id')
+            SQL.execute('SELECT beatmap_id AS id, mode, ranked, song_name, ar, od, max_combo, bpm FROM beatmaps WHERE beatmap_id = %s', [input_id])
+            res = SQL.fetchone()
+
+            if not res:
+                await message.author.send('The beatmap could not be found in our database.')
+                return
+
+        else:
+            await message.author.send(f'The request format was incorrect.\n\nPlease simply send the beatmap link in <#{akatsuki_rank_request_id}> to request a beatmmap.')
             return
 
-        mode, status = sel
+        b: Dict[str, Union[float, int, str]] = dict(zip(SQL.column_names, res))
 
-        if status in (2, 5): # Map is already ranked/loved
-            await message.author.send(f"Some (or all) of the difficulties in the beatmap you requested already seem to be {'ranked' if status == 2 else 'loved'}"
-                                       " on the Akatsuki server!\n\nIf this is false, please contact a BN directly to proceed.")
+        if b['ranked'] in (2, 5): # Map is already ranked/loved
+            await message.author.send('Some (or all) of the difficulties in the beatmap you requested already seem to be '
+                                     f'{"ranked" if b["ranked"] == 2 else "loved"} on the Akatsuki server!\n\n'
+                                      'If this is false, please contact a BN directly to proceed.')
             return
 
         # Sort out mode to be used to check difficulty.
         # Also have a formatted one to be used for final post.
-        mode, mode_formatted = osuHelper.mode_to_readable(mode)
+        mode, mode_formatted = osuHelper.mode_to_readable(b['mode'])
 
         # Select map information.
-        SQL.execute(f'SELECT song_name, ar, od, max_combo, bpm, difficulty_{mode} FROM beatmaps WHERE beatmapset_id = %s ORDER BY difficulty_{mode} DESC LIMIT 1', [map_id])
-        bData: Dict[str, Union[float, int, str]] = dict(zip(SQL.column_names, SQL.fetchone()))
+        SQL.execute(f'SELECT difficulty_{mode} FROM beatmaps WHERE beatmap_id = %s ORDER BY difficulty_{mode} DESC LIMIT 1', [b['id']])
+        res = SQL.fetchone()
+        b.update({ 'difficulty': res[0] if res else 0 })
 
         # Temp disabled
         #artist = loads(get(f'{mirror_address}/api/s/{map_id}', timeout=1.5).text)['Creator']
@@ -396,25 +404,25 @@ async def on_message(message: discord.Message) -> None:
             description = '** **',
             color       = embed_colour
             ) \
-        .set_image (url  = f"https://assets.ppy.sh/beatmaps/{map_id}/covers/cover.jpg?1522396856") \
-        .set_author(url  = f"https://akatsuki.pw/d/{map_id}", name = bData["song_name"], icon_url = akatsuki_logo) \
-        .set_footer(text = f"Akatsuki's beatmap nomination system v{abns_version:.2f}", icon_url = "https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg") \
-        .add_field (name = "Nominator",         value = message.author.name) \
-        .add_field (name = "Gamemode",          value = mode_formatted)      \
-        .add_field (name = "Highest SR",        value = f'{bData[f"difficulty_{mode}"]:.2f}*') \
-        .add_field (name = "Highest AR",        value = bData["ar"])                           \
-        .add_field (name = "Highest OD",        value = bData["od"])                           \
-        .add_field (name = "Highest Max Combo", value = f'{bData["max_combo"]}x')              \
-        .add_field (name = "BPM",               value = bData["bpm"])
+        .set_image (url  = f'https://assets.ppy.sh/beatmaps/{b["id"]}/covers/cover.jpg?1522396856') \
+        .set_author(url  = f'https://akatsuki.pw/d/{b["id"]}', name = b['song_name'], icon_url = akatsuki_logo) \
+        .set_footer(text = f"Akatsuki's beatmap nomination system v{abns_version:.2f}", icon_url = 'https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg') \
+        .add_field (name = 'Nominator',         value = message.author.name)       \
+        .add_field (name = 'Gamemode',          value = mode_formatted)            \
+        .add_field (name = 'Highest SR',        value = f'{b["difficulty"]:.2f}*') \
+        .add_field (name = 'Highest AR',        value = b['ar'])                   \
+        .add_field (name = 'Highest OD',        value = b['od'])                   \
+        .add_field (name = 'Highest Max Combo', value = f'{b["max_combo"]}x')      \
+        .add_field (name = 'BPM',               value = b['bpm'])
 
         # Prepare, and send the report to the reporter.
         embed_dm = discord.Embed(
             title       = "Your beatmap nomination request has been sent to Akatsuki's Beatmap Nomination Team for review.",
             description = 'We will review it shortly.',
             color       = 0x00ff00
-            )                                                                                               \
-        .set_thumbnail(url  = akatsuki_logo)                                                                \
-        .set_image    (url  = f"https://assets.ppy.sh/beatmaps/{map_id}/covers/cover.jpg?1522396856")       \
+            ) \
+        .set_thumbnail(url  = akatsuki_logo) \
+        .set_image    (url  = f'https://assets.ppy.sh/beatmaps/{b["id"]}/covers/cover.jpg?1522396856') \
         .set_footer   (text = f"Akatsuki's beatmap nomination system v{abns_version:.2f}", icon_url = crab_emoji)
 
         # Send the embed to the #rank_requests channel.
