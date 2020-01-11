@@ -222,7 +222,7 @@ async def on_message_edit(before: discord.Message, after: discord.Message) -> No
         m_start: str = f'[EDIT] [{datetime.now():%H:%M%p} #{after.channel}]  {after.author}:\n'
 
         m_end: Union[List[str], str] = []
-        for line in after.clean_content().split('\n'): m_end.append(f'{4 * " "}{line}') # I know theres a better way to do this in py, I just can't remember it.
+        for line in after.clean_content.split('\n'): m_end.append(f'{4 * " "}{line}') # I know theres a better way to do this in py, I just can't remember it.
         m_end = '\n'.join(m_end)
 
         with open(f'{path.dirname(path.realpath(__file__))}/discord.log', 'a+') as log: log.write(f'\n{m_start}{m_end}')
@@ -243,7 +243,7 @@ async def on_message_edit(before: discord.Message, after: discord.Message) -> No
                         'Your message in osu!Akatsuki has been removed as it has been deemed unsuitable.\n\n'
                         f'If you have any questions, please ask <@{discord_owner}>.\n'
                         '**Do not try to evade this filter as it is considered fair ground for a ban**.\n\n'
-                        f'```{f"{after.author.name}: {after.clean_content()}".replace("`", "")}```'
+                        f'```{f"{after.author.name}: {after.clean_content}".replace("`", "")}```'
                     )
                 except: print(f'{colour.LIGHTRED_EX}Could not warn {after.author.name}.')
 
@@ -499,7 +499,7 @@ async def on_message(message: discord.Message) -> None:
         m_start: str = f'[{datetime.now():%H:%M%p} #{message.channel}] {message.author}:\n'
 
         m_end: Union[List[str], str] = []
-        for line in message.clean_content().split('\n'): m_end.append(f'{4 * " "}{line}') # I know theres a better way to do this in py, I just can't remember it.
+        for line in message.clean_content.split('\n'): m_end.append(f'{4 * " "}{line}') # I know theres a better way to do this in py, I just can't remember it.
         m_end = '\n'.join(m_end)
 
         with open(f'{path.dirname(path.realpath(__file__))}/discord.log', 'a+') as log: log.write(f'\n{m_start}{m_end}')
