@@ -21,7 +21,7 @@ init(autoreset=True)
 
 # Hardcoded version numbers.
 global __version, __abns_version
-__version          = 4.67 # Aika (This bot).
+__version          = 4.68 # Aika (This bot).
 __abns_version     = 3.00 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
 __config_path: str = f'{path.dirname(path.realpath(__file__))}/config.json'
 
@@ -36,6 +36,9 @@ with open(__config_path, 'r+', encoding='ascii') as tmp_file:
     if tmp_config['version'] != __version: # If mismatch, update the old config but store the mismatched version for announce.
         mismatch = tmp_config['version']
         tmp_config['version'] = __version
+
+    if tmp_config['abns_version'] != __abns_version:
+        tmp_config['abns_version'] = __abns_version
 
     tmp_file.seek(0)
 
@@ -117,9 +120,9 @@ else: SQL = cnx.cursor()
 
 """ Compile regex patterns. """
 regex = {
-    'beatmap': re.compile(r'^((http)?s?://)?(www\.)?((gatari|akatsuki)\.pw|(old|osu)\.ppy\.sh|ripple\.moe)/b/(?P<beatmap_id>\d*)(/|\?mode=\d)?$'),
-    'beatmapset': re.compile(r'^((http)?s?://)?(www\.)?((gatari|akatsuki)\.pw|(old|osu)\.ppy\.sh|ripple\.moe)/s/(?P<beatmapset_id>\d)*(/|\?mode=\d)?$'),
-    'discussion': re.compile(r'^((http)?s?://)?(www\.)?((gatari|akatsuki)\.pw|(old|osu)\.ppy\.sh|ripple\.moe)/beatmapset/(?P<beatmapset_id>\d*)/discussion/(?P<beatmap_id>\d)*/?$')
+    'beatmap': re.compile(r'^((http)?s?://)?(www\.)?((gatari|akatsuki)\.pw|(old|osu)\.ppy\.sh|ripple\.moe)/b/(?P<beatmap_id>\d+)(/|\?mode=\d)?$', re.IGNORECASE),
+    'beatmapset': re.compile(r'^((http)?s?://)?(www\.)?((gatari|akatsuki)\.pw|(old|osu)\.ppy\.sh|ripple\.moe)/s/(?P<beatmapset_id>\d+)(/|\?mode=\d)?$', re.IGNORECASE),
+    'discussion': re.compile(r'^((http)?s?://)?(www\.)?((gatari|akatsuki)\.pw|(old|osu)\.ppy\.sh|ripple\.moe)/beatmapset/(?P<beatmapset_id>\d+)/discussion/(?P<beatmap_id>\d+)/?$', re.IGNORECASE)
 }
 
 """ Functions. """
@@ -152,7 +155,7 @@ async def on_ready() -> None:
           f'Version: {version}',
           f'ABNS Version: {abns_version}',
           f'Owner: {discord_owner}',
-          f'Filters: {len(filters)} | {len(substring_filters)}',
+          f'Filters: {filters.__len__()} | {substring_filters.__len__()}',
           '=' * 40,
           end = '\n\n',
           sep = '\n'
@@ -219,7 +222,7 @@ async def on_message_edit(before: discord.Message, after: discord.Message) -> No
         m_start: str = f'[EDIT] [{datetime.now():%H:%M%p} #{after.channel}]  {after.author}:\n'
 
         m_end: Union[List[str], str] = []
-        for line in after.content.split('\n'): m_end.append(f'{4 * " "}{line}') # I know theres a better way to do this in py, I just can't remember it.
+        for line in after.clean_content().split('\n'): m_end.append(f'{4 * " "}{line}') # I know theres a better way to do this in py, I just can't remember it.
         m_end = '\n'.join(m_end)
 
         with open(f'{path.dirname(path.realpath(__file__))}/discord.log', 'a+') as log: log.write(f'\n{m_start}{m_end}')
@@ -240,7 +243,7 @@ async def on_message_edit(before: discord.Message, after: discord.Message) -> No
                         'Your message in osu!Akatsuki has been removed as it has been deemed unsuitable.\n\n'
                         f'If you have any questions, please ask <@{discord_owner}>.\n'
                         '**Do not try to evade this filter as it is considered fair ground for a ban**.\n\n'
-                        f'```{f"{after.author.name}: {after.content}".replace("`", "")}```'
+                        f'```{f"{after.author.name}: {after.clean_content()}".replace("`", "")}```'
                     )
                 except: print(f'{colour.LIGHTRED_EX}Could not warn {after.author.name}.')
 
@@ -298,12 +301,12 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
 @bot.event
 async def on_message(message: discord.Message) -> None:
 
-    # The message has no content.
-    # Don't bother doing anything with it.
-    if not message.content: return
+    # Message is either empty, sent by the bot, or is not in a guild.
+    if not message.content or message.author == bot.user or not message.guild:
+        return
 
     # Regular user checks.
-    if message.author.id != discord_owner:
+    if not bot.is_owner(message.author.id):
 
         # Verification channel.
         if message.channel.id == akatsuki_verify_id:
@@ -334,17 +337,14 @@ async def on_message(message: discord.Message) -> None:
             return
 
 
-    # NSFW channel checks (deleting non-images from #nsfw).
-    if message.channel.id == akatsuki_nsfw_id:
-        def check_content(m: discord.Message) -> bool: # Don't delete links or images.
-            return not (any(message.content.startswith(s) for s in ('http://', 'https://')) or message.attachments)
-
-        if check_content(message): await message.delete()
+    if message.channel.id == akatsuki_nsfw_id: # NSFW channel checks (deleting non-images from #nsfw).
+        if not (re.match(r'^https?://', message.content, re.IGNORECASE) or message.attachments):
+            await message.delete()
         return
 
 
     # Message sent in #rank-request, move to #rank-requests.
-    if message.channel.id == akatsuki_rank_request_id:
+    elif message.channel.id == akatsuki_rank_request_id:
         await message.delete()
 
         input_id: int
@@ -437,7 +437,7 @@ async def on_message(message: discord.Message) -> None:
 
 
     # Message sent in #player-reporting, move to #reports.
-    if message.channel.id == akatsuki_player_reporting_id:
+    elif message.channel.id == akatsuki_player_reporting_id:
         await message.delete() # Delete the message from #player-reporting.
 
         # Prepare, and send the report in #reports.
@@ -459,81 +459,80 @@ async def on_message(message: discord.Message) -> None:
             await bot.get_channel(akatsuki_reports_id).send(embed=embed)
         return
 
-    elif message.author != bot.user and message.guild:
-        # Message sent in #help, log to db.
-        if message.channel.id == akatsuki_help_id:
-            # Split the content into sentences by periods.
-            # TODO: Other punctuation marks!
-            sentence_split: List[str] = message.content.split('.')
+    # Message sent in #help, log to db.
+    elif message.channel.id == akatsuki_help_id:
+        # Split the content into sentences by periods.
+        # TODO: Other punctuation marks!
+        sentence_split: List[str] = message.content.split('.')
 
-            # Default values for properly formatted messages / negative messages.
-            properly_formatted, negative = [False] * 2
+        # Default values for properly formatted messages / negative messages.
+        properly_formatted, negative = [False] * 2
 
-            # After every period, check they have a space and the next sentence starts with a capital letter (ignore things like "...").
-            for idx, sentence in enumerate(sentence_split):
-                if len(sentence) > 1 and idx:
-                    if sentence[0] == ' ' and sentence[1].isupper(): continue
-                    negative = True
+        # After every period, check they have a space and the next sentence starts with a capital letter (ignore things like "...").
+        for idx, sentence in enumerate(sentence_split):
+            if len(sentence) > 1 and idx:
+                if sentence[0] == ' ' and sentence[1].isupper(): continue
+                negative = True
 
-            properly_formatted = \
-                message.content[0].isupper() \
-                and message.content[len(message.content) - 1] in ('.', '?', '!') \
-                and not negative
+        properly_formatted = \
+            message.content[0].isupper() \
+            and message.content[len(message.content) - 1] in ('.', '?', '!') \
+            and not negative
 
-            quality: int = 1
-            if any(i in message.content.lower() for i in low_quality):                          quality -= 1
-            elif any(i in message.content.lower() for i in high_quality) or properly_formatted: quality += 1
+        quality: int = 1
+        if any(i in message.content.lower() for i in low_quality):                          quality -= 1
+        elif any(i in message.content.lower() for i in high_quality) or properly_formatted: quality += 1
 
-            cnx.ping(reconnect=True, attempts=2)
+        cnx.ping(reconnect=True, attempts=2)
 
-            # TODO: Store the whole bitch in a single number.
-            # Maybe even do some bitwise black magic shit.
-            SQL.execute('INSERT INTO help_logs (id, user, content, datetime, quality) VALUES (NULL, %s, %s, %s, %s)',
-                [message.author.id, message.content.encode('ascii', errors='ignore'), time(), quality])
+        # TODO: Store the whole bitch in a single number.
+        # Maybe even do some bitwise black magic shit.
+        SQL.execute('INSERT INTO help_logs (id, user, content, datetime, quality) VALUES (NULL, %s, %s, %s, %s)',
+            [message.author.id, message.content.encode('ascii', errors='ignore'), time(), quality])
 
-        if message.channel.id != akatsuki_botspam_id:
-            col: Optional[int] = None
-            if not message.guild:                         col = colour.GREEN
-            elif 'cmyui' in message.content.lower():      col = colour.CYAN
-            elif message.guild.id == akatsuki_server_id:  col = colour.YELLOW
+    if message.channel.id != akatsuki_botspam_id:
+        col: Optional[int] = None
+        if not message.guild:                         col = colour.GREEN
+        elif 'cmyui' in message.content.lower():      col = colour.CYAN
+        elif message.guild.id == akatsuki_server_id:  col = colour.YELLOW
 
-            m_start: str = f'[{datetime.now():%H:%M%p} #{message.channel}] {message.author}:\n'
+        m_start: str = f'[{datetime.now():%H:%M%p} #{message.channel}] {message.author}:\n'
 
-            m_end: Union[List[str], str] = []
-            for line in message.content.split('\n'): m_end.append(f'{4 * " "}{line}') # I know theres a better way to do this in py, I just can't remember it.
-            m_end = '\n'.join(m_end)
+        m_end: Union[List[str], str] = []
+        for line in message.clean_content().split('\n'): m_end.append(f'{4 * " "}{line}') # I know theres a better way to do this in py, I just can't remember it.
+        m_end = '\n'.join(m_end)
 
-            with open(f'{path.dirname(path.realpath(__file__))}/discord.log', 'a+') as log: log.write(f'\n{m_start}{m_end}')
+        with open(f'{path.dirname(path.realpath(__file__))}/discord.log', 'a+') as log: log.write(f'\n{m_start}{m_end}')
 
-            print(f'{col}{m_start}{colour.RESET}{m_end}\n')
+        print(f'{col}{m_start}{colour.RESET}{m_end}\n')
 
-        # Ignore any member with discord's "manage_messages" permissions.
-        # Filter messages with our filters & substring_filters.
-        if not is_admin(message.author):
-            for split in message.content.lower().split(' '):
-                if any(i == split for i in filters) or any(i in message.content.lower() for i in substring_filters):
-                    await message.delete()
+    # Ignore any member with discord's "manage_messages" permissions.
+    # Filter messages with our filters & substring_filters.
+    if not is_admin(message.author):
+        for split in message.content.lower().split(' '):
+            if any(i == split for i in filters) or any(i in message.content.lower() for i in substring_filters):
+                await message.delete()
 
-                    print(f'{colour.LIGHTYELLOW_EX}^ Autoremoved message ^')
-                    try:
-                        await message.author.send(
-                            'Hello,\n\n'
-                            'Your message in osu!Akatsuki has been removed as it has been deemed unsuitable.\n\n'
-                           f'If you have any questions, please ask <@{discord_owner}>.\n'
-                            '**Do not try to evade this filter as it is considered fair ground for a ban**.\n\n'
-                           f'```{f"{message.author.name}: {message.content}".replace("`", "")}```'
-                        )
-                    except: print(f'{colour.LIGHTRED_EX}Could not warn {message.author.name}.')
+                print(f'{colour.LIGHTYELLOW_EX}^ Autoremoved message ^')
+                try:
+                    await message.author.send(
+                        'Hello,\n\n'
+                        'Your message in osu!Akatsuki has been removed as it has been deemed unsuitable.\n\n'
+                        f'If you have any questions, please ask <@{discord_owner}>.\n'
+                        '**Do not try to evade this filter as it is considered fair ground for a ban**.\n\n'
+                        f'```{f"{message.author.name}: {message.content}".replace("`", "")}```'
+                    )
+                except: print(f'{colour.LIGHTRED_EX}Could not warn {message.author.name}.')
 
-                    cnx.ping(reconnect=True, attempts=2)
+                cnx.ping(reconnect=True, attempts=2)
 
-                    SQL.execute('INSERT INTO profanity_logs (id, user, content, datetime) VALUES (NULL, %s, %s, %s)',
-                        [message.author.id, message.content.encode('ascii', errors='ignore'), time()])
+                SQL.execute('INSERT INTO profanity_logs (id, user, content, datetime) VALUES (NULL, %s, %s, %s)',
+                    [message.author.id, message.content.encode('ascii', errors='ignore'), time()])
 
-                    return
+                return
 
-        # Finally, process commands.
-        await bot.process_commands(message)
+    # Finally, process commands.
+    await bot.process_commands(message)
     return
 
 bot.run(discord_token, bot=True, reconnect=True)
