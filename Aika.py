@@ -353,7 +353,6 @@ async def on_message(message: discord.Message) -> None:
 
         if regex['beatmap'].match(message.content):
             input_id = regex['beatmap'].match(message.content).group('beatmap_id')
-            print(input_id)
             SQL.execute('SELECT beatmap_id AS id, mode, ranked, song_name, ar, od, max_combo, bpm FROM beatmaps WHERE beatmap_id = %s', [input_id])
             res = SQL.fetchone()
 
