@@ -126,7 +126,7 @@ regex = {
 def get_prefix(client, message: discord.Message):
     return commands.when_mentioned_or(*[config['command_prefix']])(client, message)
 
-def is_admin(author: discord.User) -> bool:
+def is_admin(author: discord.Member) -> bool:
     return author.guild_permissions.manage_messages
 
 client = discord.Client(
@@ -218,7 +218,7 @@ async def on_message_edit(before: discord.Message, after: discord.Message) -> No
 
         m_start: str = f'[EDIT] [{datetime.now():%H:%M%p} #{after.channel}]  {after.author}:\n'
 
-        m_end: Union[List[str], str] = []
+        m_end: Union[List[str], str]
         for line in after.content.split('\n'): m_end.append(f'{4 * " "}{line}') # I know theres a better way to do this in py, I just can't remember it.
         m_end = '\n'.join(m_end)
 
@@ -274,7 +274,7 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
     msg: Optional[discord.Message] = await friends_only_text.send(embed=embed)
     await msg.add_reaction('👍')
 
-    def check(reaction: discord.Reaction, user: discord.User) -> bool: # TODO: safe
+    def check(reaction: discord.Reaction, user: discord.Member) -> bool: # TODO: safe
         if user in [member, bot.user]: return False
         return reaction.emoji == '👍' and user.voice.channel == friends_only_voice
 
