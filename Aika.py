@@ -244,7 +244,7 @@ async def on_message_edit(before: discord.Message, after: discord.Message) -> No
                     )
                 except: print(f'{colour.LIGHTRED_EX}Could not warn {after.author.name}.')
 
-                cnx.ping(reconnect=True, attempts=2, delay=1)
+                cnx.ping(reconnect=True, attempts=2)
 
                 SQL.execute('INSERT INTO profanity_logs (id, user, content, datetime) VALUES (NULL, %s, %s, %s)',
                     [after.author.id, after.content.encode('ascii', errors='ignore'), time()])
@@ -349,7 +349,7 @@ async def on_message(message: discord.Message) -> None:
 
         input_id: int
         res: Optional[Tuple[float, int, str]]
-        cnx.ping(reconnect=True, attempts=2, delay=1)
+        cnx.ping(reconnect=True, attempts=2)
 
         if regex['beatmap'].match(message.content):
             input_id = regex['beatmap'].match(message.content).group('beatmap_id')
@@ -484,7 +484,7 @@ async def on_message(message: discord.Message) -> None:
             if any(i in message.content.lower() for i in low_quality):                          quality -= 1
             elif any(i in message.content.lower() for i in high_quality) or properly_formatted: quality += 1
 
-            cnx.ping(reconnect=True, attempts=2, delay=1)
+            cnx.ping(reconnect=True, attempts=2)
 
             # TODO: Store the whole bitch in a single number.
             # Maybe even do some bitwise black magic shit.
@@ -499,7 +499,7 @@ async def on_message(message: discord.Message) -> None:
 
             m_start: str = f'[{datetime.now():%H:%M%p} #{message.channel}] {message.author}:\n'
 
-            m_end: Union[List[str], str] = []
+            m_end: Union[List[str], str]
             for line in message.content.split('\n'): m_end.append(f'{4 * " "}{line}') # I know theres a better way to do this in py, I just can't remember it.
             m_end = '\n'.join(m_end)
 
@@ -525,7 +525,7 @@ async def on_message(message: discord.Message) -> None:
                         )
                     except: print(f'{colour.LIGHTRED_EX}Could not warn {message.author.name}.')
 
-                    cnx.ping(reconnect=True, attempts=2, delay=1)
+                    cnx.ping(reconnect=True, attempts=2)
 
                     SQL.execute('INSERT INTO profanity_logs (id, user, content, datetime) VALUES (NULL, %s, %s, %s)',
                         [message.author.id, message.content.encode('ascii', errors='ignore'), time()])

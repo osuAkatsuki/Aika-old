@@ -54,7 +54,7 @@ class User(commands.Cog):
         usage       = '<username (default: linked osu!Akatsuki account)> <-rx>',
     )
     async def recent_score_command(self, ctx) -> None:
-        cnx.ping(reconnect=True, attempts=2, delay=1)
+        cnx.ping(reconnect=True, attempts=2)
         messages: List[str] = ctx.message.content.split(' ')[1:]
         username_safe: Optional[str] = None
         rx: bool = False
@@ -158,7 +158,7 @@ class User(commands.Cog):
         usage       = '<callback>'
     )
     async def faq_command(self, ctx) -> None:
-        cnx.ping(reconnect=True, attempts=2, delay=1)
+        cnx.ping(reconnect=True, attempts=2)
         _faq: bool = not ctx.invoked_with.startswith('info')
         callback = ctx.message.content[len(ctx.prefix) + len(ctx.invoked_with) + 1:]
 
