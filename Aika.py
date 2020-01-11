@@ -117,9 +117,9 @@ else: SQL = cnx.cursor()
 
 """ Compile regex patterns. """
 regex = {
-    'beatmap': re.compile(r'^((http)?s?://)?(www\.)?((gatari|akatsuki)\.pw|(old|osu)\.ppy\.sh|ripple\.moe)/b/(?P<beatmap_id>[0-9])*(/|\?mode=[0-9])?$'),
-    'beatmapset': re.compile(r'^((http)?s?://)?(www\.)?((gatari|akatsuki)\.pw|(old|osu)\.ppy\.sh|ripple\.moe)/s/(?P<beatmapset_id>[0-9])*(/|\?mode=[0-9])?$'),
-    'discussion': re.compile(r'^((http)?s?://)?(www\.)?((gatari|akatsuki)\.pw|(old|osu)\.ppy\.sh|ripple\.moe)/beatmapset/(?P<beatmapset_id>[0-9])*/discussion/(?P<beatmap_id>[0-9])*/?$')
+    'beatmap': re.compile(r'^((http)?s?://)?(www\.)?((gatari|akatsuki)\.pw|(old|osu)\.ppy\.sh|ripple\.moe)/b/(?P<beatmap_id>\d*)(/|\?mode=\d)?$'),
+    'beatmapset': re.compile(r'^((http)?s?://)?(www\.)?((gatari|akatsuki)\.pw|(old|osu)\.ppy\.sh|ripple\.moe)/s/(?P<beatmapset_id>\d)*(/|\?mode=\d)?$'),
+    'discussion': re.compile(r'^((http)?s?://)?(www\.)?((gatari|akatsuki)\.pw|(old|osu)\.ppy\.sh|ripple\.moe)/beatmapset/(?P<beatmapset_id>\d*)/discussion/(?P<beatmap_id>\d)*/?$')
 }
 
 """ Functions. """
@@ -353,6 +353,7 @@ async def on_message(message: discord.Message) -> None:
 
         if regex['beatmap'].match(message.content):
             input_id = regex['beatmap'].match(message.content).group('beatmap_id')
+            print(input_id)
             SQL.execute('SELECT beatmap_id AS id, mode, ranked, song_name, ar, od, max_combo, bpm FROM beatmaps WHERE beatmap_id = %s', [input_id])
             res = SQL.fetchone()
 
