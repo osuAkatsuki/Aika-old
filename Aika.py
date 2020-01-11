@@ -213,10 +213,10 @@ async def on_message_edit(before: discord.Message, after: discord.Message) -> No
     if after.channel.id != akatsuki_botspam_id:
         col: Optional[int] = None
         if not after.guild:                         col = colour.GREEN
-        elif 'cmyui' in after.content.lower():      col = colour.YELLOW
-        elif after.guild.id == akatsuki_server_id:  col = colour.CYAN
+        elif 'cmyui' in after.content.lower():      col = colour.CYAN
+        elif after.guild.id == akatsuki_server_id:  col = colour.YELLOW
 
-        m_start: str = f'[EDIT] {datetime.now():%Y-%m-%d %H:%M:%S} [{after.guild} #{after.channel}] {after.author}:\n'
+        m_start: str = f'[EDIT] [{datetime.now():%H:%M%p} #{after.channel}]  {after.author}:\n'
 
         m_end: Union[List[str], str] = []
         for line in after.content.split('\n'): m_end.append(f'{4 * " "}{line}') # I know theres a better way to do this in py, I just can't remember it.
@@ -224,7 +224,7 @@ async def on_message_edit(before: discord.Message, after: discord.Message) -> No
 
         with open(f'{path.dirname(path.realpath(__file__))}/discord.log', 'a+') as log: log.write(f'\n{m_start}{m_end}')
 
-        print(f'{col}{m_start}{colour.RESET}{m_end}')
+        print(f'{col}{m_start}{colour.RESET}{m_end}\n')
 
     # Ignore any member with discord's "manage_messages" permissions.
     # Filter messages with our filters & substring_filters.
@@ -494,10 +494,10 @@ async def on_message(message: discord.Message) -> None:
         if message.channel.id != akatsuki_botspam_id:
             col: Optional[int] = None
             if not message.guild:                         col = colour.GREEN
-            elif 'cmyui' in message.content.lower():      col = colour.YELLOW
-            elif message.guild.id == akatsuki_server_id:  col = colour.CYAN
+            elif 'cmyui' in message.content.lower():      col = colour.CYAN
+            elif message.guild.id == akatsuki_server_id:  col = colour.YELLOW
 
-            m_start: str = f'{datetime.now():%Y-%m-%d %H:%M:%S} [{message.guild} #{message.channel}] {message.author}:\n'
+            m_start: str = f'[{datetime.now():%H:%M%p} #{message.channel}] {message.author}:\n'
 
             m_end: Union[List[str], str] = []
             for line in message.content.split('\n'): m_end.append(f'{4 * " "}{line}') # I know theres a better way to do this in py, I just can't remember it.
@@ -505,7 +505,7 @@ async def on_message(message: discord.Message) -> None:
 
             with open(f'{path.dirname(path.realpath(__file__))}/discord.log', 'a+') as log: log.write(f'\n{m_start}{m_end}')
 
-            print(f'{col}{m_start}{colour.RESET}{m_end}')
+            print(f'{col}{m_start}{colour.RESET}{m_end}\n')
 
         # Ignore any member with discord's "manage_messages" permissions.
         # Filter messages with our filters & substring_filters.
