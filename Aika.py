@@ -21,7 +21,7 @@ init(autoreset=True)
 
 # Hardcoded version numbers.
 global __version, __abns_version
-__version          = 4.65 # Aika (This bot).
+__version          = 4.67 # Aika (This bot).
 __abns_version     = 3.00 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
 __config_path: str = f'{path.dirname(path.realpath(__file__))}/config.json'
 
