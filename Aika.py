@@ -353,7 +353,7 @@ async def on_message(message: discord.Message) -> None:
 
         if regex['beatmap'].match(message.content):
             input_id = regex['beatmap'].match(message.content).group('beatmap_id')
-            SQL.execute('SELECT beatmap_id AS id, mode, ranked, song_name, ar, od, max_combo, bpm FROM beatmaps WHERE beatmap_id = %s', [input_id])
+            SQL.execute('SELECT beatmap_id AS id, beatmapset_id AS sid, mode, ranked, song_name, ar, od, max_combo, bpm FROM beatmaps WHERE beatmap_id = %s', [input_id])
             res = SQL.fetchone()
 
             if not res:
@@ -362,11 +362,11 @@ async def on_message(message: discord.Message) -> None:
 
         elif regex['beatmapset'].match(message.content):
             input_id = int(regex['beatmapset'].match(message.content).group('beatmapset_id'))
-            SQL.execute('SELECT beatmap_id AS id, mode, ranked, song_name, ar, od, max_combo, bpm FROM beatmaps WHERE beatmap_id = (SELECT beatmap_id FROM beatmaps WHERE beatmapset_id = %s)', [input_id])
+            SQL.execute('SELECT beatmap_id AS id, beatmapset_id AS sid, mode, ranked, song_name, ar, od, max_combo, bpm FROM beatmaps WHERE beatmap_id = (SELECT beatmap_id FROM beatmaps WHERE beatmapset_id = %s)', [input_id])
 
         elif regex['discussion'].match(message.content):
             input_id = regex['discussion'].match(message.content).group('beatmap_id')
-            SQL.execute('SELECT beatmap_id AS id, mode, ranked, song_name, ar, od, max_combo, bpm FROM beatmaps WHERE beatmap_id = %s', [input_id])
+            SQL.execute('SELECT beatmap_id AS id, beatmapset_id AS sid, mode, ranked, song_name, ar, od, max_combo, bpm FROM beatmaps WHERE beatmap_id = %s', [input_id])
             res = SQL.fetchone()
 
             if not res:
@@ -404,8 +404,8 @@ async def on_message(message: discord.Message) -> None:
             description = '** **',
             color       = embed_colour
             ) \
-        .set_image (url  = f'https://assets.ppy.sh/beatmaps/{b["id"]}/covers/cover.jpg?1522396856') \
-        .set_author(url  = f'https://akatsuki.pw/d/{b["id"]}', name = b['song_name'], icon_url = akatsuki_logo) \
+        .set_image (url  = f'https://assets.ppy.sh/beatmaps/{b["sid"]}/covers/cover.jpg?1522396856') \
+        .set_author(url  = f'https://akatsuki.pw/d/{b["sid"]}', name = b['song_name'], icon_url = akatsuki_logo) \
         .set_footer(text = f"Akatsuki's beatmap nomination system v{abns_version:.2f}", icon_url = 'https://nanahira.life/MpgDe2ssQ5zDsWliUqzmQedZcuR4tr4c.jpg') \
         .add_field (name = 'Nominator',         value = message.author.name)       \
         .add_field (name = 'Gamemode',          value = mode_formatted)            \
@@ -422,7 +422,7 @@ async def on_message(message: discord.Message) -> None:
             color       = 0x00ff00
             ) \
         .set_thumbnail(url  = akatsuki_logo) \
-        .set_image    (url  = f'https://assets.ppy.sh/beatmaps/{b["id"]}/covers/cover.jpg?1522396856') \
+        .set_image    (url  = f'https://assets.ppy.sh/beatmaps/{b["sid"]}/covers/cover.jpg?1522396856') \
         .set_footer   (text = f"Akatsuki's beatmap nomination system v{abns_version:.2f}", icon_url = crab_emoji)
 
         # Send the embed to the #rank_requests channel.
