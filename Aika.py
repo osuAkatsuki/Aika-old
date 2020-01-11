@@ -306,7 +306,7 @@ async def on_message(message: discord.Message) -> None:
         return
 
     # Regular user checks.
-    if not bot.is_owner(message.author.id):
+    if not await bot.is_owner(message.author.id):
 
         # Verification channel.
         if message.channel.id == akatsuki_verify_id:
