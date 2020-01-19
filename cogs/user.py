@@ -82,7 +82,7 @@ class User(commands.Cog):
                 username_safe: str = res[1]
                 user_id:       int = res[2]
         else:
-            SQL.execute('SELECT username, id FROM users WHERE username_safe = %s', [username])
+            SQL.execute('SELECT username, id FROM users WHERE username_safe = %s', [username_safe])
             res = SQL.fetchone()
             if not res:
                 await ctx.send(f'Sorry, but I could not find a user by that name.\nIf you believe this is a bug, please report it to cmyui(#0425).')

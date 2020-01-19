@@ -120,9 +120,9 @@ else: SQL = cnx.cursor()
 
 """ Compile regex patterns. """
 regex = {
-    'beatmap': re.compile(r'^((http)?s?://)?(www\.)?((gatari|akatsuki)\.pw|(old|osu)\.ppy\.sh|ripple\.moe)/b/(?P<beatmap_id>\d+)(/|\?mode=\d)?$', re.IGNORECASE),
-    'beatmapset': re.compile(r'^((http)?s?://)?(www\.)?((gatari|akatsuki)\.pw|(old|osu)\.ppy\.sh|ripple\.moe)/(s|d)/(?P<beatmapset_id>\d+)(/|\?mode=\d)?$', re.IGNORECASE),
-    'discussion': re.compile(r'^((http)?s?://)?(www\.)?((gatari|akatsuki)\.pw|(old|osu)\.ppy\.sh|ripple\.moe)/beatmapset/(?P<beatmapset_id>\d+)/discussion/(?P<beatmap_id>\d+)/?$', re.IGNORECASE)
+    'beatmap': re.compile(r'^((http)?s?://)?(www\.)?((gatari|akatsuki)\.pw|o(ld|su)\.ppy\.sh|ripple\.moe)/b/(?P<beatmap_id>\d+)(/|\?mode=\d)?$', re.IGNORECASE),
+    'beatmapset': re.compile(r'^((http)?s?://)?(www\.)?((gatari|akatsuki)\.pw|o(ld|su)\.ppy\.sh|ripple\.moe)/(s|d)/(?P<beatmapset_id>\d+)(/|\?mode=\d)?$', re.IGNORECASE),
+    'discussion': re.compile(r'^((http)?s?://)?(www\.)?((gatari|akatsuki)\.pw|o(ld|su)\.ppy\.sh|ripple\.moe)/beatmapset/(?P<beatmapset_id>\d+)/discussion/(?P<beatmap_id>\d+)/?$', re.IGNORECASE)
 }
 
 """ Functions. """
