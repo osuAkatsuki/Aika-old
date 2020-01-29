@@ -126,9 +126,6 @@ regex = {
 }
 
 """ Functions. """
-def get_prefix(client, message: discord.Message):
-    return commands.when_mentioned_or(*[config['command_prefix']])(client, message)
-
 def is_admin(author: discord.Member) -> bool:
     return author.guild_permissions.manage_messages
 
@@ -138,7 +135,7 @@ client = discord.Client(
 )
 
 bot = commands.Bot(
-    command_prefix   = get_prefix,
+    command_prefix   = lambda client, message: commands.when_mentioned_or(*(config['command_prefix']))(client, message),
     case_insensitive = True,
     help_command     = None,
     self_bot         = False,
