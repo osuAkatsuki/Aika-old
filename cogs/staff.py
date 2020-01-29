@@ -1,6 +1,7 @@
 from typing import List, Union
 from discord.ext import commands
 from datetime import datetime as d
+from os import _exit
 
 class Staff(commands.Cog):
 
@@ -38,6 +39,15 @@ class Staff(commands.Cog):
                     await ctx.send(content='You have used the incorrect syntax for this command.')
 
         return
+
+    @commands.command(
+        name = 'shutdown',
+        description = 'Shuts down Aika.'
+    )
+    async def shutdown_command(self, ctx):
+        print('Shutting down Aika..')
+        await self.bot.logout()
+        _exit(0)
 
 
 def setup(bot: commands.Bot):

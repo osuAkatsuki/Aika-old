@@ -538,10 +538,3 @@ async def on_message(message: discord.Message) -> None:
     return
 
 bot.run(discord_token, bot=True, reconnect=True)
-
-# Clean up
-print('\nKeyboardInterrupt detected. Powering down Aika..')
-SQL.close()
-cnx.close()
-bot.logout()
-print('Cleaning complete.')
