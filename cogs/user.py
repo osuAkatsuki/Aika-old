@@ -36,9 +36,9 @@ class User(commands.Cog):
             if m == '-rx': rx = True
             else: username_safe = m
 
-        if rx:
-            await ctx.send('Relax is not yet supported.\nThis command is still very much a work in progress. :)')
-            return
+        #if rx:
+        #    await ctx.send('Relax is not yet supported.\nThis command is still very much a work in progress. :)')
+        #    return
 
         if not username_safe: # User didn't specify a username; use their connected osu!Akatsuki account if their Discord is linked..
             res: Optional[Dict[str, Union[str, int]]] = glob.db.fetch(
@@ -55,7 +55,7 @@ class User(commands.Cog):
                 return
 
         # Do API request to akatsuki-api.
-        r = get(f'http://akatsuki.pw/api/v1/users/scores/recent?id={res["id"]}&l=1', timeout=1.50).json()
+        r = get(f'http://akatsuki.pw/api/v1/users/scores/recent?id={res["id"]}&l=1&rx={"1" if rx else "0"}', timeout=1.50).json()
         if not r or int(r['code']) != 200: await ctx.send('An error occured while attempting to fetch data from the API.\n\nPlease try again later.')
         if not r['scores']: await ctx.send("That user doesn't seem to have any scores!")
 
