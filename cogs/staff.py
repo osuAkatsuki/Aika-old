@@ -3,6 +3,8 @@ from discord import Message
 from discord.ext import commands
 from sys import exit
 
+from objects import glob
+
 class Staff(commands.Cog):
 
     def __init__(self, bot):
@@ -45,6 +47,9 @@ class Staff(commands.Cog):
         description = 'Shuts down Aika.'
     )
     async def shutdown_command(self, ctx):
+        if not ctx.author.id == glob.config["discord_owner_userid"]:
+            await ctx.send(content='You do not have sufficient privileges for this command.')
+            return
         await ctx.send('Goodnight..')
         await self.bot.logout()
         return exit(0)
