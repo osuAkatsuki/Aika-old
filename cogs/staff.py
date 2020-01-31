@@ -45,7 +45,6 @@ class Staff(commands.Cog):
         description = 'Shuts down Aika.'
     )
     async def shutdown_command(self, ctx):
-        print('Shutting down Aika..')
         await ctx.send('Goodnight..')
         await self.bot.logout()
         return exit(0)
