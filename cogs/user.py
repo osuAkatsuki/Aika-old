@@ -1,51 +1,21 @@
 from typing import Dict, List, Optional, Union
-import discord, time, hashlib, re, os, random, mysql.connector
+import discord
 from discord.ext import commands
-from datetime import datetime as d
+import mysql.connector
 from mysql.connector import errorcode
+from datetime import datetime as d
 from requests import get
+from random import randint
 from json import loads
+from time import time
+from hashlib import md5, sha1, sha224, sha256, sha384, sha512
 
+from objects import glob
 from helpers import osuHelper
 
-# For FAQ
-akatsuki_ip_address = '51.79.17.191'     # Akatsuki's osu! server IP.
-
-# Akatsuki's logo.
-# To be used mostly for embed thumbnails.
-akatsuki_logo = 'https://akatsuki.pw/static/logos/logo.png'
-
-""" Read and assign values from config. """
-with open(f'{os.path.dirname(os.path.realpath(__file__))}/../config.json', 'r') as f:
-    global config
-    config = loads(f.read())
-
-version: float = config['version']
-
-try:
-    cnx = mysql.connector.connect(
-        user       = config['mysql_user'],
-        password   = config['mysql_passwd'],
-        host       = config['mysql_host'],
-        database   = config['mysql_database'],
-        autocommit = True)
-except mysql.connector.Error as err:
-    if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-        raise Exception('Something is wrong with your username or password.')
-    elif err.errno == errorcode.ER_BAD_DB_ERROR:
-        raise Exception('Database does not exist.')
-    else:
-        raise Exception(err)
-except: raise Exception('Something really died.')
-
-SQL = cnx.cursor()
-del config
-
 class User(commands.Cog):
-
     def __init__(self, bot):
         self.bot = bot
-
 
     @commands.command(
         name        = 'recent',
@@ -54,7 +24,6 @@ class User(commands.Cog):
         usage       = '<username (default: linked osu!Akatsuki account)> <-rx>',
     )
     async def recent_score_command(self, ctx) -> None:
-        cnx.ping(reconnect=True, attempts=2)
         messages: List[str] = ctx.message.content.split(' ')[1:]
         username_safe: Optional[str] = None
         rx: bool = False
@@ -72,52 +41,37 @@ class User(commands.Cog):
             return
 
         if not username_safe: # User didn't specify a username; use their connected osu!Akatsuki account if their Discord is linked..
-            SQL.execute('SELECT users.username, users.username_safe, users.id FROM discord LEFT JOIN users ON discord.userid = users.id WHERE discord.discordid = %s', [ctx.author.id])
-            res = SQL.fetchone()
+            res: Optional[Dict[str, Union[str, int]]] = glob.db.fetch(
+                'SELECT users.username, users.username_safe, users.id FROM discord LEFT JOIN users ON discord.userid = users.id WHERE discord.discordid = %s',
+                [ctx.author.id]
+            )
             if not res:
                 await ctx.send('Please either specify a username, or connect your osu!Akatsuki account with the !linkosu command.\n\n> `!recent <username (default: linked osu!Akatsuki account)> <-rx>`')
                 return
-            else:
-                username:      str = res[0]
-                username_safe: str = res[1]
-                user_id:       int = res[2]
         else:
-            SQL.execute('SELECT username, id FROM users WHERE username_safe = %s', [username_safe])
-            res = SQL.fetchone()
+            res = glob.db.fetch('SELECT username, id FROM users WHERE username_safe = %s', [username_safe])
             if not res:
                 await ctx.send(f'Sorry, but I could not find a user by that name.\nIf you believe this is a bug, please report it to cmyui(#0425).')
                 return
 
-            username: str = res[0]
-            user_id:  int = res[1]
-
         # Do API request to akatsuki-api.
-        r = get(f'http://akatsuki.pw/api/v1/users/scores/recent?id={user_id}&l=1', timeout=1.50).json()
+        r = get(f'http://akatsuki.pw/api/v1/users/scores/recent?id={res["id"]}&l=1', timeout=1.50).json()
         if not r or int(r['code']) != 200: await ctx.send('An error occured while attempting to fetch data from the API.\n\nPlease try again later.')
         if not r['scores']: await ctx.send("That user doesn't seem to have any scores!")
-
-        # Get some player information for our embed.
-        _table = 'rx_stats' if rx else 'users_stats'
-        SQL.execute(f'SELECT pp_std, ranked_score_std, total_score_std, level_std, avg_accuracy_std, playtime_std, total_playtime_std, country FROM {_table} WHERE id = %s', [user_id])
-        res = SQL.fetchone()
-        if not res:
-            await ctx.send('<@285190493703503872> HOW')
-            return
-        else: pdata: Dict[str, Union[float, int, str]] = dict(zip(SQL.column_names, res))
 
         score = r['scores'][0] # sanity > a few bytes
 
         embed = discord.Embed(
             title = score['beatmap']['song_name'],
-            description = f'This score was submitted on osu!Akatsuki at {score["time"]}',
+            description = f'This score was submitted on osu!Akatsuki on {d.strptime(score["time"], "%Y-%m-%dT%H:%M:%SZ").strftime("%b %d at %I:%M%p")}.', # bad idea to strptime?
             url = f"https://akatsuki.pw/b/{score['beatmap']['beatmap_id']}")                                                    \
         .set_image(url = f"https://assets.ppy.sh/beatmaps/{score['beatmap']['beatmapset_id']}/covers/cover.jpg?1522396856")     \
-        .set_footer(text = f'This command is still a work-in-progress. Please send any ideas to cmyui(#0425)! Aika v{version}') \
-        .set_thumbnail(url = akatsuki_logo)                                                                                     \
+        .set_footer(text = f'This command is still a work-in-progress. Aika v{glob.config["version"]}') \
+        .set_thumbnail(url = glob.config['akatsuki_logo'])                                                                                     \
         .set_author(
-            url      = f"https://akatsuki.pw/u/{user_id}",
-            name     = username,
-            icon_url = f'https://a.akatsuki.pw/{user_id}') \
+            url      = f'https://akatsuki.pw/u/{res["id"]}',
+            name     = res['username'],
+            icon_url = f'https://a.akatsuki.pw/{res["id"]}') \
         .add_field(
             name  = 'Play Information',
             value = '\n'.join((
@@ -135,19 +89,7 @@ class User(commands.Cog):
                 f'**Status**: {osuHelper.ranked_status_to_readable(score["beatmap"]["ranked"])}',
                 f'**Max combo**: {score["beatmap"]["max_combo"]}x',
                 f'**Length**: {osuHelper.hitlength_to_readable(score["beatmap"]["hit_length"])}'
-                )), inline = True)# \
-        #.add_field(
-        #    name  ='Player Information',
-        #    value = '\n'.join((
-        #        f'**PP**: {pdata["pp_std"]:,.2f}pp',
-        #        f'**Ranked score**: {pdata["ranked_score_std"]:,}',
-        #        f'**Total score**: {pdata["total_score_std"]:,}',
-        #        f'**Level**: {pdata["level_std"]:,}',
-        #        f'**Accuracy**: {pdata["avg_accuracy_std"]:,.2f}%',
-        #        f'**Playtime**: {osuHelper.playtime_to_readable(pdata["playtime_std"])}',
-        #        f'**Total playtime**: {osuHelper.playtime_to_readable(pdata["total_playtime_std"])}',
-        #        f'**Country**: {pdata["country"]}'
-        #    )), inline = False)
+                )), inline = True)
         await ctx.send(embed=embed)
         return
 
@@ -158,23 +100,20 @@ class User(commands.Cog):
         usage       = '<callback>'
     )
     async def faq_command(self, ctx) -> None:
-        cnx.ping(reconnect=True, attempts=2)
         _faq: bool = not ctx.invoked_with.startswith('info')
         callback = ctx.message.content[len(ctx.prefix) + len(ctx.invoked_with) + 1:]
 
         async def fail() -> None: # Send the available FAQ topics.
-            SQL.execute('SELECT topic, title FROM discord_faq WHERE type = %s', [int(_faq)])
-
             embed = discord.Embed(
                 title = f"Available FAQ topics",
                 description = 'The following are the currently available FAQ topics.',
                 color = 0x00ff00)
 
             embed.set_footer(
-                icon_url = akatsuki_logo,
+                icon_url = glob.config['akatsuki_logo'],
                 text = "For any additional help required, please use the #help channel.")
 
-            for i, v in enumerate(SQL.fetchall()):
+            for i, v in enumerate(glob.db.fetchAll('SELECT topic, title FROM discord_faq WHERE type = %s', [int(_faq)])):
                 embed.add_field(name=f'{i + 1}) {v[0]}', value=v[1], inline=False)
 
             await ctx.send(embed=embed)
@@ -184,33 +123,35 @@ class User(commands.Cog):
             await fail()
             return
 
-        SQL.execute('SELECT id, title, content, footer, inline FROM discord_faq WHERE topic = %s AND type = %s', [callback, int(_faq)])
-        result: Dict[str, Union[int, str, bool]] = dict(zip(SQL.column_names, SQL.fetchone()))
+        res: Optional[Dict[str, Union[str, int, bool]]] = glob.db.fetch(
+            'SELECT id, title, content, footer, inline FROM discord_faq WHERE topic = %s AND type = %s',
+            [callback, int(_faq)]
+        )
 
-        if not result:
+        if not res:
             await fail()
             return
 
-        content_len = len(result['content'])
+        content_len = len(res['content'])
         if content_len > 1024:
-            await ctx.send(f'An error occurred while trying to print the faq.\n\n<@285190493703503872> `faq [{result["id"]}] content {content_len - 1024} too long`.')
+            await ctx.send(f'An error occurred while trying to print the faq.\n\n<@285190493703503872> `faq [{res["id"]}] content {content_len - 1024} too long`.')
             return
 
         embed = discord.Embed(
-            title = result['title'],
+            title = res['title'],
             description = '** **',
             color = 0x00ff00
         ).add_field(
             name = '** **',
-            value = result['content'].format(
-                        AKATSUKI_IP    = akatsuki_ip_address,
+            value = res['content'].format(
+                        AKATSUKI_IP    = glob.config['akatsuki_ip'],
                         COMMAND_PREFIX = ctx.prefix
                     ),
-            inline = result['inline']
-        ).set_thumbnail(url=akatsuki_logo)
+            inline = res['inline']
+        ).set_thumbnail(url=glob.config['akatsuki_logo'])
 
-        if result['footer']:
-            embed.set_footer(icon_url='', text=result['footer'])
+        if res['footer']:
+            embed.set_footer(icon_url='', text=res['footer'])
 
         await ctx.send(embed=embed)
         return
@@ -247,7 +188,7 @@ class User(commands.Cog):
         # not only to reduce the amount of members or possible offenders who may break
         # discord TOS, but also because the server grew to an extent that I personally
         # don't think we should have a public NSFW channel; it seems quite unprofessional.
-        if not any(i.name in ['Supporter', 'Premium'] for i in ctx.author.roles):
+        if not any(r.name in ('Supporter', 'Premium') for r in ctx.author.roles):
             return
 
         await ctx.author.add_roles(discord.utils.get(ctx.message.guild.roles, name='NSFW Access'))
@@ -263,6 +204,7 @@ class User(commands.Cog):
     async def current_unixtime(self, ctx) -> None:
         await ctx.send(f'Current UNIX timestamp: `{int(time.time())}`') # int cast to round lol
         return
+
 
     @commands.command(
         name        = 'ftcm',
@@ -303,12 +245,12 @@ class User(commands.Cog):
 
         string = ' '.join(ctx.message.content.split(' ')[2:]).encode('utf-8')
 
-        if   hash_type == 'md5':    r = hashlib.md5   (string)
-        elif hash_type == 'sha1':   r = hashlib.sha1  (string)
-        elif hash_type == 'sha224': r = hashlib.sha224(string)
-        elif hash_type == 'sha256': r = hashlib.sha256(string)
-        elif hash_type == 'sha384': r = hashlib.sha384(string)
-        elif hash_type == 'sha512': r = hashlib.sha512(string)
+        if   hash_type == 'md5':    r = md5   (string)
+        elif hash_type == 'sha1':   r = sha1  (string)
+        elif hash_type == 'sha224': r = sha224(string)
+        elif hash_type == 'sha256': r = sha256(string)
+        elif hash_type == 'sha384': r = sha384(string)
+        elif hash_type == 'sha512': r = sha512(string)
 
         await ctx.send(f'{hash_type.upper()}: `{r.hexdigest()}`')
         return
@@ -319,7 +261,7 @@ class User(commands.Cog):
         description = 'Rolls a random number between 1-100.'
     )
     async def roll(self, ctx) -> None:
-        await ctx.send(f'{ctx.author} rolled a {random.randint(1, 100)}!')
+        await ctx.send(f'{ctx.author} rolled a {randint(1, 100)}!')
         return
 
 
@@ -329,15 +271,14 @@ class User(commands.Cog):
         aliases     = ['linkdiscord']
     )
     async def link_osu_account(self, ctx) -> None:
-        SQL.execute('SELECT userid FROM discord WHERE discordid = %s', [ctx.author.id])
-        result = SQL.fetchone()
-        if result and result[0]:
-            await ctx.send(f"Your account is already linked to https://akatsuki.pw/u/{result[0]}.\nIf you'd like to link your Discord to another account, please contact @cmyui#0425.")
+        res = glob.db.fetch('SELECT userid FROM discord WHERE discordid = %s', [ctx.author.id])
+        if res and res['userid']:
+            await ctx.send(f"Your account is already linked to https://akatsuki.pw/u/{res['userid']}.\nIf you'd like to link your Discord to another account, please contact @cmyui#0425.")
             return
-        elif result:
+        elif res:
             s = "It seems as if you've already initiated the linking process."
         else:
-            SQL.execute('INSERT INTO discord (id, userid, discordid) VALUES (NULL, 0, %s)', [ctx.author.id])
+            glob.db.execute('INSERT INTO discord (id, userid, discordid) VALUES (NULL, 0, %s)', [ctx.author.id])
             s = 'Linking process initiated.'
 
         await ctx.send(f'{s}\nPlease enter the following command on the osu!Akatsuki server to `Aika`, or in #osu to complete verification.\n> `!linkdiscord {ctx.author.id}`')
@@ -349,24 +290,20 @@ class User(commands.Cog):
         description = 'Syncs your roles from the osu!Akatsuki server to the Discord.'
     )
     async def sync_osu_roles(self, ctx) -> None:
-        SQL.execute('SELECT userid FROM discord WHERE discordid = %s', [ctx.author.id])
-        result = SQL.fetchone()
-        if result and result[0]:
-            SQL.execute('SELECT privileges FROM users WHERE id = %s', [result[0]])
-            privileges: int = SQL.fetchone()[0]
+        res = glob.db.execute('SELECT privileges FROM discord WHERE discordid = %s', [ctx.author.id])
+        if not res:
+            await ctx.send("It doesn't seem like your Discord is linked to an osu!Akatsuki account.\nYou can link one by using the `!linkosu` command.")
+            return
 
-            if privileges & 8388608: # Premium
-                role = discord.utils.get(ctx.message.guild.roles, name='Premium')
-            elif privileges & 4: # Supporter
-                role = discord.utils.get(ctx.message.guild.roles, name='Supporter')
-            else:
-                await ctx.send("I couldn't find any roles to sync!\n\nIf you have recently donated and are trying to claim your discord perks, please contact <@285190493703503872> directly.")
-                return
+        if res['privileges'] & 8388608: role = discord.utils.get(ctx.message.guild.roles, name='Premium') # Premium
+        elif res['privileges'] & 4: role = discord.utils.get(ctx.message.guild.roles, name='Supporter') # Supporter
+        else:
+            await ctx.send("I couldn't find any roles to sync!\n\nIf you have recently donated and are trying to claim your discord perks, please contact <@285190493703503872> directly.")
+            return
 
-            await ctx.author.add_roles(role)
-            await ctx.send('Your roles have been synced.')
-        else: await ctx.send("It doesn't seem like your Discord is linked to an osu!Akatsuki account.\nYou can link one by using the `!linkosu` command.")
-
+        await ctx.author.add_roles(role)
+        await ctx.send('Your roles have been synced.')
+        return
 
     @commands.command(
         name        = 'ar',

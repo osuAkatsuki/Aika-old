@@ -1,7 +1,7 @@
 from typing import List, Union
+from discord import Message
 from discord.ext import commands
-from datetime import datetime as d
-from os import _exit
+from sys import exit
 
 class Staff(commands.Cog):
 
@@ -32,7 +32,7 @@ class Staff(commands.Cog):
                 message_count = int(message_count)
 
                 if message_count <= 1000 and message_count >= 1:
-                    deleted: List[discord.Message] = await ctx.channel.purge(limit=message_count + 1 if message_count != 1000 else message_count)
+                    deleted: List[Message] = await ctx.channel.purge(limit=message_count + 1 if message_count != 1000 else message_count)
 
                     await ctx.send(content=f'Successfully pruned {len(deleted) - 1} message{"s" if len(deleted) - 1 > 1 else ""}.')
                 else:
@@ -46,9 +46,9 @@ class Staff(commands.Cog):
     )
     async def shutdown_command(self, ctx):
         print('Shutting down Aika..')
+        await ctx.send('Goodnight..')
         await self.bot.logout()
-        _exit(0)
-
+        return exit(0)
 
 def setup(bot: commands.Bot):
     bot.add_cog(Staff(bot))
