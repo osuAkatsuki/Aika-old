@@ -113,7 +113,7 @@ class User(commands.Cog):
                 icon_url = glob.config['akatsuki_logo'],
                 text = "For any additional help required, please use the #help channel.")
 
-            for i, v in enumerate(glob.db.fetchAll('SELECT topic, title FROM discord_faq WHERE type = %s', [int(_faq)])):
+            for i, v in enumerate(glob.db.fetchall('SELECT topic, title FROM discord_faq WHERE type = %s', [int(_faq)])):
                 embed.add_field(name=f'{i + 1}) {v[0]}', value=v[1], inline=False)
 
             await ctx.send(embed=embed)
