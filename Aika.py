@@ -194,6 +194,9 @@ async def on_message_edit(before: discord.Message, after: discord.Message) -> No
 
                 return
 
+    # Finally, process commands.
+    await bot.process_commands(after)
+    return
 
 @bot.event
 async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState) -> None: # TODO: check if they left dragmein, and delete embed.. if that's even possible..
