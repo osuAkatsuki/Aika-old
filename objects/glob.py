@@ -6,7 +6,7 @@ from os import path
 
 start_time: float = time()
 
-version = 5.01      # Aika (This bot).
+version = 5.03      # Aika (This bot).
 abns_version = 3.06 # Akatsuki's Beatmap Nomination System (#rank-request(s)).
 
 db: Optional[MySQLConnectionPool] = None
