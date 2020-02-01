@@ -274,7 +274,7 @@ class User(commands.Cog):
     async def link_osu_account(self, ctx) -> None:
         res = glob.db.fetch('SELECT userid FROM discord WHERE discordid = %s', [ctx.author.id])
         if res and res['userid']:
-            await ctx.send(f"Your account is already linked to https://akatsuki.pw/u/{res['userid']}.\nIf you'd like to link your Discord to another account, please contact @cmyui#0425.")
+            await ctx.send(f"Your account is already linked to https://akatsuki.pw/u/{res['userid']}.\nIf you'd like to link your Discord to another account, please contact <@{glob.config['discord_owner_userid']}>.")
             return
         elif res:
             s = "It seems as if you've already initiated the linking process."
@@ -305,6 +305,75 @@ class User(commands.Cog):
         await ctx.author.add_roles(role)
         await ctx.send('Your roles have been synced.')
         return
+
+
+    @commands.command(
+        name        = 'rawfrom',
+        description = 'Returns the amount of raw PP you would get for a specific amount of PP.',
+        aliases = ('ppfrom',)
+    )
+    async def rawfrom_command(self, ctx) -> None:
+        messages: List[str] = ctx.message.content.split(' ')[1:]
+        username_safe: Optional[str] = None
+        pp: float = 0.
+        rx: bool = False
+
+        if len(messages) > 3: # Should never have more than a username and possibly -rx flag.
+            await ctx.send('Invalid syntax. Please use the following syntax:\n> `!ppfrom <username (default: linked osu!Akatsuki account)> <-rx>`')
+            return
+
+        for m in messages:
+            if m == '-rx': rx = True
+            else:
+                try: pp = float(m)
+                except:
+                    if username_safe:
+                        await ctx.send('Invalid syntax. Please use the following syntax:\n> `!ppfrom <username (default: linked osu!Akatsuki account)> <-rx>`')
+                        return
+                    username_safe = m
+                    pp = 0.
+
+        if not pp or pp < 0 or pp > 3000:
+            await ctx.send('HUH')
+            return
+
+        if not username_safe: # User didn't specify a username; use their connected osu!Akatsuki account if their Discord is linked..
+            res: Optional[Dict[str, Union[str, int]]] = glob.db.fetch(
+                'SELECT users.id FROM discord LEFT JOIN users ON discord.userid = users.id WHERE discord.discordid = %s',
+                [ctx.author.id]
+            )
+            if not res or not res['id']:
+                await ctx.send('Please either specify a username, or connect your osu!Akatsuki account with the !linkosu command.\n\n> `!recent <username (default: linked osu!Akatsuki account)> <-rx>`')
+                return
+        else:
+            res = glob.db.fetch('SELECT id FROM users WHERE username_safe = %s', [username_safe])
+            if not res:
+                await ctx.send(f'Sorry, but I could not find a user by that name.\nIf you believe this is a bug, please report it to cmyui(#0425).')
+                return
+
+        scores = [row['pp'] for row in glob.db.fetchall(
+            f'SELECT pp FROM scores{"_relax" if rx else ""} LEFT JOIN(beatmaps) USING(beatmap_md5) '
+            'WHERE userid = %s AND play_mode = %s AND completed = 3 AND ranked >= 2 AND disable_pp = 0 AND pp IS NOT NULL '
+            'ORDER BY pp DESC LIMIT 125',
+            (res['id'], 0)) # TODO: allow for other modes
+        ]
+
+        total: List[int] = [0, 0]
+
+        # Current total pp
+        total[0] = sum(round(round(_pp) * 0.95 ** i) for i, _pp in enumerate(scores))
+
+        # Add the new score and re-sort the List.
+        scores.append(pp)
+        scores.sort(reverse=True)
+
+        # New total pp after getting that amount of pp.
+        total[1] = sum(round(round(_pp) * 0.95 ** i) for i, _pp in enumerate(scores))
+
+        # Return our answer.
+        await ctx.send(f'<@{ctx.author.id}> - A {pp}pp score would give you {total[1] - total[0]}pp raw.')
+        return
+
 
     @commands.command(
         name        = 'ar',
