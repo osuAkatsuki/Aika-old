@@ -10,6 +10,7 @@ from json import loads
 from time import time
 from hashlib import md5, sha1, sha224, sha256, sha384, sha512
 
+from constants import mods
 from objects import glob
 from helpers import osuHelper
 
@@ -36,16 +37,12 @@ class User(commands.Cog):
             if m == '-rx': rx = True
             else: username_safe = m
 
-        #if rx:
-        #    await ctx.send('Relax is not yet supported.\nThis command is still very much a work in progress. :)')
-        #    return
-
         if not username_safe: # User didn't specify a username; use their connected osu!Akatsuki account if their Discord is linked..
             res: Optional[Dict[str, Union[str, int]]] = glob.db.fetch(
                 'SELECT users.username, users.username_safe, users.id FROM discord LEFT JOIN users ON discord.userid = users.id WHERE discord.discordid = %s',
                 [ctx.author.id]
             )
-            if not res or res['id']:
+            if not res or not res['id']:
                 await ctx.send('Please either specify a username, or connect your osu!Akatsuki account with the !linkosu command.\n\n> `!recent <username (default: linked osu!Akatsuki account)> <-rx>`')
                 return
         else:
@@ -56,18 +53,25 @@ class User(commands.Cog):
 
         # Do API request to akatsuki-api.
         r = get(f'http://akatsuki.pw/api/v1/users/scores/recent?id={res["id"]}&l=1&rx={"1" if rx else "0"}', timeout=1.50).json()
-        if not r or int(r['code']) != 200: await ctx.send('An error occured while attempting to fetch data from the API.\n\nPlease try again later.')
-        if not r['scores']: await ctx.send("That user doesn't seem to have any scores!")
+        if not r or int(r['code']) != 200:
+            await ctx.send('An error occured while attempting to fetch data from the API.\n\nPlease try again later.')
+            return
+
+        if not r['scores']:
+            await ctx.send("That user doesn't seem to have any scores!")
+            return
 
         score = r['scores'][0] # sanity > a few bytes
 
+        print(score)
+
         embed = discord.Embed(
             title = score['beatmap']['song_name'],
-            description = f'This score was submitted on osu!Akatsuki on {d.strptime(score["time"], "%Y-%m-%dT%H:%M:%SZ").strftime("%b %d at %I:%M%p")}.', # bad idea to strptime?
-            url = f"https://akatsuki.pw/b/{score['beatmap']['beatmap_id']}")                                                    \
-        .set_image(url = f"https://assets.ppy.sh/beatmaps/{score['beatmap']['beatmapset_id']}/covers/cover.jpg?1522396856")     \
-        .set_footer(text = f'This command is still a work-in-progress. Aika v{glob.config["version"]}') \
-        .set_thumbnail(url = glob.config['akatsuki_logo'])                                                                                     \
+            description = f'** **', # bad idea to strptime?
+            url = f"https://akatsuki.pw/b/{score['beatmap']['beatmap_id']}") \
+        .set_image(url = f"https://assets.ppy.sh/beatmaps/{score['beatmap']['beatmapset_id']}/covers/cover.jpg?1522396856") \
+        .set_footer(text = f'Score submitted on {"Relax" if score["mods"] & mods.RELAX else "Vanilla"} @ {d.strptime(score["time"], "%Y-%m-%dT%H:%M:%SZ").strftime("%-I:%M%p %b %d %Y")}.') \
+        .set_thumbnail(url = glob.config['akatsuki_logo']) \
         .set_author(
             url      = f'https://akatsuki.pw/u/{res["id"]}',
             name     = res['username'],
@@ -75,7 +79,7 @@ class User(commands.Cog):
         .add_field(
             name  = 'Play Information',
             value = '\n'.join((
-                f'**PP**: {score["pp"]:,.2f}pp',
+                f'**PP**: {score["pp"]:,.2f}pp' if score['pp'] else '**Map completion**: TBA', # TODO: add map completion % to db on score submit so we can use it here!
                 f'**Accuracy**: {score["accuracy"]:.2f}%',
                 f'**Combo**: {score["max_combo"]}x',
                 f'**Mods**: {osuHelper.mods_to_readable(score["mods"])}',
@@ -84,10 +88,9 @@ class User(commands.Cog):
         .add_field(
             name  = 'Beatmap Information',
             value = '\n'.join((
-                f'**AR**: {score["beatmap"]["ar"]}',
-                f'**OD**: {score["beatmap"]["od"]}',
+                f'**AR**: {score["beatmap"]["ar"]} | **OD**: {score["beatmap"]["od"]}',
                 f'**Status**: {osuHelper.ranked_status_to_readable(score["beatmap"]["ranked"])}',
-                f'**Max combo**: {score["beatmap"]["max_combo"]}x',
+                f'**Max combo**: {score["beatmap"]["max_combo"]}x' if score["beatmap"]["max_combo"] else '**Max combo**: ok so the api literally sent the max combo for the map as "0" idk what u expect me to do',
                 f'**Length**: {osuHelper.hitlength_to_readable(score["beatmap"]["hit_length"])}'
                 )), inline = True)
         await ctx.send(embed=embed)

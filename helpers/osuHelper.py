@@ -2,6 +2,8 @@ from typing import List, Tuple
 from constants import mods
 
 def mods_to_readable(m: int) -> str:
+    if not m: return 'Nomod'
+
     s: List[str] = []
     if m & mods.NOFAIL:      s.append('NF')
     if m & mods.EASY:        s.append('EZ')
@@ -39,7 +41,7 @@ def ranked_status_to_readable(i: int) -> str:
     return 'Ranked' if i == 2 else ('Loved' if i == 5 else 'Unranked')
 
 def hitlength_to_readable(l: int) -> str:
-    return f'{l // 60}:{l % 60}'
+    return f'{l // 60}:{str(l % 60).zfill(2)}'
 
 def playtime_to_readable(t: int) -> str:
     d = int(t / 60 / 60 // 24)
