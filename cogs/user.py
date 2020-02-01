@@ -45,7 +45,7 @@ class User(commands.Cog):
                 'SELECT users.username, users.username_safe, users.id FROM discord LEFT JOIN users ON discord.userid = users.id WHERE discord.discordid = %s',
                 [ctx.author.id]
             )
-            if not res:
+            if not res or res['id']:
                 await ctx.send('Please either specify a username, or connect your osu!Akatsuki account with the !linkosu command.\n\n> `!recent <username (default: linked osu!Akatsuki account)> <-rx>`')
                 return
         else:
@@ -114,7 +114,7 @@ class User(commands.Cog):
                 text = "For any additional help required, please use the #help channel.")
 
             for i, v in enumerate(glob.db.fetchall('SELECT topic, title FROM discord_faq WHERE type = %s', [int(_faq)])):
-                embed.add_field(name=f'{i + 1}) {v[0]}', value=v[1], inline=False)
+                embed.add_field(name=f'{i + 1}) {v["topic"]}', value=v["title"], inline=False)
 
             await ctx.send(embed=embed)
             return
