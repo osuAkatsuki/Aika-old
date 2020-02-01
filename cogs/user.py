@@ -371,7 +371,7 @@ class User(commands.Cog):
         total[1] = sum(round(round(_pp) * 0.95 ** i) for i, _pp in enumerate(scores))
 
         # Return our answer.
-        await ctx.send(f'<@{ctx.author.id}> - A {pp}pp score would give you {total[1] - total[0]}pp raw.')
+        await ctx.send(f'<@{ctx.author.id}> - A **{pp}pp** score would give {username_safe if username_safe else "you"} **{total[1] - total[0]}pp** raw.')
         return
 
 
