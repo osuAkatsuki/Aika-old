@@ -63,8 +63,6 @@ class User(commands.Cog):
 
         score = r['scores'][0] # sanity > a few bytes
 
-        print(score)
-
         embed = discord.Embed(
             title = score['beatmap']['song_name'],
             description = f'** **', # bad idea to strptime?
