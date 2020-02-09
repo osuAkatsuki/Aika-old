@@ -291,7 +291,7 @@ class User(commands.Cog):
         description = 'Syncs your roles from the osu!Akatsuki server to the Discord.'
     )
     async def sync_osu_roles(self, ctx) -> None:
-        res = glob.db.execute('SELECT privileges FROM users LEFT JOIN discord ON users.id = discord.userid WHERE discordid = %s', [ctx.author.id])
+        res = glob.db.fetch('SELECT privileges FROM users LEFT JOIN discord ON users.id = discord.userid WHERE discordid = %s', [ctx.author.id]) # broke?
         if not res:
             await ctx.send("It doesn't seem like your Discord is linked to an osu!Akatsuki account.\nYou can link one by using the `!linkosu` command.")
             return
