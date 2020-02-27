@@ -424,7 +424,7 @@ class User(commands.Cog):
         ar_ms = round(MapDifficultyRange(ar, 1800.0, 1200.0, 450.0, mods))
 
         # Calculate ms with speed changing mods.
-        if 'DT' in mods:   ar_ms /= 1.50
+        if   'DT' in mods: ar_ms /= 1.50
         elif 'HT' in mods: ar_ms /= 0.75
 
         # Calculate AR. Round to 3 decimal places.
