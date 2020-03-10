@@ -48,7 +48,7 @@ class User(commands.Cog):
         else:
             res = glob.db.fetch('SELECT username, id FROM users WHERE username_safe = %s', [username_safe])
             if not res:
-                await ctx.send(f'Sorry, but I could not find a user by that name.\nIf you believe this is a bug, please report it to cmyui(#0425).')
+                await ctx.send(f'Sorry, but I could not find a user by that name.\nIf you believe this is a bug, please report it to a developer.')
                 return
 
         # Do API request to akatsuki-api.
@@ -299,7 +299,7 @@ class User(commands.Cog):
         if res['privileges'] & 8388608: role = discord.utils.get(ctx.message.guild.roles, name='Premium') # Premium
         elif res['privileges'] & 4: role = discord.utils.get(ctx.message.guild.roles, name='Supporter') # Supporter
         else:
-            await ctx.send("I couldn't find any roles to sync!\n\nIf you have recently donated and are trying to claim your discord perks, please contact <@285190493703503872> directly.")
+            await ctx.send(f"I couldn't find any roles to sync!\n\nIf you have recently donated and are trying to claim your discord perks, please contact <@{glob.config['discord_owner_userid']}> directly.")
             return
 
         await ctx.author.add_roles(role)
