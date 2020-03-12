@@ -274,7 +274,7 @@ class User(commands.Cog):
     async def link_osu_account(self, ctx) -> None:
         res = glob.db.fetch('SELECT userid FROM discord WHERE discordid = %s', [ctx.author.id])
         if res and res['userid']:
-            await ctx.send(f"Your account is already linked to https://akatsuki.pw/u/{res['userid']}!")
+            await ctx.send(f"Your account is already linked to https://akatsuki.pw/u/{res['userid']}.")
             return
         elif res:
             s = "It seems as if you've already initiated the linking process."
