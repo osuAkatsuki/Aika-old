@@ -95,6 +95,78 @@ class User(commands.Cog):
         return
 
     @commands.command(
+        name        = 'top',
+        description = "Displays information about a user's top scores",
+        aliases     = ['topscore'],
+        usage       = '<username (default: linked osu!Akatsuki account)> <-rx>',
+    )
+    async def top_score_command(self, ctx) -> None:
+	    messages: List[str] = ctx.message.content.split(' ')[1:]
+        username_safe: Optional[str] = None
+        rx: bool = False
+
+        if len(messages) > 2: # Should never have more than a username and possibly -rx flag.
+            await ctx.send('Invalid syntax. Please use the following syntax:\n> `!top <username (default: linked osu!Akatsuki account)> <-rx>`')
+            return
+
+        for m in messages:
+            if m == '-rx': rx = True
+            else: username_safe = m
+
+        if not username_safe: # User didn't specify a username; use their connected osu!Akatsuki account if their Discord is linked..
+            res: Optional[Dict[str, Union[str, int]]] = glob.db.fetch(
+               'SELECT users.username, users.username_safe, users.id FROM discord LEFT JOIN users ON discord.userid = users.id WHERE discord.discordid = %s',
+                [ctx.author.id]
+            )
+            if not res:
+                await ctx.send('Please either specify a username, or connect your osu!Akatsuki account with the !linkosu command.\n\n> `!top <username (default: linked osu!Akatsuki account)> <-rx>`')
+                return
+        else:
+            res = glob.db.fetch('SELECT username, id FROM users WHERE username_safe = %s', [username_safe])
+            if not res:
+                await ctx.send(f'Sorry, but I could not find a user by that name.\nIf you believe this is a bug, please report it to cmyui(#0425).')
+                return
+
+            # Do API request to akatsuki-api.
+        r = get(f'http://akatsuki.pw/api/v1/users/scores/best?id={res["id"]}&l=1&rx={"1" if rx else "0"}', timeout=1.50).json()
+        if not r or int(r['code']) != 200: await ctx.send('An error occured while attempting to fetch data from the API.\n\nPlease try again later.')
+        if not r['scores']: await ctx.send("That user doesn't seem to have any scores!")
+
+        score = r['scores'][0] # sanity > a few bytes
+
+        embed = discord.Embed(
+            title = score['beatmap']['song_name'],
+            description = f'This score was submitted on osu!Akatsuki on {d.strptime(score["time"], "%Y-%m-%dT%H:%M:%SZ").strftime("%b %d at %I:%M%p")}.', # bad idea to strptime?
+            url = f"https://akatsuki.pw/b/{score['beatmap']['beatmap_id']}")                                                    \
+            .set_image(url = f"https://assets.ppy.sh/beatmaps/{score['beatmap']['beatmapset_id']}/covers/cover.jpg?1522396856")     \
+            .set_footer(text = f'This command is still a work-in-progress. Aika v{glob.config["version"]}') \
+            .set_thumbnail(url = glob.config['akatsuki_logo'])                                                                                     \
+            .set_author(
+                url      = f'https://akatsuki.pw/u/{res["id"]}',
+                name     = res['username'],
+                icon_url = f'https://a.akatsuki.pw/{res["id"]}') \
+            .add_field(
+                name  = 'Play Information',
+                value = '\n'.join((
+                    f'**PP**: {score["pp"]:,.2f}pp',
+                    f'**Accuracy**: {score["accuracy"]:.2f}%',
+                    f'**Combo**: {score["max_combo"]}x',
+                    f'**Mods**: {osuHelper.mods_to_readable(score["mods"])}',
+                    f'**Passed**: {"True" if score["completed"] > 1 else "False"}'
+                )), inline = True) \
+            .add_field(
+                name  = 'Beatmap Information',
+                value = '\n'.join((
+                    f'**AR**: {score["beatmap"]["ar"]}',
+                    f'**OD**: {score["beatmap"]["od"]}',
+                    f'**Status**: {osuHelper.ranked_status_to_readable(score["beatmap"]["ranked"])}',
+                    f'**Max combo**: {score["beatmap"]["max_combo"]}x',
+                    f'**Length**: {osuHelper.hitlength_to_readable(score["beatmap"]["hit_length"])}'
+                    )), inline = True)
+        await ctx.send(embed=embed)
+        return
+                
+    @commands.command(
         name        = 'faq',
         description = 'Frequently asked questions.',
         aliases     = ['info', 'information'],
